@@ -182,6 +182,7 @@ Built-in operators.
 
 ```
 
+!=
 =
 >
 <
