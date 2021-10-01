@@ -1,5 +1,5 @@
 # amino
-A framework to build domain specific languages
+A framework to build domain specific languages for the purposes of rules engines
 
 
 ## How to Use
