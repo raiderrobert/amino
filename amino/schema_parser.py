@@ -45,14 +45,6 @@ def _tokenizer(target: str) -> list[str]:
     return tokens
 
 
-def load_schema():
-    schema: str = """
-    foo: int
-    """
-
-    return parse_schema(schema)
-
-
 class SchemaType(enum.Enum):
     str = 'str'
     int = 'int'
@@ -84,9 +76,15 @@ def parse_schema(schema):
                     Names(name, parse_types(_type))
                 )
                 tokens = remainder
+            case _:
+                raise Exception(f'Unexpected remainder {tokens}')
 
     return parsed_schema
 
 
-def parse():
-    pass
+def load_schema():
+    schema: str = """
+    foo: int
+    """
+
+    return parse_schema(schema)
