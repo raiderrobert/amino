@@ -6,7 +6,7 @@ authors = ["Robert Roskam <raiderrobert@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
