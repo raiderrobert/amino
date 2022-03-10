@@ -150,7 +150,7 @@ is_large_int: func(int)
 
 ```
 >>> data = {"amount": 100, "state_code": "CA"}
->>> rule = "amount > 0 and state_code = 'CA'"
+>>> rule = "is_large_int(0) and state_code = 'CA'"
 >>> amn.eval(rule, data)
 True
 ```
