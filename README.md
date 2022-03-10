@@ -143,17 +143,42 @@ schema.amn
 amount: int
 state_code: str
 
-is_large_int: func(int)
+smallest_number: func(int, int)
 
 ```
 
 
 ```
 >>> data = {"amount": 100, "state_code": "CA"}
->>> rule = "is_large_int(0) and state_code = 'CA'"
+>>> rule = "biggest_number(amount, 1000) < 1000 and state_code = 'CA'"
 >>> amn.eval(rule, data)
 True
 ```
+
+#### Default Arguments
+
+Functions also support more complex cases, such as referencing other variables in the schema:
+
+schema.amn
+```
+COMPANY_MAX_LOAN_AMT: int = 100_000
+
+loan_amount: int
+approved_amount: int
+state_code: str
+
+within_tolerances: func(COMPANY_MAX_LOAN_AMT, loan_amount, approved_amount)()
+
+```
+
+
+```
+>>> data = {"amount": 100, "state_code": "CA"}
+>>> rule = "within_tolerances(_,_,90_000) and state_code = 'CA'"
+>>> amn.eval(rule, data)
+True
+```
+
 
 
 ### Lists
