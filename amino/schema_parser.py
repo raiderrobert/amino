@@ -3,6 +3,9 @@ import enum
 import regex
 
 
+RESERVED_NAMES = ['and', 'or', 'not']  # all casing variations of these are reserved
+
+
 whitespace = regex.compile("[\s]+")
 word = regex.compile("[\w]+")
 colon = regex.compile(":")
@@ -36,6 +39,8 @@ def _tokenizer(target: str) -> list[str]:
             if match_obj is not None:
                 value = match_obj.group(0)
                 if token_type is not token_type.whitespace:
+                    if str(value).lower() in RESERVED_NAMES:
+                        raise Exception(f"Cannot declare reserved name: {RESERVED_NAMES}")
                     tokens.append(Token(value, token_type))
                 pos = match_obj.end()
                 target = target[pos:]
@@ -48,6 +53,8 @@ def _tokenizer(target: str) -> list[str]:
 class SchemaType(enum.Enum):
     str = 'str'
     int = 'int'
+    bool = 'bool'
+    any = 'any'
 
 
 def parse_types(_type):
@@ -66,7 +73,7 @@ class Names:
     _type: SchemaType
 
 
-def parse_schema(schema):
+def parse_schema(schema) -> list[Names]:
     tokens = _tokenizer(schema)
     parsed_schema = []
     while len(tokens) > 0:

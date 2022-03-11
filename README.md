@@ -143,7 +143,7 @@ schema.amn
 amount: int
 state_code: str
 
-smallest_number: func(int, int)
+smallest_number: func(int, int) -> int
 
 ```
 
@@ -219,4 +219,24 @@ not
 and
 or
 
+```
+
+
+### Examples of Built-In Behavior
+
+We support homogenous or heterogeneous arrays with the `list` keyword
+
+schema.amn
+```
+amount: int
+state_code: str
+```
+
+
+
+```
+>>> data = {"amount": 100, "state_code": "CA", "things": ["CA", 1, 1.0] }
+>>> rule = "amount > 0 and state_code = 'CA' or state_code in things"
+>>> amn.eval(rule, data)
+True
 ```
