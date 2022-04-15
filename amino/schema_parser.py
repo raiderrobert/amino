@@ -2,12 +2,10 @@ import dataclasses
 import enum
 import regex
 
-
 RESERVED_NAMES = ['and', 'or', 'not']  # all casing variations of these are reserved
 
-
-whitespace = regex.compile("[\s]+")
-word = regex.compile("[\w]+")
+whitespace = regex.compile("[\\s]+")
+word = regex.compile("[\\w]+")
 colon = regex.compile(":")
 
 
@@ -63,6 +61,10 @@ def parse_types(_type):
             return SchemaType.str
         case "int":
             return SchemaType.int
+        case "bool":
+            return SchemaType.bool
+        case "any":
+            return SchemaType.any
 
     raise Exception(f'Unexpected type {_type}')
 
@@ -89,8 +91,8 @@ def parse_schema(schema) -> list[Names]:
     return parsed_schema
 
 
-def load_schema():
-    schema: str = """
+def load_schema(schema) -> list[Names]:
+    schema: str = schema or """
     foo: int
     """
 
