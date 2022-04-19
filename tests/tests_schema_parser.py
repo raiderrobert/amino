@@ -8,7 +8,7 @@ from amino.schema_parser import parse_schema, Names, SchemaType
         ("foo:int", [Names("foo", _type=SchemaType.int)], False),
         (
             """
-            foo:int
+            foo: int
             bar: str
             baz: bool
             bat: any

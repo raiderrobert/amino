@@ -4,8 +4,7 @@ from typing import Optional
 
 import regex
 
-from amino.schema_parser import Names
-from amino.schema_parser import SchemaType
+from amino.schema_parser import Schema, SchemaType
 
 whitespace = regex.compile(r"[\s]+")
 name_token = regex.compile(r"[A-Za-z_]+")
@@ -36,14 +35,25 @@ token_map = {
     name_token: TokenType.name,
 }
 
+token_return_type_map = {
+    parenthesis_open: TokenType.parenthesis_open,
+    parenthesis_close: TokenType.parenthesis_close,
+    whitespace: TokenType.whitespace,
+    number_literal: TokenType.number_literal,
+    symbol: TokenType.symbol,
+    string_literal: TokenType.string_literal,
+    name_token: TokenType.name,
+}
+
 
 @dataclasses.dataclass
 class Token:
     value: str
     token_type: TokenType
+    schema_type: SchemaType | None
 
 
-def _tokenizer(target: str) -> list[Token]:
+def _tokenizer(target: str, schema: Schema | None = None) -> list[Token]:
     tokens: list = []
     pos = 0
     while len(target) > 0:
@@ -52,7 +62,17 @@ def _tokenizer(target: str) -> list[Token]:
             if match_obj is not None:
                 value = match_obj.group(0)
                 if token_type is not token_type.whitespace:
-                    tokens.append(Token(value, token_type))
+                    schema_type = None
+                    if schema:
+                        match token_type:
+                            case TokenType.name:
+                                schema_type = schema.get_type(value)
+                            case TokenType.string_literal:
+                                schema_type = SchemaType.str
+                            case TokenType.number_literal:
+                                schema_type = SchemaType.int
+
+                    tokens.append(Token(value, token_type, schema_type))
                 pos = match_obj.end()
                 target = target[pos:]
                 break
@@ -77,7 +97,6 @@ class Func:
 
 @dataclasses.dataclass
 class Node:
-    parent: Optional['Node']
     name: Func | str
     arguments: list
 
@@ -102,24 +121,23 @@ def builtin_funcs():
     return {f.name: f for f in funcs}, func_types
 
 
-def parse_rule(rule, schema: list[Names]):
-    tokens = _tokenizer(rule)
-    func_tree = Node(parent=None, name='root', arguments=[])
+def parse_rule(rule, schema: Schema):
+    tokens = _tokenizer(rule, schema)
+    func_tree = Node(name='root', arguments=[])
     funcs, func_types = builtin_funcs()
 
-    while len(tokens) > 0:
+    for _ in tokens:
         match tokens:
             case [
-                Token(value_1, TokenType.name | TokenType.string_literal | TokenType.number_literal),
-                Token(infix_operator, TokenType.symbol | TokenType.name),
-                Token(_type, TokenType.name | TokenType.string_literal | TokenType.number_literal),
-                *remainder
-            ] if infix_operator in func_types[PositionType.infix]:
+                Token(t1, TokenType.name | TokenType.string_literal | TokenType.number_literal, t1_type),
+                Token(infix_operator, infix_type),
+                Token(t2, TokenType.name | TokenType.string_literal | TokenType.number_literal, t2_type),
+                *tokens
+            ] if infix_operator in func_types[PositionType.infix] and infix_type in (TokenType.symbol, TokenType.name):
                 name = funcs[infix_operator]
-
-                Node(parent=func_tree, name=name, arguments=[value_1])
-
-                pass
+                func_tree.arguments.append(Node(name=name, arguments=[[t1, t1_type],[t2,t2_type]]))
+            case []:
+                break
             case _:
                 raise Exception(f'Unexpected remainder {tokens}')
 

@@ -72,26 +72,35 @@ def parse_types(_type):
 @dataclasses.dataclass
 class Names:
     name: str
-    _type: SchemaType
+    name_type: SchemaType
 
 
-def parse_schema(schema) -> list[Names]:
+class Schema:
+
+    def __init__(self, names_list: list[Names]):
+        self.name_list = names_list
+        self.names_dict = {i.name: i.name_type for i in names_list}
+
+    def get_type(self, name: str):
+        return self.names_dict[name]
+
+
+def parse_schema(schema) -> Schema:
     tokens = _tokenizer(schema)
     parsed_schema = []
     while len(tokens) > 0:
         match tokens:
-            case [Token(name, TokenType.word), Token(_, TokenType.colon), Token(_type, TokenType.word), *remainder]:
+            case [Token(name, TokenType.word), Token(_, TokenType.colon), Token(name_type, TokenType.word), *remainder]:
                 parsed_schema.append(
-                    Names(name, parse_types(_type))
+                    Names(name, parse_types(name_type))
                 )
                 tokens = remainder
             case _:
                 raise Exception(f'Unexpected remainder {tokens}')
+    return Schema(parsed_schema)
 
-    return parsed_schema
 
-
-def load_schema(schema) -> list[Names]:
+def load_schema(schema) -> Schema:
     schema: str = schema or """
     foo: int
     """
