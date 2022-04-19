@@ -5,7 +5,7 @@ from amino.schema_parser import parse_schema, Names, SchemaType
 @pytest.mark.parametrize(
     "test_input,expected,exception",
     [
-        ("foo:int", [Names("foo", _type=SchemaType.int)], False),
+        ("foo:int", [Names("foo", name_type=SchemaType.int)], False),
         (
             """
             foo: int
@@ -14,10 +14,10 @@ from amino.schema_parser import parse_schema, Names, SchemaType
             bat: any
             """,
             [
-                Names("foo", _type=SchemaType.int),
-                Names("bar", _type=SchemaType.str),
-                Names("baz", _type=SchemaType.bool),
-                Names("bat", _type=SchemaType.any),
+                Names("foo", name_type=SchemaType.int),
+                Names("bar", name_type=SchemaType.str),
+                Names("baz", name_type=SchemaType.bool),
+                Names("bat", name_type=SchemaType.any),
             ],
             False,
         ),
@@ -32,9 +32,9 @@ from amino.schema_parser import parse_schema, Names, SchemaType
     ],
 )
 def test_good(test_input, expected, exception):
-
-    if exception:
-        with pytest.raises(Exception) as excinfo:
+    with pytest.raises(Exception) as excinfo:
+        output = parse_schema(test_input)
+        if exception:
             assert str(excinfo.value) == expected
-    else:
-        assert parse_schema(test_input) == expected
+        else:
+            assert output == expected
