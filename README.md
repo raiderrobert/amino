@@ -234,7 +234,7 @@ We support homogenous or heterogeneous arrays with the `list` keyword
 schema.amn
 ```
 amount: int
-state_code: str
+state_code: list[str]
 ```
 
 
