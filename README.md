@@ -3,7 +3,7 @@ A toolkit for custom rules engines
 
 Amino has three parts:
 - a schema definition like graphql or protobuf for the data space it operates on
-- a pre-built small DSL for conditional logic to operate on these schemas
+- a pre-built small and extensible DSL for conditional logic to operate on these schemas
 - a runtime to evaluate the rules against the data set
 
 
