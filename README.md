@@ -225,23 +225,3 @@ and
 or
 
 ```
-
-
-### Examples of Built-In Behavior
-
-We support homogenous or heterogeneous arrays with the `list` keyword
-
-schema.amn
-```
-amount: int
-state_code: list[str]
-```
-
-
-
-```
->>> data = {"amount": 100, "state_code": "CA", "things": ["CA", 1, 1.0] }
->>> rule = "amount > 0 and state_code = 'CA' or state_code in things"
->>> amn.eval(rule, data)
-True
-```
