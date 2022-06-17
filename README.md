@@ -1,5 +1,10 @@
 # amino
-A toolkit and DSL for custom rules engines
+A toolkit for custom rules engines
+
+Amino has three parts:
+- a schema definition like graphql or protobuf for the data space it operates on
+- a pre-built small DSL for conditional logic to operate on these schemas
+- a runtime to evaluate the rules against the data set
 
 
 ## How to Use
