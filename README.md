@@ -136,7 +136,7 @@ True
 
 
 ### Functions
-We support function declarations with the keyword `func`, wherein you declare the inputs and output, and you 
+We support function declarations; you declare the inputs and output, and you 
 implement the function in your own language. These aren't true functions. It may be more appropriate to call it a 
 foreign function interface declaration. That is, amino is the host language, and your implementation language in your
 project (e.g. Python, TypeScript, etc.) is the guest language.
@@ -148,14 +148,16 @@ schema.amn
 amount: int
 state_code: str
 
-smallest_number: func(int, int) -> int
+smallest_number: (int, int) -> int
 
 ```
 
+Note the passing of `min` and passing it into the `funcs` argument while loading the schema. This provides the DSL host language access to calling out to the guest function `min` while the host function in the DSL uses `smallest_number`.
 
 ```
+>>> amn = amino.load_schema("schema.amn", funcs={'smallest_number': min})
 >>> data = {"amount": 100, "state_code": "CA"}
->>> rule = "biggest_number(amount, 1000) < 1000 and state_code = 'CA'"
+>>> rule = "smallest_number(amount, 1000) < 1000 and state_code = 'CA'"
 >>> amn.eval(rule, data)
 True
 ```
@@ -172,14 +174,17 @@ loan_amount: int
 approved_amount: int
 state_code: str
 
-within_tolerances: func(COMPANY_MAX_LOAN_AMT, loan_amount, approved_amount)()
+within_tolerances: (COMPANY_MAX_LOAN_AMT)(loan_amount, approved_amount) -> bool
 
 ```
 
+Note the passing of `within_tolerances` and passing it into the `funcs` argument while loading the schema.
 
 ```
+>>> import custom_module
+>>> amn = amino.load_schema("schema.amn", {'within_tolerances': custom_module.within_tolerances})
 >>> data = {"amount": 100, "state_code": "CA"}
->>> rule = "within_tolerances(_,_,90_000) and state_code = 'CA'"
+>>> rule = "within_tolerances(10_000, 90_000) and state_code = 'CA'"
 >>> amn.eval(rule, data)
 True
 ```
@@ -211,7 +216,6 @@ True
 Built-in operators.
 
 ```
-
 !=
 =
 >
