@@ -180,6 +180,8 @@ within_tolerances: (COMPANY_MAX_LOAN_AMT)(loan_amount, approved_amount) -> bool
 
 Note the passing of `within_tolerances` and passing it into the `funcs` argument while loading the schema.
 
+At runtime, three variables in the order provided will be passed to `within_tolerances`
+
 ```
 >>> import custom_module
 >>> amn = amino.load_schema("schema.amn", {'within_tolerances': custom_module.within_tolerances})
