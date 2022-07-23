@@ -73,23 +73,23 @@ from amino.schema_parser import parse_schema, SchemaType
             NodeType(type=GT, arguments=[Literal("1", SchemaType.int), Name("a", SchemaType.int)], parent=None),
             False,
         ),
-        (
-                """
-                a: int
-                b: int
-                """,
-                "a > b and b > 0",
-                Node(
-                    name="root",
-                    arguments=[
-                        Node(
-                            name=Func(">", PositionType.infix, SchemaType.bool, 2),
-                            arguments=[["a", SchemaType.int], ["b", SchemaType.int]],
-                        )
-                    ],
-                ),
-                False,
-        ),
+        # (
+        #         """
+        #         a: int
+        #         b: int
+        #         """,
+        #         "a > b and b > 0",
+        #         NodeType(
+        #             name="root",
+        #             arguments=[
+        #                 Node(
+        #                     name=Func(">", PositionType.infix, SchemaType.bool, 2),
+        #                     arguments=[["a", SchemaType.int], ["b", SchemaType.int]],
+        #                 )
+        #             ],
+        #         ),
+        #         False,
+        # ),
     ],
 )
 def test_parse_rule(test_schema, test_rule, expected, exception):
