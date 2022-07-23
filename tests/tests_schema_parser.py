@@ -1,11 +1,11 @@
 import pytest
-from amino.schema_parser import parse_schema, Names, SchemaType
+from amino.schema_parser import parse_schema, Name, SchemaType
 
 
 @pytest.mark.parametrize(
     "test_input,expected,exception",
     [
-        ("foo:int", [Names("foo", name_type=SchemaType.int)], False),
+        ("foo:int", [Name("foo", name_type=SchemaType.int)], False),
         (
             """
             foo: int
@@ -14,10 +14,10 @@ from amino.schema_parser import parse_schema, Names, SchemaType
             bat: any
             """,
             [
-                Names("foo", name_type=SchemaType.int),
-                Names("bar", name_type=SchemaType.str),
-                Names("baz", name_type=SchemaType.bool),
-                Names("bat", name_type=SchemaType.any),
+                Name("foo", name_type=SchemaType.int),
+                Name("bar", name_type=SchemaType.str),
+                Name("baz", name_type=SchemaType.bool),
+                Name("bat", name_type=SchemaType.any),
             ],
             False,
         ),
