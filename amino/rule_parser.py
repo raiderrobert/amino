@@ -141,9 +141,7 @@ def builtin_keywords() -> LookupKeyword:
     funcs = [
         AND,
         OR,
-        NOT,
-        Func('val', PositionType.infix, SchemaType.int, 1),
-        Func('id', PositionType.infix, SchemaType.int, 1),
+        NOT
     ]
 
     func_types = {_t: [] for _t in PositionType}
@@ -266,6 +264,7 @@ class Parser:
         if token.token_type in token_types:
             return token
         return None
+
 
 def peek(tokens):
     return tokens[0]
