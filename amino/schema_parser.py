@@ -1,12 +1,12 @@
 import dataclasses
 import enum
-import regex
+import re
 
 RESERVED_NAMES = ["and", "or", "not"]  # all casing variations of these are reserved
 
-whitespace = regex.compile("[\\s]+")
-word = regex.compile("[\\w]+")
-colon = regex.compile(":")
+whitespace = re.compile("[\\s]+")
+word = re.compile("[\\w]+")
+colon = re.compile(":")
 
 
 class TokenType(enum.Enum):

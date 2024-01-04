@@ -2,17 +2,17 @@ import dataclasses
 import enum
 import typing
 
-import regex
+import re
 
 from amino.schema_parser import Schema, SchemaType
 
-whitespace_regex = regex.compile(r"[\s]+")
-name_regex = regex.compile(r"[A-Za-z_]+")
-parenthesis_open_regex = regex.compile(r"[(]+")
-parenthesis_close_regex = regex.compile(r"[)]+")
-int_literal_regex = regex.compile(r"[\d]+")
-string_literal_regex = regex.compile(r"'[^']*'")
-symbol_regex = regex.compile("[^a-zA-Z0-9\\s'\"]+")
+whitespace_regex = re.compile(r"[\s]+")
+name_regex = re.compile(r"[A-Za-z_]+")
+parenthesis_open_regex = re.compile(r"[(]+")
+parenthesis_close_regex = re.compile(r"[)]+")
+int_literal_regex = re.compile(r"[\d]+")
+string_literal_regex = re.compile(r"'[^']*'")
+symbol_regex = re.compile("[^a-zA-Z0-9\\s'\"]+")
 
 
 class TokenType(enum.Enum):
