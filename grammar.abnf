@@ -1,0 +1,45 @@
+;; Amino Schema Language Grammar
+
+;; Top level constructs
+schema           = *( comment / declaration / struct-decl / function-decl )
+
+;; Basic declarations
+declaration      = identifier ":" type-expr [ "=" value ] LF
+
+;; Comments
+comment          = "#" *ANY LF
+
+;; Identifiers and basic types
+identifier       = ALPHA *(ALPHA / DIGIT / "_")
+basic-type       = "int" / "str" / "float" / "bool"
+type-expr        = basic-type / list-type / union-type
+
+;; Lists
+list-type        = "list" "[" type-list "]"
+type-list        = type-expr *( "|" type-expr )
+union-type       = type-expr *( "|" type-expr )
+
+;; Structs
+struct-decl      = "struct" identifier "{" *struct-field "}" LF
+struct-field     = identifier ":" type-expr "," LF
+
+;; Functions
+function-decl    = identifier ":" function-signature LF
+function-signature = "(" arg-list ")" [ "(" default-args ")" ] "->" return-type
+arg-list         = type-expr *( "," type-expr )
+default-args     = identifier *( "," identifier )
+return-type      = basic-type
+
+;; Values
+value           = number / string / boolean
+number          = [ "-" ] 1*DIGIT [ "_" 1*DIGIT ]
+string          = DQUOTE *CHAR DQUOTE
+boolean         = "true" / "false"
+
+;; Core tokens
+ALPHA           = %x41-5A / %x61-7A   ; A-Z / a-z
+DIGIT           = %x30-39             ; 0-9
+ANY             = %x20-7E             ; Any printable character
+CHAR            = %x20-21 / %x23-7E   ; Any char except "
+DQUOTE          = %x22                ; "
+LF              = %x0A                ; Line feed
