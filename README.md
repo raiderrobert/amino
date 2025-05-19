@@ -1,5 +1,5 @@
 # amino
-A toolkit and DSL for custom rules engines. Much focus has been given toward AI and machine learning tooling to help take humans out of the loop. However, there are exist a wide variety of current and future applications for custom rules engines.
+A toolkit and DSL for classification rules engines—sometimes called expert systems. Much focus has been given toward AI and machine learning tooling to help take humans out of the loop. However, there are exist a wide variety of current and future applications for custom rules engines.
 
 We propose inverting the problem space and placing a schema at the center, not unlike how GraphQL has done so for APIs.
 
