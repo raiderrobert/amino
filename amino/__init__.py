@@ -1,2 +1,32 @@
-from .schema_parser import load_schema  # noqa: F401
-from .compiler import compile  # noqa: F401
+"""Amino - Schema-first classification rules engine."""
+
+# Main API
+from .core import Schema, load_schema
+
+# Type system
+from .types import TypeRegistry, register_builtin_types
+
+# Utilities  
+from .utils.errors import (
+    AminoError, SchemaParseError, RuleParseError, 
+    TypeValidationError, RuleEvaluationError
+)
+
+__version__ = "0.1.0"
+
+__all__ = [
+    # Main API
+    'Schema',
+    'load_schema',
+    
+    # Type system
+    'TypeRegistry', 
+    'register_builtin_types',
+    
+    # Errors
+    'AminoError',
+    'SchemaParseError', 
+    'RuleParseError',
+    'TypeValidationError',
+    'RuleEvaluationError'
+]
