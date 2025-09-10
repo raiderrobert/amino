@@ -1,101 +1,149 @@
 import pytest
-from amino.rule_parser import NodeType, Parser, GT, Literal, Name
-from amino.schema_parser import parse_schema, SchemaType
-
-#
-# @pytest.mark.parametrize(
-#     "test_input,expected,exception",
-#     [
-#         (
-#             "a > b",
-#             [Token("a", TokenType.name, None), Token(">", TokenType.symbol, None), Token("b", TokenType.name, None)],
-#             False,
-#         ),
-#         (
-#             "a > 1",
-#             [
-#                 Token("a", TokenType.name, None),
-#                 Token(">", TokenType.symbol, None),
-#                 Token("1", TokenType.int_literal, None),
-#             ],
-#             False,
-#         ),
-#         (
-#             "a < b and c > a",
-#             [
-#                 Token("a", TokenType.name, None),
-#                 Token("<", TokenType.symbol, None),
-#                 Token("b", TokenType.name, None),
-#                 Token("and", TokenType.name, None),
-#                 Token("c", TokenType.name, None),
-#                 Token(">", TokenType.symbol, None),
-#                 Token("a", TokenType.name, None),
-#             ],
-#             False,
-#         ),
-#     ],
-# )
-# def test_tokenizer(test_input, expected, exception):
-#     if exception:
-#         with pytest.raises(Exception) as excinfo:
-#             assert str(excinfo.value) == expected
-#     else:
-#         assert _tokenizer(test_input) == expected
+from amino.rules.parser import parse_rule
+from amino.rules.ast import BinaryOp, Literal, Variable, Operator
+from amino.schema.parser import parse_schema
+from amino.utils.errors import RuleParseError
 
 
 @pytest.mark.parametrize(
-    "test_schema,test_rule,expected,exception",
+    "schema_content,rule,should_raise,expected_error",
     [
         (
-            """
-            a: int
-            b: int
-            """,
-            "2 > 1",
-            NodeType(type=GT, arguments=[Literal("2", SchemaType.int), Literal("1", SchemaType.int)], parent=None),
-            False,
-        ),
-        (
-            """
-            a: int
-            b: int
-            """,
+            "a: int\nb: int",
             "a > 1",
-            NodeType(type=GT, arguments=[Name("a", SchemaType.int), Literal("1", SchemaType.int)], parent=None),
             False,
+            None,
         ),
         (
-            """
-            a: int
-            b: int
-            """,
-            "1 > a",
-            NodeType(type=GT, arguments=[Literal("1", SchemaType.int), Name("a", SchemaType.int)], parent=None),
+            "a: int\nb: int", 
+            "2 > 1",
             False,
+            None,
         ),
-        # (
-        #         """
-        #         a: int
-        #         b: int
-        #         """,
-        #         "a > b and b > 0",
-        #         NodeType(
-        #             name="root",
-        #             arguments=[
-        #                 Node(
-        #                     name=Func(">", PositionType.infix, SchemaType.bool, 2),
-        #                     arguments=[["a", SchemaType.int], ["b", SchemaType.int]],
-        #                 )
-        #             ],
-        #         ),
-        #         False,
-        # ),
+        (
+            "a: int\nb: int",
+            "a > b and b > 0",
+            False,
+            None,
+        ),
+        (
+            "name: str\nage: int",
+            "name = 'John' and age >= 18",
+            False,
+            None,
+        ),
+        (
+            "amount: int",
+            "amount > unknown_var",
+            True,
+            "Unknown variable: unknown_var",
+        ),
+        (
+            "amount: int",
+            "amount > 0 and",
+            True,
+            "Unexpected end of rule",
+        ),
     ],
 )
-def test_parse_rule(test_schema, test_rule, expected, exception):
-    if exception:
-        with pytest.raises(Exception) as excinfo:
-            assert str(excinfo.value) == expected
+def test_rule_parsing(schema_content, rule, should_raise, expected_error):
+    """Test rule parsing with new architecture."""
+    schema_ast = parse_schema(schema_content)
+    
+    if should_raise:
+        with pytest.raises(RuleParseError) as excinfo:
+            parse_rule(rule, schema_ast)
+        assert expected_error in str(excinfo.value)
     else:
-        parsed_schema = parse_schema(test_schema)
-        assert Parser(test_rule, parsed_schema).parse_all() == expected
+        rule_ast = parse_rule(rule, schema_ast)
+        assert rule_ast.root is not None
+        assert hasattr(rule_ast, 'variables')
+        assert hasattr(rule_ast, 'functions')
+
+
+def test_simple_comparison():
+    """Test parsing simple comparison."""
+    schema_ast = parse_schema("amount: int")
+    rule_ast = parse_rule("amount > 100", schema_ast)
+    
+    assert isinstance(rule_ast.root, BinaryOp)
+    assert rule_ast.root.operator == Operator.GT
+    assert isinstance(rule_ast.root.left, Variable)
+    assert rule_ast.root.left.name == "amount"
+    assert isinstance(rule_ast.root.right, Literal)
+    assert rule_ast.root.right.value == 100
+
+
+def test_literal_comparison():
+    """Test parsing literal comparison."""
+    schema_ast = parse_schema("amount: int")
+    rule_ast = parse_rule("100 > 50", schema_ast)
+    
+    assert isinstance(rule_ast.root, BinaryOp)
+    assert rule_ast.root.operator == Operator.GT
+    assert isinstance(rule_ast.root.left, Literal)
+    assert rule_ast.root.left.value == 100
+    assert isinstance(rule_ast.root.right, Literal)
+    assert rule_ast.root.right.value == 50
+
+
+def test_logical_and():
+    """Test parsing logical AND."""
+    schema_ast = parse_schema("amount: int\nstate: str")
+    rule_ast = parse_rule("amount > 0 and state = 'CA'", schema_ast)
+    
+    assert isinstance(rule_ast.root, BinaryOp)
+    assert rule_ast.root.operator == Operator.AND
+    assert isinstance(rule_ast.root.left, BinaryOp)
+    assert isinstance(rule_ast.root.right, BinaryOp)
+    
+    # Check variables are collected
+    assert "amount" in rule_ast.variables
+    assert "state" in rule_ast.variables
+
+
+def test_string_literals():
+    """Test parsing string literals with quotes."""
+    schema_ast = parse_schema("name: str")
+    
+    # Single quotes
+    rule_ast = parse_rule("name = 'John'", schema_ast)
+    assert isinstance(rule_ast.root.right, Literal)
+    assert rule_ast.root.right.value == "John"
+    
+    # Double quotes  
+    rule_ast = parse_rule('name = "Jane"', schema_ast)
+    assert isinstance(rule_ast.root.right, Literal)
+    assert rule_ast.root.right.value == "Jane"
+
+
+def test_parentheses():
+    """Test parsing expressions with parentheses."""
+    schema_ast = parse_schema("a: int\nb: int\nc: int")
+    rule_ast = parse_rule("(a > 0 and b > 0) or c > 0", schema_ast)
+    
+    assert isinstance(rule_ast.root, BinaryOp)
+    assert rule_ast.root.operator == Operator.OR
+
+
+def test_function_calls():
+    """Test parsing function calls."""
+    schema_ast = parse_schema("amount: int\nmax_amount: int\nmin_func: (int, int) -> int")
+    rule_ast = parse_rule("min_func(amount, max_amount) > 0", schema_ast)
+    
+    assert isinstance(rule_ast.root, BinaryOp)
+    assert "min_func" in rule_ast.functions
+
+
+def test_struct_field_access():
+    """Test parsing struct field access."""
+    schema_ast = parse_schema("""
+    struct person {
+        name: str,
+        age: int
+    }
+    """)
+    rule_ast = parse_rule("person.age > 18", schema_ast)
+    
+    assert isinstance(rule_ast.root.left, Variable)
+    assert rule_ast.root.left.name == "person.age"

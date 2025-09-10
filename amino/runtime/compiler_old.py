@@ -1,0 +1,2 @@
+def compile(ast):
+    pass
