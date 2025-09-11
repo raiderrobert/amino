@@ -86,14 +86,18 @@ def test_simple_comparisons(
 
     assert isinstance(rule_ast.root.left, left_type)
     if left_type == Variable:
+        assert isinstance(rule_ast.root.left, Variable)
         assert rule_ast.root.left.name == left_value
     else:
+        assert isinstance(rule_ast.root.left, Literal)
         assert rule_ast.root.left.value == left_value
 
     assert isinstance(rule_ast.root.right, right_type)
     if right_type == Variable:
+        assert isinstance(rule_ast.root.right, Variable)
         assert rule_ast.root.right.name == right_value
     else:
+        assert isinstance(rule_ast.root.right, Literal)
         assert rule_ast.root.right.value == right_value
 
     for var in expected_variables:

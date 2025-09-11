@@ -19,7 +19,7 @@ from .ast import (
 class CompiledRule:
     """Compiled rule that can be evaluated efficiently."""
 
-    def __init__(self, rule_id: Any, evaluator: Callable[[dict[str, Any]], bool],
+    def __init__(self, rule_id: Any, evaluator: Callable[[dict[str, Any], dict[str, Callable]], bool],
                  variables: list[str], functions: list[str]):
         self.rule_id = rule_id
         self.evaluator = evaluator
