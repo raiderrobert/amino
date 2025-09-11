@@ -4,12 +4,12 @@ from .types import SchemaType
 from .validator import SchemaValidator
 
 __all__ = [
-    'SchemaParser',
-    'parse_schema',
-    'SchemaAST',
     'FieldDefinition',
-    'StructDefinition',
     'FunctionDefinition',
+    'SchemaAST',
+    'SchemaParser',
     'SchemaType',
-    'SchemaValidator'
+    'SchemaValidator',
+    'StructDefinition',
+    'parse_schema'
 ]

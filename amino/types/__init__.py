@@ -3,10 +3,10 @@ from .registry import TypeDefinition, TypeRegistry
 from .validation import TypeValidator, ValidationResult
 
 __all__ = [
-    'TypeRegistry',
-    'TypeDefinition',
     'BuiltinTypes',
-    'register_builtin_types',
+    'TypeDefinition',
+    'TypeRegistry',
     'TypeValidator',
-    'ValidationResult'
+    'ValidationResult',
+    'register_builtin_types'
 ]

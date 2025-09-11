@@ -46,7 +46,7 @@ def advanced_schema():
         age: int,
         tags: list[str]
     }
-    
+
     MIN_AGE: int = 18
     validate_eligibility: (applicant, int) -> bool
     """)

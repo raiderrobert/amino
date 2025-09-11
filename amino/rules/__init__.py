@@ -4,14 +4,14 @@ from .optimizer import RuleOptimizer
 from .parser import RuleParser, parse_rule
 
 __all__ = [
-    'RuleParser',
-    'parse_rule',
-    'RuleAST',
     'BinaryOp',
-    'UnaryOp',
-    'Literal',
-    'Variable',
     'FunctionCall',
+    'Literal',
+    'RuleAST',
     'RuleCompiler',
-    'RuleOptimizer'
+    'RuleOptimizer',
+    'RuleParser',
+    'UnaryOp',
+    'Variable',
+    'parse_rule'
 ]

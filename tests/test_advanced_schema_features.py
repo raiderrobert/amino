@@ -3,7 +3,7 @@
 These tests use parametrize decorators following the project's test patterns.
 They define the expected behavior for:
 1. Function declarations
-2. Struct definitions  
+2. Struct definitions
 3. List types
 4. Enhanced type constraints
 """
@@ -577,7 +577,7 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
                 age: int,
                 tags: list[str]
             }
-            
+
             MIN_AGE: int = 18
             validate_eligibility: (applicant, int) -> bool
             """,
@@ -590,7 +590,7 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
                 }
             },
             """
-            validate_eligibility(applicant, 18) and 
+            validate_eligibility(applicant, 18) and
             'verified' in applicant.tags and
             applicant.age >= 21
             """,
@@ -603,7 +603,7 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
                 permissions: list[str],
                 level: int
             }
-            
+
             check_access: (user, str) -> bool
             """,
             lambda user, required_perm: required_perm in user["permissions"] and user["level"] >= 1,

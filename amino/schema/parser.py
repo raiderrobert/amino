@@ -374,7 +374,7 @@ class SchemaParser:
 def parse_schema(content: str, strict: bool = False,
                 known_custom_types: set | None = None) -> SchemaAST:
     """Parse schema content into AST.
-    
+
     Args:
         content: Schema content to parse
         strict: If True, raise error for unknown types instead of treating as custom

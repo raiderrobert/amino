@@ -4,9 +4,9 @@ from .evaluator import RuleEvaluator
 from .matcher import MatchMode, MatchResult
 
 __all__ = [
-    'RuleEngine',
-    'RuleEvaluator',
-    'MatchResult',
+    'CompiledRules',
     'MatchMode',
-    'CompiledRules'
+    'MatchResult',
+    'RuleEngine',
+    'RuleEvaluator'
 ]

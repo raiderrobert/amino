@@ -48,7 +48,7 @@ class SchemaValidator:
 
         # Find duplicates
         seen = set()
-        for name, kind in all_names:
+        for name, _kind in all_names:
             if name in seen:
                 errors.append(f"Duplicate name '{name}' found")
             seen.add(name)

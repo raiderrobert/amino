@@ -13,15 +13,13 @@ from .utils.errors import (
 __version__ = "0.1.0"
 
 __all__ = [
-        'Schema',
-    'load_schema',
-
-        'TypeRegistry',
-    'register_builtin_types',
-
-        'AminoError',
-    'SchemaParseError',
+    'AminoError',
+    'RuleEvaluationError',
     'RuleParseError',
+    'Schema',
+    'SchemaParseError',
+    'TypeRegistry',
     'TypeValidationError',
-    'RuleEvaluationError'
+    'load_schema',
+    'register_builtin_types'
 ]

@@ -121,7 +121,7 @@ class RuleEngine:
 
     def _optimize_rule_order(self, rules: list, options: MatchOptions) -> list:
         """Optimize rule order for performance.
-        
+
         Orders rules by complexity (simpler rules first) for better performance.
         In FIRST mode, this can significantly reduce evaluation time.
         """
@@ -141,7 +141,7 @@ class RuleEngine:
 
     def _estimate_rule_complexity(self, rule) -> int:
         """Estimate the computational complexity of a rule.
-        
+
         Returns a complexity score (lower = simpler/faster).
         """
         complexity = 0
