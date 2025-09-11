@@ -26,9 +26,9 @@ struct context {
 }
 
 # ML and analysis functions
-sentiment_score: (str) -> float
-toxicity_score: (str) -> float
-contains_spam_patterns: (str) -> bool
-contains_banned_words: (str) -> bool
-is_potential_harassment: (str, str) -> bool  # text, target_user
-detect_self_harm_language: (str) -> bool
+sentiment_score: (text: str) -> float
+toxicity_score: (text: str) -> float
+contains_spam_patterns: (text: str) -> bool
+contains_banned_words: (text: str) -> bool
+is_potential_harassment: (text: str, target_user: str) -> bool
+detect_self_harm_language: (text: str) -> bool

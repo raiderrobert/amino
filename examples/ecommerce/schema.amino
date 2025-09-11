@@ -25,6 +25,6 @@ struct order {
 }
 
 # Custom functions available in rules
-calculate_discount: (float, float) -> float
-is_holiday_season: (str) -> bool
-get_shipping_cost: (str, float) -> float
+calculate_discount: (tier_discount: float, volume_discount: float) -> float
+is_holiday_season: (date: str) -> bool
+get_shipping_cost: (zip_code: str, weight: float) -> float

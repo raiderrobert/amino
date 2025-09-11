@@ -37,10 +37,10 @@ struct user_preferences {
 }
 
 # Utility functions for IoT logic  
-time_in_range: (str, str, str) -> bool  # current_time, start, end
-calculate_energy_cost: (float, float) -> float  # power_kw, hours
-get_weather_forecast: (str) -> str  # location -> "sunny", "rainy", "cloudy"
-send_notification: (str, str) -> bool  # user_id, message
-get_average_consumption: (str, int) -> float  # device_id, days
-temp_above_preferred: (float, float, float) -> bool  # current_temp, preferred_temp, threshold
-power_above_threshold: (float, float, float) -> bool  # current_power, average_power, multiplier
+time_in_range: (current_time: str, start: str, end: str) -> bool
+calculate_energy_cost: (power_kw: float, hours: float) -> float
+get_weather_forecast: (location: str) -> str  # Returns "sunny", "rainy", "cloudy"
+send_notification: (user_id: str, message: str) -> bool
+get_average_consumption: (device_id: str, days: int) -> float
+temp_above_preferred: (current_temp: float, preferred_temp: float, threshold: float) -> bool
+power_above_threshold: (current_power: float, average_power: float, multiplier: float) -> bool

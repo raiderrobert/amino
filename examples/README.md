@@ -172,7 +172,7 @@ struct my_data {
 }
 
 # Add new functions
-my_function: (str, int) -> bool
+my_function: (text: str, count: int) -> bool
 ```
 
 ## 🎓 Learning Path
