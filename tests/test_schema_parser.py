@@ -34,9 +34,12 @@ from amino.utils.errors import SchemaParseError
             bat: any
             blargh: boo
             """,
-            [],
-            True,
-            "Unexpected type boo",
+            [
+                ("bat", SchemaType.any),
+                ("blargh", SchemaType.custom),
+            ],
+            False,
+            None,
         ),
         (
             "amount: float",

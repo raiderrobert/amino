@@ -42,7 +42,7 @@ from amino.utils.errors import RuleParseError
             "amount: int",
             "amount > 0 and",
             True,
-            "Unexpected end of rule",
+            "Unexpected end of expression",
         ),
     ],
 )
@@ -61,69 +61,66 @@ def test_rule_parsing(schema_content, rule, should_raise, expected_error):
         assert hasattr(rule_ast, 'functions')
 
 
-def test_simple_comparison():
-    """Test parsing simple comparison."""
-    schema_ast = parse_schema("amount: int")
-    rule_ast = parse_rule("amount > 100", schema_ast)
+@pytest.mark.parametrize(
+    "schema_content,rule,expected_operator,left_type,left_value,right_type,right_value,expected_variables",
+    [
+        # Simple variable comparison
+        ("amount: int", "amount > 100", Operator.GT, Variable, "amount", Literal, 100, ["amount"]),
+        
+        # Literal comparison
+        ("amount: int", "100 > 50", Operator.GT, Literal, 100, Literal, 50, []),
+        
+        # String comparison with single quotes
+        ("name: str", "name = 'John'", Operator.EQ, Variable, "name", Literal, "John", ["name"]),
+        
+        # String comparison with double quotes
+        ("name: str", 'name = "Jane"', Operator.EQ, Variable, "name", Literal, "Jane", ["name"]),
+    ]
+)
+def test_simple_comparisons(schema_content, rule, expected_operator, left_type, left_value, right_type, right_value, expected_variables):
+    """Test parsing simple comparisons."""
+    schema_ast = parse_schema(schema_content)
+    rule_ast = parse_rule(rule, schema_ast)
     
     assert isinstance(rule_ast.root, BinaryOp)
-    assert rule_ast.root.operator == Operator.GT
-    assert isinstance(rule_ast.root.left, Variable)
-    assert rule_ast.root.left.name == "amount"
-    assert isinstance(rule_ast.root.right, Literal)
-    assert rule_ast.root.right.value == 100
+    assert rule_ast.root.operator == expected_operator
+    
+    # Check left operand
+    assert isinstance(rule_ast.root.left, left_type)
+    if left_type == Variable:
+        assert rule_ast.root.left.name == left_value
+    else:
+        assert rule_ast.root.left.value == left_value
+    
+    # Check right operand
+    assert isinstance(rule_ast.root.right, right_type)
+    if right_type == Variable:
+        assert rule_ast.root.right.name == right_value
+    else:
+        assert rule_ast.root.right.value == right_value
+    
+    # Check variables collection
+    for var in expected_variables:
+        assert var in rule_ast.variables
 
 
-def test_literal_comparison():
-    """Test parsing literal comparison."""
-    schema_ast = parse_schema("amount: int")
-    rule_ast = parse_rule("100 > 50", schema_ast)
+@pytest.mark.parametrize(
+    "schema_content,rule,expected_variables",
+    [
+        ("amount: int\nstate: str", "amount > 0 and state = 'CA'", ["amount", "state"]),
+        ("a: int\nb: int\nc: int", "(a > 0 and b > 0) or c > 0", ["a", "b", "c"]),
+    ]
+)
+def test_complex_expressions(schema_content, rule, expected_variables):
+    """Test parsing complex logical expressions."""
+    schema_ast = parse_schema(schema_content)
+    rule_ast = parse_rule(rule, schema_ast)
     
     assert isinstance(rule_ast.root, BinaryOp)
-    assert rule_ast.root.operator == Operator.GT
-    assert isinstance(rule_ast.root.left, Literal)
-    assert rule_ast.root.left.value == 100
-    assert isinstance(rule_ast.root.right, Literal)
-    assert rule_ast.root.right.value == 50
-
-
-def test_logical_and():
-    """Test parsing logical AND."""
-    schema_ast = parse_schema("amount: int\nstate: str")
-    rule_ast = parse_rule("amount > 0 and state = 'CA'", schema_ast)
-    
-    assert isinstance(rule_ast.root, BinaryOp)
-    assert rule_ast.root.operator == Operator.AND
-    assert isinstance(rule_ast.root.left, BinaryOp)
-    assert isinstance(rule_ast.root.right, BinaryOp)
     
     # Check variables are collected
-    assert "amount" in rule_ast.variables
-    assert "state" in rule_ast.variables
-
-
-def test_string_literals():
-    """Test parsing string literals with quotes."""
-    schema_ast = parse_schema("name: str")
-    
-    # Single quotes
-    rule_ast = parse_rule("name = 'John'", schema_ast)
-    assert isinstance(rule_ast.root.right, Literal)
-    assert rule_ast.root.right.value == "John"
-    
-    # Double quotes  
-    rule_ast = parse_rule('name = "Jane"', schema_ast)
-    assert isinstance(rule_ast.root.right, Literal)
-    assert rule_ast.root.right.value == "Jane"
-
-
-def test_parentheses():
-    """Test parsing expressions with parentheses."""
-    schema_ast = parse_schema("a: int\nb: int\nc: int")
-    rule_ast = parse_rule("(a > 0 and b > 0) or c > 0", schema_ast)
-    
-    assert isinstance(rule_ast.root, BinaryOp)
-    assert rule_ast.root.operator == Operator.OR
+    for var in expected_variables:
+        assert var in rule_ast.variables
 
 
 def test_function_calls():

@@ -25,7 +25,7 @@ ARROW = re.compile(r"->")
 PIPE = re.compile(r"\|")
 LBRACKET = re.compile(r"\[")
 RBRACKET = re.compile(r"\]")
-NUMBER = re.compile(r"\d+")
+NUMBER = re.compile(r"\d+(?:\.\d+)?")
 QUESTION = re.compile(r"\?")
 COMMENT = re.compile(r"#[^\n]*")
 
@@ -161,9 +161,11 @@ class SchemaParser:
         
         self._expect(TokenType.COLON)
         
-        # Parse the type - should be a single WORD token for basic types
-        type_token = self._expect(TokenType.WORD)
-        field_type = parse_type(type_token.value)
+        # Parse the type - can be simple (int) or complex (list[str])
+        type_info = self._parse_type_expression()
+        field_type = type_info["type"]
+        type_name = type_info["name"]
+        element_types = type_info.get("element_types", [])
         
         # Handle optional type (ending with ?)
         optional = False
@@ -176,7 +178,7 @@ class SchemaParser:
         if self._peek() and self._peek().token_type == TokenType.LBRACE:
             constraints = self._parse_constraints()
         
-        return FieldDefinition(name_token.value, field_type, constraints, optional)
+        return FieldDefinition(name_token.value, field_type, type_name, element_types, constraints, optional)
     
     def _parse_struct(self) -> StructDefinition:
         """Parse a struct definition."""
@@ -198,17 +200,27 @@ class SchemaParser:
         name_token = self._expect(TokenType.WORD)
         self._expect(TokenType.COLON)
         
-        # Parse default args if present
+        # Parse default args if present (pattern: (DEFAULT_ARGS)(input_types) -> output)
         default_args = []
-        if self._peek() and self._peek().token_type == TokenType.LPAREN:
-            self._advance()  # (
+        
+        # Check if we have default args by looking ahead
+        # Default args: (NAME)(types) -> type  
+        # Input types: (type, type) -> type
+        # The key difference: default args are followed by another ( for input types
+        if (self._peek() and self._peek().token_type == TokenType.LPAREN and
+            self.pos + 3 < len(self.tokens) and
+            self.tokens[self.pos + 1].token_type == TokenType.WORD and
+            self.tokens[self.pos + 2].token_type == TokenType.RPAREN and
+            self.tokens[self.pos + 3].token_type == TokenType.LPAREN):
+            # This is default args: (NAME) followed by another (
+            self._advance()  # consume (
             while self._peek() and self._peek().token_type != TokenType.RPAREN:
                 default_args.append(self._advance().value)
                 if self._peek() and self._peek().token_type == TokenType.COMMA:
                     self._advance()
             self._expect(TokenType.RPAREN)
         
-        # Parse input types
+        # Parse input types - now expect the input types parentheses
         self._expect(TokenType.LPAREN)
         input_types = []
         while self._peek() and self._peek().token_type != TokenType.RPAREN:
@@ -254,9 +266,13 @@ class SchemaParser:
             self._expect(TokenType.COLON)
             value_token = self._advance()
             
-            # Convert value based on key
+            # Convert value based on key and type
             if key_token.value in ("min", "max", "length"):
-                constraints[key_token.value] = int(value_token.value)
+                # Try to convert to int first, then float if it contains a decimal point
+                if "." in value_token.value:
+                    constraints[key_token.value] = float(value_token.value)
+                else:
+                    constraints[key_token.value] = int(value_token.value)
             else:
                 constraints[key_token.value] = value_token.value.strip('"\'')
             
@@ -266,33 +282,80 @@ class SchemaParser:
         self._expect(TokenType.RBRACE)
         return constraints
     
+    def _parse_type_expression(self) -> Dict[str, Any]:
+        """Parse a type expression (simple or complex like list[type])."""
+        type_token = self._expect(TokenType.WORD)
+        type_name = type_token.value
+        
+        # Check if this is a list type with element specification
+        if type_name == "list" and self._peek() and self._peek().token_type == TokenType.LBRACKET:
+            self._advance()  # consume '['
+            
+            # Parse element types (can be type1|type2|type3)
+            element_types = []
+            while self._peek() and self._peek().token_type != TokenType.RBRACKET:
+                elem_token = self._expect(TokenType.WORD)
+                element_types.append(elem_token.value)
+                
+                # Check for union type separator '|'
+                if self._peek() and self._peek().token_type == TokenType.PIPE:
+                    self._advance()  # consume '|'
+                elif self._peek() and self._peek().token_type != TokenType.RBRACKET:
+                    raise SchemaParseError("Expected '|' or ']' in list type definition")
+            
+            self._expect(TokenType.RBRACKET)  # consume ']'
+            
+            return {
+                "type": SchemaType.list,
+                "name": f"list[{'|'.join(element_types)}]",
+                "element_types": element_types
+            }
+        else:
+            # Simple type
+            field_type = parse_type(type_name)
+            return {
+                "type": field_type,
+                "name": type_name,
+                "element_types": []
+            }
+    
     def _is_function_declaration(self) -> bool:
         """Check if current tokens represent a function declaration."""
-        if self.pos + 5 >= len(self.tokens):
+        if self.pos + 3 >= len(self.tokens):
+            return False
+        
+        # Check basic pattern: name : ...
+        if not (self.tokens[self.pos].token_type == TokenType.WORD and
+                self.tokens[self.pos + 1].token_type == TokenType.COLON):
             return False
         
         # Look ahead for pattern: name : (type, type) -> type
-        # We need to find the arrow token to distinguish from regular field
+        # Start looking after the colon
         i = self.pos + 2
         paren_count = 0
         found_arrow = False
         
-        while i < len(self.tokens):
+        # Only look ahead a reasonable distance (max 20 tokens to avoid false positives)
+        max_lookahead = min(i + 20, len(self.tokens))
+        
+        while i < max_lookahead:
             token = self.tokens[i]
             if token.token_type == TokenType.LPAREN:
                 paren_count += 1
             elif token.token_type == TokenType.RPAREN:
                 paren_count -= 1
+                # Only stop if we've found an arrow after closing all parentheses
                 if paren_count == 0:
                     # Check if next token is arrow
                     if i + 1 < len(self.tokens) and self.tokens[i + 1].token_type == TokenType.ARROW:
                         found_arrow = True
-                    break
+                        break
+            elif token.token_type == TokenType.WORD and paren_count == 0:
+                # If we hit another word at paren_count 0, this is likely the next declaration
+                break
             i += 1
         
-        return (self.tokens[self.pos].token_type == TokenType.WORD and
-                self.tokens[self.pos + 1].token_type == TokenType.COLON and
-                found_arrow)
+        return found_arrow
     
     def _is_constant_declaration(self) -> bool:
         """Check if current tokens represent a constant declaration."""

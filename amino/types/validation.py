@@ -110,8 +110,17 @@ class TypeValidator:
             return
         
         # Handle custom types first
+        if field_def.field_type == SchemaType.custom:
+            # Use the preserved type_name for custom types
+            type_name = field_def.type_name
+            if not self.type_registry.validate_value(type_name, value):
+                result.add_error(field_name, 
+                               f"Value does not match type '{type_name}'", value)
+            return
+        
+        # Handle registered types that are built-in
         type_name = field_def.field_type.value
-        if field_def.field_type == SchemaType.custom or self.type_registry.has_type(type_name):
+        if self.type_registry.has_type(type_name):
             if not self.type_registry.validate_value(type_name, value):
                 result.add_error(field_name, 
                                f"Value does not match type '{type_name}'", value)

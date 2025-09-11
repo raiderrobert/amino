@@ -76,8 +76,11 @@ class RuleParser:
         self._structs = {s.name: s for s in schema_ast.structs}
         self._functions = {f.name: f for f in schema_ast.functions}
         
-        # Add struct fields to variables (flattened)
+        # Add struct types as potential variables
         for struct in schema_ast.structs:
+            # The struct name itself can be used as a variable (instance of the struct)
+            self._variables[struct.name] = SchemaType.struct
+            # Add struct fields to variables (flattened)
             for field in struct.fields:
                 var_name = f"{struct.name}.{field.name}"
                 self._variables[var_name] = field.field_type

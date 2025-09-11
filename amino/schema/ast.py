@@ -10,6 +10,8 @@ class FieldDefinition:
     """Represents a field definition in the schema."""
     name: str
     field_type: SchemaType
+    type_name: str = ""  # Original type name for custom types
+    element_types: List[str] = dataclasses.field(default_factory=list)  # For list[type] or list[type|type]
     constraints: Dict[str, Any] = dataclasses.field(default_factory=dict)
     optional: bool = False
 
