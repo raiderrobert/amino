@@ -1,25 +1,16 @@
-[tool.poetry]
+[project]
 name = "amino"
 version = "0.1.0"
 description = "A framework to build custom domain specific languages"
-authors = ["Robert Roskam <raiderrobert@gmail.com>"]
-license = "MIT"
+authors = [{name = "Robert Roskam", email = "raiderrobert@gmail.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.2"
-pytest-cov = "*"
-ipython  = "*"
-black = "*"
-flake8 = "*"
-py = "^1.11.0"
-
-[build-system]
-requires = ["poetry-core>=1.0.0a5"]
-build-backend = "poetry.core.masonry.api"
-
-
-[tool.black]
-line-length = 120
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov",
+    "ruff>=0.12.7",
+    "ty>=0.0.1a20",
+]
