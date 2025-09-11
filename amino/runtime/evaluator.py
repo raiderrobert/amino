@@ -20,8 +20,9 @@ class RuleEvaluator:
         except Exception as e:
             raise RuleEvaluationError(f"Error evaluating rule {rule.rule_id}: {e}") from e
 
-    def evaluate_batch(self, rules: list[CompiledRule],
-                      data_list: list[dict[str, Any]]) -> list[list[tuple[Any, bool]]]:
+    def evaluate_batch(
+        self, rules: list[CompiledRule], data_list: list[dict[str, Any]]
+    ) -> list[list[tuple[Any, bool]]]:
         """Evaluate multiple rules against multiple data items."""
         results = []
 
@@ -37,8 +38,7 @@ class RuleEvaluator:
 
         return results
 
-    def evaluate_rules_for_data(self, rules: list[CompiledRule],
-                               data: dict[str, Any]) -> list[tuple[Any, bool]]:
+    def evaluate_rules_for_data(self, rules: list[CompiledRule], data: dict[str, Any]) -> list[tuple[Any, bool]]:
         """Evaluate all rules for a single data item."""
         results = []
         for rule in rules:

@@ -11,6 +11,7 @@ from .registry import TypeRegistry
 @dataclasses.dataclass
 class ValidationError:
     """Individual validation error."""
+
     field: str
     message: str
     value: Any = None
@@ -19,6 +20,7 @@ class ValidationError:
 @dataclasses.dataclass
 class ValidationResult:
     """Result of type validation."""
+
     valid: bool
     errors: list[ValidationError] = dataclasses.field(default_factory=list)
 
@@ -46,14 +48,11 @@ class TypeValidator:
             if struct_def.name in data:
                 struct_data = data[struct_def.name]
                 if not isinstance(struct_data, dict):
-                    result.add_error(struct_def.name,
-                                   f"Expected object for struct '{struct_def.name}'",
-                                   struct_data)
+                    result.add_error(struct_def.name, f"Expected object for struct '{struct_def.name}'", struct_data)
                     continue
 
                 for field_def in struct_def.fields:
-                    self._validate_field(field_def, struct_data, result,
-                                       prefix=f"{struct_def.name}.")
+                    self._validate_field(field_def, struct_data, result, prefix=f"{struct_def.name}.")
 
         return result
 
@@ -74,8 +73,9 @@ class TypeValidator:
         self._validate_field_value(field_def, value, result, field_name)
         return result
 
-    def _validate_field(self, field_def: FieldDefinition, data: dict[str, Any],
-                       result: ValidationResult, prefix: str = ""):
+    def _validate_field(
+        self, field_def: FieldDefinition, data: dict[str, Any], result: ValidationResult, prefix: str = ""
+    ):
         """Validate a field against its definition."""
         full_field_name = f"{prefix}{field_def.name}"
 
@@ -91,8 +91,7 @@ class TypeValidator:
 
         self._validate_field_value(field_def, value, result, full_field_name)
 
-    def _validate_field_value(self, field_def: FieldDefinition, value: Any,
-                             result: ValidationResult, field_name: str):
+    def _validate_field_value(self, field_def: FieldDefinition, value: Any, result: ValidationResult, field_name: str):
         """Validate a field value against its type and constraints."""
 
         # Handle list types
@@ -111,23 +110,19 @@ class TypeValidator:
             # Use the preserved type_name for custom types
             type_name = field_def.type_name
             if not self.type_registry.validate_value(type_name, value):
-                result.add_error(field_name,
-                               f"Value does not match type '{type_name}'", value)
+                result.add_error(field_name, f"Value does not match type '{type_name}'", value)
             return
 
         # Handle registered types that are built-in
         type_name = field_def.field_type.value
         if self.type_registry.has_type(type_name):
             if not self.type_registry.validate_value(type_name, value):
-                result.add_error(field_name,
-                               f"Value does not match type '{type_name}'", value)
+                result.add_error(field_name, f"Value does not match type '{type_name}'", value)
             return
 
         # Handle built-in types
         if not self._validate_builtin_type(field_def.field_type.value, value):
-            result.add_error(field_name,
-                           f"Expected {field_def.field_type.value} for field '{field_name}'",
-                           value)
+            result.add_error(field_name, f"Expected {field_def.field_type.value} for field '{field_name}'", value)
             return
 
         # Validate constraints
@@ -147,44 +142,44 @@ class TypeValidator:
         validator = type_validators.get(type_name)
         return validator(value) if validator else False
 
-    def _validate_constraints(self, field_def: FieldDefinition, value: Any,
-                             result: ValidationResult, field_name: str):
+    def _validate_constraints(self, field_def: FieldDefinition, value: Any, result: ValidationResult, field_name: str):
         """Validate field constraints."""
         for constraint, constraint_value in field_def.constraints.items():
             if constraint == "min":
-                if hasattr(value, '__lt__') and value < constraint_value:
-                    result.add_error(field_name,
-                                   f"Value {value} is less than minimum {constraint_value}")
+                if hasattr(value, "__lt__") and value < constraint_value:
+                    result.add_error(field_name, f"Value {value} is less than minimum {constraint_value}")
 
             elif constraint == "max":
-                if hasattr(value, '__gt__') and value > constraint_value:
-                    result.add_error(field_name,
-                                   f"Value {value} is greater than maximum {constraint_value}")
+                if hasattr(value, "__gt__") and value > constraint_value:
+                    result.add_error(field_name, f"Value {value} is greater than maximum {constraint_value}")
 
             elif constraint == "length":
-                if hasattr(value, '__len__') and len(value) != constraint_value:
-                    result.add_error(field_name,
-                                   f"Length {len(value)} does not equal required {constraint_value}")
+                if hasattr(value, "__len__") and len(value) != constraint_value:
+                    result.add_error(field_name, f"Length {len(value)} does not equal required {constraint_value}")
 
             elif constraint == "format":
                 # Format validation using built-in validators
                 if constraint_value == "email":
                     from .builtin import BuiltinTypes
+
                     if not BuiltinTypes.validate_email(value):
                         result.add_error(field_name, f"Invalid email format: {value}")
 
                 elif constraint_value == "url":
                     from .builtin import BuiltinTypes
+
                     if not BuiltinTypes.validate_url(value):
                         result.add_error(field_name, f"Invalid URL format: {value}")
 
                 elif constraint_value == "uuid":
                     from .builtin import BuiltinTypes
+
                     if not BuiltinTypes.validate_uuid(value):
                         result.add_error(field_name, f"Invalid UUID format: {value}")
 
-    def _validate_list_elements(self, field_def: FieldDefinition, list_value: list[Any],
-                               result: ValidationResult, field_name: str):
+    def _validate_list_elements(
+        self, field_def: FieldDefinition, list_value: list[Any], result: ValidationResult, field_name: str
+    ):
         """Validate each element in a list against the allowed element types."""
         for i, element in enumerate(list_value):
             element_valid = False
@@ -197,9 +192,9 @@ class TypeValidator:
 
             if not element_valid:
                 allowed_types = " | ".join(field_def.element_types)
-                result.add_error(field_name,
-                               f"Element at index {i} does not match allowed types [{allowed_types}]",
-                               element)
+                result.add_error(
+                    field_name, f"Element at index {i} does not match allowed types [{allowed_types}]", element
+                )
 
     def _validate_element_type(self, type_name: str, value: Any) -> bool:
         """Validate a single value against a type name."""

@@ -15,8 +15,7 @@ from .matcher import MatchMode, MatchOptions
 class RuleDefinition:
     """Definition of a single rule."""
 
-    def __init__(self, id: Any, rule: str, ordering: int | None = None,
-                 metadata: dict[str, Any] | None = None):
+    def __init__(self, id: Any, rule: str, ordering: int | None = None, metadata: dict[str, Any] | None = None):
         self.id = id
         self.rule = rule
         self.ordering = ordering
@@ -26,26 +25,28 @@ class RuleDefinition:
 class RuleEngine:
     """Main rule evaluation engine."""
 
-    def __init__(self, schema_ast: SchemaAST,
-                 function_registry: dict[str, Callable] | None = None):
+    def __init__(self, schema_ast: SchemaAST, function_registry: dict[str, Callable] | None = None):
         self.schema_ast = schema_ast
         self.function_registry = function_registry or {}
         self.compiler = RuleCompiler()
         self.optimizer = RuleOptimizer()
 
-    def compile_rules(self, rule_definitions: list[RuleDefinition | dict[str, Any]],
-                     match: dict[str, Any] | None = None) -> CompiledRules:
+    def compile_rules(
+        self, rule_definitions: list[RuleDefinition | dict[str, Any]], match: dict[str, Any] | None = None
+    ) -> CompiledRules:
         """Compile a list of rule definitions."""
         # Normalize rule definitions
         rules = []
         for rule_def in rule_definitions:
             if isinstance(rule_def, dict):
-                rules.append(RuleDefinition(
-                    id=rule_def["id"],
-                    rule=rule_def["rule"],
-                    ordering=rule_def.get("ordering"),
-                    metadata=rule_def.get("metadata", {})
-                ))
+                rules.append(
+                    RuleDefinition(
+                        id=rule_def["id"],
+                        rule=rule_def["rule"],
+                        ordering=rule_def.get("ordering"),
+                        metadata=rule_def.get("metadata", {}),
+                    )
+                )
             else:
                 rules.append(rule_def)
 
@@ -104,6 +105,7 @@ class RuleEngine:
             compiled_rule = self.compiler.compile_rule("temp", optimized_ast)
 
             from .evaluator import RuleEvaluator
+
             evaluator = RuleEvaluator(self.function_registry)
             return evaluator.evaluate_single(compiled_rule, data)
 
@@ -150,17 +152,17 @@ class RuleEngine:
         complexity += 1
 
         # Add complexity for operators and functions in the rule string
-        rule_text = getattr(rule, 'rule_text', str(rule))
+        rule_text = getattr(rule, "rule_text", str(rule))
 
         # Count logical operators (AND/OR add complexity)
-        complexity += rule_text.lower().count(' and ') * 2
-        complexity += rule_text.lower().count(' or ') * 2
+        complexity += rule_text.lower().count(" and ") * 2
+        complexity += rule_text.lower().count(" or ") * 2
 
         # Count function calls (expensive operations)
-        complexity += rule_text.count('(') * 3
+        complexity += rule_text.count("(") * 3
 
         # Count field references
-        complexity += rule_text.count('.') * 1
+        complexity += rule_text.count(".") * 1
 
         # Longer rules are generally more complex
         complexity += len(rule_text) // 20

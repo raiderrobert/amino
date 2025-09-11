@@ -8,12 +8,7 @@ from amino.utils.errors import SchemaParseError
 @pytest.mark.parametrize(
     "test_input,expected_fields,should_raise,expected_error",
     [
-        (
-            "foo: int",
-            [("foo", SchemaType.int)],
-            False,
-            None
-        ),
+        ("foo: int", [("foo", SchemaType.int)], False, None),
         (
             """
             foo: int

@@ -150,7 +150,7 @@ schema.amn
 amount: int
 state_code: str
 
-smallest_number: (int, int) -> int
+smallest_number: (first: int, second: int) -> int
 
 ```
 
@@ -164,31 +164,27 @@ Note the passing of `min` and passing it into the `funcs` argument while loading
 True
 ```
 
-#### Default Arguments
+#### Function Parameters
 
-Functions also support more complex cases, such as referencing other variables in the schema:
+Functions require named parameters that clearly document their purpose:
 
 schema.amn
 ```
-COMPANY_MAX_LOAN_AMT: int = 100_000
-
-loan_amount: int
-approved_amount: int
+amount: int
 state_code: str
 
-within_tolerances: (COMPANY_MAX_LOAN_AMT)(loan_amount, approved_amount) -> bool
+calculate_tax: (amount: int, rate: float) -> float
 
 ```
 
-Note the passing of `within_tolerances` and passing it into the `funcs` argument while loading the schema.
-
-At runtime, three variables in the order provided will be passed to `within_tolerances`
+Note the passing of `calculate_tax` and passing it into the `funcs` argument while loading the schema.
 
 ```
->>> import custom_module
->>> amn = amino.load_schema("schema.amn", {'within_tolerances': custom_module.within_tolerances})
+>>> def tax_calculator(amount, rate):
+...     return amount * rate
+>>> amn = amino.load_schema("schema.amn", {'calculate_tax': tax_calculator})
 >>> data = {"amount": 100, "state_code": "CA"}
->>> rule = "within_tolerances(10_000, 90_000) and state_code = 'CA'"
+>>> rule = "calculate_tax(amount, 0.08) > 5.0 and state_code = 'CA'"
 >>> amn.eval(rule, data)
 True
 ```

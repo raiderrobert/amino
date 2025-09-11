@@ -16,8 +16,13 @@ from .utils.errors import SchemaParseError
 class Schema:
     """Main schema class providing the public API."""
 
-    def __init__(self, schema_content: str, type_registry: TypeRegistry | None = None,
-                 funcs: dict[str, Callable] | None = None, strict: bool = False):
+    def __init__(
+        self,
+        schema_content: str,
+        type_registry: TypeRegistry | None = None,
+        funcs: dict[str, Callable] | None = None,
+        strict: bool = False,
+    ):
         """Initialize schema from content string."""
         if type_registry is None:
             type_registry = TypeRegistry()
@@ -27,8 +32,7 @@ class Schema:
         known_custom_types = set(self.type_registry.get_registered_types()) if strict else None
 
         try:
-            self.ast = parse_schema(schema_content, strict=strict,
-                                  known_custom_types=known_custom_types)
+            self.ast = parse_schema(schema_content, strict=strict, known_custom_types=known_custom_types)
         except Exception as e:
             raise SchemaParseError(f"Failed to parse schema: {e}") from e
 
@@ -43,8 +47,7 @@ class Schema:
         """Evaluate a single rule against data."""
         return self.engine.eval_single_rule(rule, data)
 
-    def compile(self, rules: list[dict[str, Any] | RuleDefinition],
-                **options) -> CompiledRules:
+    def compile(self, rules: list[dict[str, Any] | RuleDefinition], **options) -> CompiledRules:
         """Compile rules for batch evaluation."""
         return self.engine.compile_rules(rules, options)
 
@@ -57,8 +60,12 @@ class Schema:
         self.type_registry.register_type(name, base_type, validator, **constraints)
 
 
-def load_schema(schema_file_or_content: str, type_registry: TypeRegistry | None = None,
-                funcs: dict[str, Callable] | None = None, strict: bool = False) -> Schema:
+def load_schema(
+    schema_file_or_content: str,
+    type_registry: TypeRegistry | None = None,
+    funcs: dict[str, Callable] | None = None,
+    strict: bool = False,
+) -> Schema:
     """Load schema from file path or content string."""
     try:
         with open(schema_file_or_content) as f:

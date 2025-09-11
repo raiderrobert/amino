@@ -26,7 +26,7 @@ from amino.utils.errors import TypeValidationError
         ("currency", "float", 0, True, False),
         ("currency", "float", -10, False, False),
         ("currency", "float", 10.123, False, False),
-    ]
+    ],
 )
 def test_type_validation(
     type_name,
@@ -56,7 +56,7 @@ def test_type_validation(
         ("limited_int", "int", {"min": 10, "max": 100}, 100, True),
         ("limited_int", "int", {"min": 10, "max": 100}, 5, False),
         ("limited_int", "int", {"min": 10, "max": 100}, 150, False),
-    ]
+    ],
 )
 def test_type_constraints(type_name, base_type, constraints, value, expected_valid, type_registry):
     """Test type constraints validation."""
@@ -100,17 +100,12 @@ class TestTypeRegistry:
     "schema_content,data,expected_valid,expected_error_count,error_field,error_contains",
     [
         ("name: str\nage: int", {"name": "John", "age": 25}, True, 0, None, None),
-
         ("name: str\nage: int", {"name": "John"}, False, 1, "age", "missing"),
-
         ("name: str\nage: int", {"name": "John", "age": "25"}, False, 1, "age", None),
-
         ("name: str\nage: int?", {"name": "John", "age": 25}, True, 0, None, None),
-
         ("name: str\nage: int?", {"name": "John"}, True, 0, None, None),
-
         ("name: str\nage: int?", {"name": "John", "age": None}, True, 0, None, None),
-    ]
+    ],
 )
 def test_basic_validation(schema_content, data, expected_valid, expected_error_count, error_field, error_contains):
     """Test basic data validation scenarios."""
@@ -132,15 +127,11 @@ def test_basic_validation(schema_content, data, expected_valid, expected_error_c
     "schema_content,data,expected_valid,error_contains",
     [
         ("age: int {min: 18, max: 120}", {"age": 25}, True, None),
-
         ("age: int {min: 18, max: 120}", {"age": 16}, False, "minimum"),
-
         ("age: int {min: 18, max: 120}", {"age": 150}, False, "maximum"),
-
         ("email: str {format: email}", {"email": "user@example.com"}, True, None),
-
         ("email: str {format: email}", {"email": "invalid-email"}, False, "email"),
-    ]
+    ],
 )
 def test_constraint_validation(schema_content, data, expected_valid, error_contains):
     """Test validation with field constraints."""
@@ -160,8 +151,7 @@ class TestTypeValidator:
     def test_custom_type_validation(self):
         """Test validation with custom types."""
         registry = TypeRegistry()
-        registry.register_type("positive_int", "int",
-                              validator=lambda x: isinstance(x, int) and x > 0)
+        registry.register_type("positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0)
 
         schema_ast = parse_schema("score: positive_int")
         validator = TypeValidator(schema_ast, registry)

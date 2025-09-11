@@ -7,14 +7,16 @@ from typing import Any, Literal
 
 class MatchMode(enum.Enum):
     """Rule matching modes."""
-    ALL = "all"          # Return all matching rules
-    FIRST = "first"      # Return first match based on ordering
-    BEST = "best"        # Return best match based on score
+
+    ALL = "all"  # Return all matching rules
+    FIRST = "first"  # Return first match based on ordering
+    BEST = "best"  # Return best match based on score
 
 
 @dataclasses.dataclass
 class MatchOptions:
     """Options for rule matching."""
+
     mode: MatchMode = MatchMode.ALL
     ordering_key: str | None = None
     ordering_direction: Literal["asc", "desc"] = "asc"
@@ -23,6 +25,7 @@ class MatchOptions:
 @dataclasses.dataclass
 class MatchResult:
     """Result of rule evaluation."""
+
     id: Any
     results: list[Any] = dataclasses.field(default_factory=list)
     metadata: dict[str, Any] | None = None
@@ -34,8 +37,9 @@ class RuleMatcher:
     def __init__(self, options: MatchOptions | None = None):
         self.options = options or MatchOptions()
 
-    def process_matches(self, data_id: Any, rule_matches: list[tuple[Any, bool]],
-                       rule_metadata: dict[Any, dict] | None = None) -> MatchResult:
+    def process_matches(
+        self, data_id: Any, rule_matches: list[tuple[Any, bool]], rule_metadata: dict[Any, dict] | None = None
+    ) -> MatchResult:
         """Process rule evaluation results into final match result."""
         rule_metadata = rule_metadata or {}
 
@@ -67,7 +71,7 @@ class RuleMatcher:
 
         def get_ordering_value(rule_id):
             meta = metadata.get(rule_id, {})
-            return meta.get(self.options.ordering_key, float('inf'))
+            return meta.get(self.options.ordering_key, float("inf"))
 
         reverse = self.options.ordering_direction == "desc"
         return sorted(rule_ids, key=get_ordering_value, reverse=reverse)

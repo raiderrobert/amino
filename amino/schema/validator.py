@@ -1,6 +1,5 @@
 """Schema validation implementation."""
 
-
 from .ast import FieldDefinition, SchemaAST, StructDefinition
 from .types import SchemaType
 
@@ -88,11 +87,8 @@ class SchemaValidator:
         """Validate a function definition."""
         errors = []
 
-        # Validate default args reference valid constants or fields
-        for arg in func.default_args:
-            if (arg not in self.ast.constants and
-                arg not in self._field_names):
-                errors.append(f"Function '{func.name}' references unknown default arg '{arg}'")
+        # Basic function validation could be added here
+        # For now, functions don't have complex validation requirements
 
         return errors
 

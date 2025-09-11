@@ -14,7 +14,7 @@ class BuiltinTypes:
         """Validate email format."""
         if not isinstance(value, str):
             return False
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, value))
 
     @staticmethod
@@ -22,7 +22,7 @@ class BuiltinTypes:
         """Validate URL format."""
         if not isinstance(value, str):
             return False
-        pattern = r'^https?://[^\s/$.?#].[^\s]*$'
+        pattern = r"^https?://[^\s/$.?#].[^\s]*$"
         return bool(re.match(pattern, value))
 
     @staticmethod
@@ -30,7 +30,7 @@ class BuiltinTypes:
         """Validate UUID format."""
         if not isinstance(value, str):
             return False
-        pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         return bool(re.match(pattern, value.lower()))
 
     @staticmethod
@@ -39,15 +39,15 @@ class BuiltinTypes:
         if not isinstance(value, str):
             return False
         # Simple phone validation - digits, spaces, dashes, parentheses
-        pattern = r'^[\d\s\-\(\)\+]+$'
-        return bool(re.match(pattern, value)) and len(re.sub(r'[^\d]', '', value)) >= 10
+        pattern = r"^[\d\s\-\(\)\+]+$"
+        return bool(re.match(pattern, value)) and len(re.sub(r"[^\d]", "", value)) >= 10
 
     @staticmethod
     def validate_ssn(value: Any) -> bool:
         """Validate SSN format (###-##-####)."""
         if not isinstance(value, str):
             return False
-        pattern = r'^\d{3}-\d{2}-\d{4}$'
+        pattern = r"^\d{3}-\d{2}-\d{4}$"
         return bool(re.match(pattern, value))
 
     @staticmethod
@@ -76,16 +76,12 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         "str",
         validator=BuiltinTypes.validate_email,
         format_string="user@domain.com",
-        description="Valid email address"
+        description="Valid email address",
     )
 
     # URL type
     registry.register_type(
-        "url",
-        "str",
-        validator=BuiltinTypes.validate_url,
-        format_string="https://example.com",
-        description="Valid URL"
+        "url", "str", validator=BuiltinTypes.validate_url, format_string="https://example.com", description="Valid URL"
     )
 
     # UUID type
@@ -94,7 +90,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         "str",
         validator=BuiltinTypes.validate_uuid,
         format_string="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-        description="Valid UUID"
+        description="Valid UUID",
     )
 
     # Phone number type
@@ -103,7 +99,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         "str",
         validator=BuiltinTypes.validate_phone,
         format_string="(555) 123-4567",
-        description="Valid phone number"
+        description="Valid phone number",
     )
 
     # SSN type
@@ -112,7 +108,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         "str",
         validator=BuiltinTypes.validate_ssn,
         format_string="###-##-####",
-        description="Valid Social Security Number"
+        description="Valid Social Security Number",
     )
 
     # Credit score type
@@ -122,7 +118,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         validator=BuiltinTypes.validate_credit_score,
         min=300,
         max=850,
-        description="Valid credit score (300-850)"
+        description="Valid credit score (300-850)",
     )
 
     # Currency type
@@ -132,16 +128,12 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         validator=BuiltinTypes.validate_currency,
         min=0,
         precision=2,
-        description="Non-negative currency amount"
+        description="Non-negative currency amount",
     )
 
     # Positive integer
     registry.register_type(
-        "positive_int",
-        "int",
-        validator=lambda x: isinstance(x, int) and x > 0,
-        min=1,
-        description="Positive integer"
+        "positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0, min=1, description="Positive integer"
     )
 
     # Non-negative integer
@@ -150,5 +142,5 @@ def register_builtin_types(registry: TypeRegistry) -> None:
         "int",
         validator=lambda x: isinstance(x, int) and x >= 0,
         min=0,
-        description="Non-negative integer"
+        description="Non-negative integer",
     )

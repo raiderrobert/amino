@@ -72,9 +72,7 @@ class RuleOptimizer:
                 return Literal(not operand.value, SchemaType.bool)
 
         # Double negation elimination: NOT NOT x = x
-        if (node.operator == Operator.NOT and
-            isinstance(operand, UnaryOp) and
-            operand.operator == Operator.NOT):
+        if node.operator == Operator.NOT and isinstance(operand, UnaryOp) and operand.operator == Operator.NOT:
             return operand.operand
 
         return UnaryOp(node.operator, operand, node.return_type)

@@ -7,7 +7,7 @@ from typing import Any
 
 from ..utils.errors import SchemaParseError
 from ..utils.helpers import is_reserved_name
-from .ast import FieldDefinition, FunctionDefinition, SchemaAST, StructDefinition
+from .ast import FieldDefinition, FunctionDefinition, FunctionParameter, SchemaAST, StructDefinition
 from .types import SchemaType, parse_type
 
 # Token patterns
@@ -31,6 +31,7 @@ COMMENT = re.compile(r"#[^\n]*")
 
 class TokenType(enum.Enum):
     """Token types for schema parsing."""
+
     WHITESPACE = "whitespace"
     WORD = "word"
     COLON = "colon"
@@ -72,6 +73,7 @@ TOKEN_PATTERNS = [
 @dataclasses.dataclass
 class Token:
     """Schema token."""
+
     value: str
     token_type: TokenType
     line: int = 0
@@ -81,8 +83,7 @@ class Token:
 class SchemaParser:
     """Parser for schema definition language."""
 
-    def __init__(self, content: str, strict: bool = False,
-                 known_custom_types: set | None = None):
+    def __init__(self, content: str, strict: bool = False, known_custom_types: set | None = None):
         self.content = content
         self.strict = strict
         self.known_custom_types = known_custom_types or set()
@@ -92,7 +93,7 @@ class SchemaParser:
     def _tokenize(self) -> list[Token]:
         """Tokenize schema content."""
         tokens = []
-        lines = self.content.split('\n')
+        lines = self.content.split("\n")
 
         for line_num, line in enumerate(lines):
             pos = 0
@@ -200,36 +201,26 @@ class SchemaParser:
         return StructDefinition(name_token.value, fields)
 
     def _parse_function(self) -> FunctionDefinition:
-        """Parse a function declaration."""
+        """Parse a function declaration with named parameters."""
         name_token = self._expect(TokenType.WORD)
         self._expect(TokenType.COLON)
 
-        # Parse default args if present (pattern: (DEFAULT_ARGS)(input_types) -> output)
-        default_args = []
-
-        # Check if we have default args by looking ahead
-        # Default args: (NAME)(types) -> type
-        # Input types: (type, type) -> type
-        # The key difference: default args are followed by another ( for input types
-        if (self._peek() and self._peek().token_type == TokenType.LPAREN and
-            self.pos + 3 < len(self.tokens) and
-            self.tokens[self.pos + 1].token_type == TokenType.WORD and
-            self.tokens[self.pos + 2].token_type == TokenType.RPAREN and
-            self.tokens[self.pos + 3].token_type == TokenType.LPAREN):
-            # This is default args: (NAME) followed by another (
-            self._advance()  # consume (
-            while self._peek() and self._peek().token_type != TokenType.RPAREN:
-                default_args.append(self._advance().value)
-                if self._peek() and self._peek().token_type == TokenType.COMMA:
-                    self._advance()
-            self._expect(TokenType.RPAREN)
-
-        # Parse input types - now expect the input types parentheses
+        # Parse input parameters with names
         self._expect(TokenType.LPAREN)
-        input_types = []
+        parameters = []
+
         while self._peek() and self._peek().token_type != TokenType.RPAREN:
-            type_token = self._expect(TokenType.WORD)
-            input_types.append(parse_type(type_token.value, self.strict, self.known_custom_types))
+            # Get parameter name
+            param_name_token = self._expect(TokenType.WORD)
+            self._expect(TokenType.COLON)
+
+            # Get parameter type
+            param_type_token = self._expect(TokenType.WORD)
+            param_type = parse_type(param_type_token.value, self.strict, self.known_custom_types)
+
+            parameters.append(FunctionParameter(param_name_token.value, param_type))
+
+            # Handle comma if there are more parameters
             if self._peek() and self._peek().token_type == TokenType.COMMA:
                 self._advance()
 
@@ -240,7 +231,7 @@ class SchemaParser:
         output_token = self._expect(TokenType.WORD)
         output_type = parse_type(output_token.value, self.strict, self.known_custom_types)
 
-        return FunctionDefinition(name_token.value, input_types, output_type, default_args)
+        return FunctionDefinition(name_token.value, parameters, output_type)
 
     def _parse_constant(self) -> tuple[str, Any]:
         """Parse a constant declaration."""
@@ -278,7 +269,7 @@ class SchemaParser:
                 else:
                     constraints[key_token.value] = int(value_token.value)
             else:
-                constraints[key_token.value] = value_token.value.strip('"\'')
+                constraints[key_token.value] = value_token.value.strip("\"'")
 
             if self._peek() and self._peek().token_type == TokenType.COMMA:
                 self._advance()
@@ -309,19 +300,11 @@ class SchemaParser:
 
             self._expect(TokenType.RBRACKET)  # consume ']'
 
-            return {
-                "type": SchemaType.list,
-                "name": f"list[{'|'.join(element_types)}]",
-                "element_types": element_types
-            }
+            return {"type": SchemaType.list, "name": f"list[{'|'.join(element_types)}]", "element_types": element_types}
         else:
             # Simple type
             field_type = parse_type(type_name, self.strict, self.known_custom_types)
-            return {
-                "type": field_type,
-                "name": type_name,
-                "element_types": []
-            }
+            return {"type": field_type, "name": type_name, "element_types": []}
 
     def _is_function_declaration(self) -> bool:
         """Check if current tokens represent a function declaration."""
@@ -329,11 +312,13 @@ class SchemaParser:
             return False
 
         # Check basic pattern: name : ...
-        if not (self.tokens[self.pos].token_type == TokenType.WORD and
-                self.tokens[self.pos + 1].token_type == TokenType.COLON):
+        if not (
+            self.tokens[self.pos].token_type == TokenType.WORD
+            and self.tokens[self.pos + 1].token_type == TokenType.COLON
+        ):
             return False
 
-        # Look ahead for pattern: name : (type, type) -> type
+        # Look ahead for pattern: name : (param: type, param: type) -> type
         # Start looking after the colon
         i = self.pos + 2
         paren_count = 0
@@ -367,14 +352,15 @@ class SchemaParser:
             return False
 
         # Look ahead for pattern: NAME : type = value
-        return (self.tokens[self.pos].token_type == TokenType.WORD and
-                self.tokens[self.pos].value.isupper() and
-                self.tokens[self.pos + 1].token_type == TokenType.COLON and
-                self.tokens[self.pos + 3].token_type == TokenType.EQUALS)
+        return (
+            self.tokens[self.pos].token_type == TokenType.WORD
+            and self.tokens[self.pos].value.isupper()
+            and self.tokens[self.pos + 1].token_type == TokenType.COLON
+            and self.tokens[self.pos + 3].token_type == TokenType.EQUALS
+        )
 
 
-def parse_schema(content: str, strict: bool = False,
-                known_custom_types: set | None = None) -> SchemaAST:
+def parse_schema(content: str, strict: bool = False, known_custom_types: set | None = None) -> SchemaAST:
     """Parse schema content into AST.
 
     Args:
@@ -382,6 +368,5 @@ def parse_schema(content: str, strict: bool = False,
         strict: If True, raise error for unknown types instead of treating as custom
         known_custom_types: Set of known custom type names for validation
     """
-    parser = SchemaParser(content, strict=strict,
-                         known_custom_types=known_custom_types)
+    parser = SchemaParser(content, strict=strict, known_custom_types=known_custom_types)
     return parser.parse()

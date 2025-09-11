@@ -19,8 +19,13 @@ from .ast import (
 class CompiledRule:
     """Compiled rule that can be evaluated efficiently."""
 
-    def __init__(self, rule_id: Any, evaluator: Callable[[dict[str, Any], dict[str, Callable]], bool],
-                 variables: list[str], functions: list[str]):
+    def __init__(
+        self,
+        rule_id: Any,
+        evaluator: Callable[[dict[str, Any], dict[str, Callable]], bool],
+        variables: list[str],
+        functions: list[str],
+    ):
         self.rule_id = rule_id
         self.evaluator = evaluator
         self.variables = variables
@@ -57,6 +62,7 @@ class RuleCompiler:
             return lambda data, functions: node.value
 
         elif isinstance(node, Variable):
+
             def var_evaluator(data, functions):
                 if node.name in data:
                     return data[node.name]
@@ -71,6 +77,7 @@ class RuleCompiler:
                             raise RuleEvaluationError(f"Variable '{node.name}' not found in data")
                     return value
                 raise RuleEvaluationError(f"Variable '{node.name}' not found in data")
+
             return var_evaluator
 
         elif isinstance(node, BinaryOp):

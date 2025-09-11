@@ -11,9 +11,12 @@ from .matcher import MatchOptions, MatchResult, RuleMatcher
 class CompiledRules:
     """Container for compiled rules with evaluation methods."""
 
-    def __init__(self, rules: list[CompiledRule],
-                 function_registry: dict[str, Callable] | None = None,
-                 match_options: MatchOptions | None = None):
+    def __init__(
+        self,
+        rules: list[CompiledRule],
+        function_registry: dict[str, Callable] | None = None,
+        match_options: MatchOptions | None = None,
+    ):
         self.rules = rules
         self.evaluator = RuleEvaluator(function_registry)
         self.matcher = RuleMatcher(match_options)
@@ -30,9 +33,7 @@ class CompiledRules:
 
             rule_results = self.evaluator.evaluate_rules_for_data(self.rules, item)
 
-            match_result = self.matcher.process_matches(
-                item_id, rule_results, self.rule_metadata
-            )
+            match_result = self.matcher.process_matches(item_id, rule_results, self.rule_metadata)
             results.append(match_result)
 
         return results

@@ -46,6 +46,7 @@ OPERATORS = [
 
 class TokenType(enum.Enum):
     """Token types for rule parsing."""
+
     NAME = "name"
     NUMBER = "number"
     STRING = "string"
@@ -59,6 +60,7 @@ class TokenType(enum.Enum):
 @dataclasses.dataclass
 class Token:
     """Rule token."""
+
     type: TokenType
     value: str
     operator: Operator | None = None
@@ -98,8 +100,7 @@ class RuleParser:
             for op_str, op_enum in OPERATORS:
                 if self.rule[pos:].startswith(op_str):
                     if op_str.isalpha():
-                        if (pos + len(op_str) < len(self.rule) and
-                            self.rule[pos + len(op_str)].isalnum()):
+                        if pos + len(op_str) < len(self.rule) and self.rule[pos + len(op_str)].isalnum():
                             continue
                     tokens.append(Token(TokenType.OPERATOR, op_str, op_enum))
                     pos += len(op_str)
@@ -179,9 +180,9 @@ class RuleParser:
         """Parse comparison expressions."""
         left = self._parse_primary()
 
-        if self._match_operator(Operator.EQ, Operator.NE, Operator.GT,
-                                Operator.LT, Operator.GTE, Operator.LTE,
-                                Operator.IN, Operator.NOT_IN):
+        if self._match_operator(
+            Operator.EQ, Operator.NE, Operator.GT, Operator.LT, Operator.GTE, Operator.LTE, Operator.IN, Operator.NOT_IN
+        ):
             operator = self._advance().operator
             right = self._parse_primary()
             return BinaryOp(operator, left, right, SchemaType.bool)
@@ -308,8 +309,7 @@ class RuleParser:
     def _match_operator(self, *operators: Operator) -> bool:
         """Check if current token matches any of the given operators."""
         token = self._peek()
-        return (token and token.type == TokenType.OPERATOR and
-                token.operator in operators)
+        return token and token.type == TokenType.OPERATOR and token.operator in operators
 
     def _collect_references(self, node: RuleNode, variables: list[str], functions: list[str]):
         """Collect variable and function references from AST."""

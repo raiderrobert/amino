@@ -9,6 +9,7 @@ from ..schema.types import SchemaType
 
 class Operator(enum.Enum):
     """Rule operators."""
+
     EQ = "="
     NE = "!="
     GT = ">"
@@ -30,12 +31,14 @@ class Operator(enum.Enum):
 @dataclasses.dataclass
 class RuleNode:
     """Base class for rule AST nodes."""
+
     return_type: SchemaType
 
 
 @dataclasses.dataclass
 class Literal(RuleNode):
     """Literal value in a rule."""
+
     value: Any
 
     def __init__(self, value: Any, return_type: SchemaType):
@@ -46,6 +49,7 @@ class Literal(RuleNode):
 @dataclasses.dataclass
 class Variable(RuleNode):
     """Variable reference in a rule."""
+
     name: str
 
     def __init__(self, name: str, return_type: SchemaType):
@@ -56,6 +60,7 @@ class Variable(RuleNode):
 @dataclasses.dataclass
 class BinaryOp(RuleNode):
     """Binary operation in a rule."""
+
     operator: Operator
     left: RuleNode
     right: RuleNode
@@ -70,6 +75,7 @@ class BinaryOp(RuleNode):
 @dataclasses.dataclass
 class UnaryOp(RuleNode):
     """Unary operation in a rule."""
+
     operator: Operator
     operand: RuleNode
 
@@ -82,6 +88,7 @@ class UnaryOp(RuleNode):
 @dataclasses.dataclass
 class FunctionCall(RuleNode):
     """Function call in a rule."""
+
     name: str
     args: list[RuleNode]
 
@@ -94,6 +101,7 @@ class FunctionCall(RuleNode):
 @dataclasses.dataclass
 class RuleAST:
     """Rule abstract syntax tree."""
+
     root: RuleNode
     variables: list[str] = dataclasses.field(default_factory=list)
     functions: list[str] = dataclasses.field(default_factory=list)

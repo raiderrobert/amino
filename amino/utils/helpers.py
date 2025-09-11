@@ -3,7 +3,7 @@
 from typing import Any
 
 
-def flatten_dict(data: dict[str, Any], parent_key: str = '', sep: str = '.') -> dict[str, Any]:
+def flatten_dict(data: dict[str, Any], parent_key: str = "", sep: str = ".") -> dict[str, Any]:
     """Flatten a nested dictionary."""
     items = []
     for k, v in data.items():

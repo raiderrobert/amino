@@ -88,8 +88,7 @@ def populated_type_registry():
 def custom_type_registry():
     """TypeRegistry with custom positive_int type."""
     registry = TypeRegistry()
-    registry.register_type("positive_int", "int",
-                          validator=lambda x: isinstance(x, int) and x > 0)
+    registry.register_type("positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0)
     return registry
 
 
@@ -130,7 +129,7 @@ def sample_ecommerce_data():
         {"id": 45, "amount": 100, "state_code": "CA"},
         {"id": 46, "amount": 50, "state_code": "CA"},
         {"id": 47, "amount": 100, "state_code": "NY"},
-        {"id": 48, "amount": 10, "state_code": "NY"}
+        {"id": 48, "amount": 10, "state_code": "NY"},
     ]
 
 
@@ -140,7 +139,7 @@ def basic_rules():
     return [
         {"id": 1, "rule": "amount > 0 and state_code = 'CA'"},
         {"id": 2, "rule": "amount > 10 and state_code = 'CA'"},
-        {"id": 3, "rule": "amount >= 100"}
+        {"id": 3, "rule": "amount >= 100"},
     ]
 
 
@@ -150,5 +149,5 @@ def ordered_rules():
     return [
         {"id": 1, "rule": "amount > 0 and state_code = 'CA'", "ordering": 3},
         {"id": 2, "rule": "amount > 10 and state_code = 'CA'", "ordering": 2},
-        {"id": 3, "rule": "amount >= 100", "ordering": 1}
+        {"id": 3, "rule": "amount >= 100", "ordering": 1},
     ]

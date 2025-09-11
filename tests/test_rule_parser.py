@@ -58,21 +58,18 @@ def test_rule_parsing(schema_content, rule, should_raise, expected_error):
     else:
         rule_ast = parse_rule(rule, schema_ast)
         assert rule_ast.root is not None
-        assert hasattr(rule_ast, 'variables')
-        assert hasattr(rule_ast, 'functions')
+        assert hasattr(rule_ast, "variables")
+        assert hasattr(rule_ast, "functions")
 
 
 @pytest.mark.parametrize(
     "schema_content,rule,expected_operator,left_type,left_value,right_type,right_value,expected_variables",
     [
         ("amount: int", "amount > 100", Operator.GT, Variable, "amount", Literal, 100, ["amount"]),
-
         ("amount: int", "100 > 50", Operator.GT, Literal, 100, Literal, 50, []),
-
         ("name: str", "name = 'John'", Operator.EQ, Variable, "name", Literal, "John", ["name"]),
-
         ("name: str", 'name = "Jane"', Operator.EQ, Variable, "name", Literal, "Jane", ["name"]),
-    ]
+    ],
 )
 def test_simple_comparisons(
     schema_content, rule, expected_operator, left_type, left_value, right_type, right_value, expected_variables
@@ -109,7 +106,7 @@ def test_simple_comparisons(
     [
         ("amount: int\nstate: str", "amount > 0 and state = 'CA'", ["amount", "state"]),
         ("a: int\nb: int\nc: int", "(a > 0 and b > 0) or c > 0", ["a", "b", "c"]),
-    ]
+    ],
 )
 def test_complex_expressions(schema_content, rule, expected_variables):
     """Test parsing complex logical expressions."""
@@ -124,7 +121,7 @@ def test_complex_expressions(schema_content, rule, expected_variables):
 
 def test_function_calls():
     """Test parsing function calls."""
-    schema_ast = parse_schema("amount: int\nmax_amount: int\nmin_func: (int, int) -> int")
+    schema_ast = parse_schema("amount: int\nmax_amount: int\nmin_func: (a: int, b: int) -> int")
     rule_ast = parse_rule("min_func(amount, max_amount) > 0", schema_ast)
 
     assert isinstance(rule_ast.root, BinaryOp)

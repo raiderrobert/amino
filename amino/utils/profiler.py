@@ -9,6 +9,7 @@ from typing import Any
 @dataclasses.dataclass
 class RuleProfile:
     """Profile information for a single rule."""
+
     rule_id: Any
     rule_text: str
     execution_time: float
@@ -20,6 +21,7 @@ class RuleProfile:
 @dataclasses.dataclass
 class EvaluationProfile:
     """Profile information for a complete evaluation session."""
+
     total_time: float
     total_rules: int
     total_evaluations: int
@@ -63,13 +65,12 @@ class RuleProfiler:
                 execution_time=0.0,
                 evaluation_count=0,
                 match_count=0,
-                error_count=0
+                error_count=0,
             )
 
         profile = self.rule_profiles[rule_id]
         profile.evaluation_count += 1
         self.total_evaluations += 1
-
 
         try:
             yield profile
@@ -102,7 +103,7 @@ class RuleProfiler:
             total_evaluations=self.total_evaluations,
             total_matches=self.total_matches,
             rule_profiles=self.rule_profiles.copy(),
-            short_circuit_savings=self.short_circuit_count
+            short_circuit_savings=self.short_circuit_count,
         )
 
     def print_profile_report(self, show_rules: bool = True):
@@ -116,7 +117,7 @@ class RuleProfiler:
         print(f"Total rules: {profile.total_rules}")
         print(f"Total rule evaluations: {profile.total_evaluations}")
         print(f"Total matches: {profile.total_matches}")
-        print(f"Match rate: {profile.total_matches/max(profile.total_evaluations,1)*100:.1f}%")
+        print(f"Match rate: {profile.total_matches / max(profile.total_evaluations, 1) * 100:.1f}%")
         print(f"Short-circuit optimizations: {profile.short_circuit_savings}")
 
         if show_rules and profile.rule_profiles:
@@ -124,11 +125,7 @@ class RuleProfiler:
             print("PER-RULE PERFORMANCE:")
             print("-" * 60)
 
-            sorted_rules = sorted(
-                profile.rule_profiles.values(),
-                key=lambda r: r.execution_time,
-                reverse=True
-            )
+            sorted_rules = sorted(profile.rule_profiles.values(), key=lambda r: r.execution_time, reverse=True)
 
             print(f"{'Rule ID':<15} {'Avg Time (ms)':<15} {'Evaluations':<12} {'Matches':<8} {'Errors':<6}")
             print("-" * 60)
@@ -147,8 +144,9 @@ class RuleDebugger:
     """Debugging utilities for rule development."""
 
     @staticmethod
-    def explain_rule_execution(rule_text: str, data: dict[str, Any],
-                             result: bool, variables: dict[str, Any] | None = None):
+    def explain_rule_execution(
+        rule_text: str, data: dict[str, Any], result: bool, variables: dict[str, Any] | None = None
+    ):
         """Explain why a rule succeeded or failed."""
         print(f"\nRule: {rule_text}")
         print(f"Result: {'MATCHED' if result else 'NO MATCH'}")
@@ -166,14 +164,15 @@ class RuleDebugger:
         words = rule_text.split()
 
         for word in words:
-            if word.replace('.', '').replace('_', '').isalnum() and not word.isdigit():
-                if word not in ['and', 'or', 'not', 'in', 'true', 'false']:
+            if word.replace(".", "").replace("_", "").isalnum() and not word.isdigit():
+                if word not in ["and", "or", "not", "in", "true", "false"]:
                     variables.append(word)
 
         return list(set(variables))
 
 
 _global_profiler = RuleProfiler()
+
 
 def get_profiler() -> RuleProfiler:
     """Get the global rule profiler instance."""

@@ -11,6 +11,7 @@ from ..utils.errors import TypeValidationError
 @dataclasses.dataclass
 class TypeDefinition:
     """Definition of a custom type."""
+
     name: str
     base_type: str | SchemaType
     validator: Callable[[Any], bool] | None = None
@@ -26,11 +27,15 @@ class TypeRegistry:
         self._types: dict[str, TypeDefinition] = {}
         self._validators: dict[str, Callable] = {}
 
-    def register_type(self, name: str, base_type: str | SchemaType,
-                     validator: Callable | None = None,
-                     format_string: str | None = None,
-                     description: str | None = None,
-                     **constraints) -> None:
+    def register_type(
+        self,
+        name: str,
+        base_type: str | SchemaType,
+        validator: Callable | None = None,
+        format_string: str | None = None,
+        description: str | None = None,
+        **constraints,
+    ) -> None:
         """Register a new custom type."""
         if name in self._types:
             raise TypeValidationError(f"Type '{name}' already registered")
@@ -41,7 +46,7 @@ class TypeRegistry:
             validator=validator,
             constraints=constraints,
             format_string=format_string,
-            description=description
+            description=description,
         )
 
         self._types[name] = type_def
@@ -107,13 +112,7 @@ class TypeRegistry:
 
     def _validate_builtin_type(self, type_name: str, value: Any) -> bool:
         """Validate against built-in types."""
-        type_map = {
-            "str": str,
-            "int": int,
-            "float": float,
-            "bool": bool,
-            "any": lambda x: True
-        }
+        type_map = {"str": str, "int": int, "float": float, "bool": bool, "any": lambda x: True}
 
         if type_name in type_map:
             expected_type = type_map[type_name]
@@ -147,13 +146,13 @@ class TypeRegistry:
         """Validate value against constraints."""
         for constraint, constraint_value in constraints.items():
             if constraint == "min":
-                if hasattr(value, '__lt__') and value < constraint_value:
+                if hasattr(value, "__lt__") and value < constraint_value:
                     return False
             elif constraint == "max":
-                if hasattr(value, '__gt__') and value > constraint_value:
+                if hasattr(value, "__gt__") and value > constraint_value:
                     return False
             elif constraint == "length":
-                if hasattr(value, '__len__') and len(value) != constraint_value:
+                if hasattr(value, "__len__") and len(value) != constraint_value:
                     return False
             elif constraint == "format":
                 # Format validation would go here
