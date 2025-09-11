@@ -148,7 +148,7 @@ class RuleDebugger:
     
     @staticmethod
     def explain_rule_execution(rule_text: str, data: Dict[str, Any], 
-                             result: bool, variables: Dict[str, Any] = None):
+                             result: bool, variables: Dict[str, Any] | None = None):
         """Explain why a rule succeeded or failed."""
         print(f"\nRule: {rule_text}")
         print(f"Result: {'MATCHED' if result else 'NO MATCH'}")

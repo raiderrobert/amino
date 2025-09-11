@@ -1,8 +1,7 @@
 """Rule compilation implementation."""
 
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Callable
 from .ast import RuleAST, RuleNode, BinaryOp, UnaryOp, Literal, Variable, FunctionCall, Operator
-from ..schema.types import SchemaType
 from ..utils.errors import RuleEvaluationError
 
 
@@ -16,7 +15,7 @@ class CompiledRule:
         self.variables = variables
         self.functions = functions
     
-    def evaluate(self, data: Dict[str, Any], function_registry: Dict[str, Callable] = None) -> bool:
+    def evaluate(self, data: Dict[str, Any], function_registry: Dict[str, Callable] | None = None) -> bool:
         """Evaluate the compiled rule against data."""
         try:
             return self.evaluator(data, function_registry or {})
@@ -31,7 +30,7 @@ class RuleCompiler:
         """Compile a single rule AST."""
         evaluator_code = self._generate_evaluator(ast.root)
         
-        def evaluator(data: Dict[str, Any], functions: Dict[str, Callable] = None) -> bool:
+        def evaluator(data: Dict[str, Any], functions: Dict[str, Callable] | None = None) -> bool:
             functions = functions or {}
             return evaluator_code(data, functions)
         

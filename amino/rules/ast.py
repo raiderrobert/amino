@@ -2,7 +2,7 @@
 
 import dataclasses
 import enum
-from typing import List, Any, Union, Optional
+from typing import List, Any
 from ..schema.types import SchemaType
 
 

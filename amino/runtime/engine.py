@@ -26,14 +26,14 @@ class RuleEngine:
     """Main rule evaluation engine."""
     
     def __init__(self, schema_ast: SchemaAST, 
-                 function_registry: Dict[str, Callable] = None):
+                 function_registry: Dict[str, Callable] | None = None):
         self.schema_ast = schema_ast
         self.function_registry = function_registry or {}
         self.compiler = RuleCompiler()
         self.optimizer = RuleOptimizer()
     
     def compile_rules(self, rule_definitions: List[Union[RuleDefinition, Dict[str, Any]]], 
-                     match: Dict[str, Any] = None) -> CompiledRules:
+                     match: Dict[str, Any] | None = None) -> CompiledRules:
         """Compile a list of rule definitions."""
         # Normalize rule definitions
         rules = []

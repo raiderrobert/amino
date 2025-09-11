@@ -31,7 +31,7 @@ class ValidationResult:
 class TypeValidator:
     """Validates data against schema with custom types."""
     
-    def __init__(self, schema_ast: SchemaAST, type_registry: TypeRegistry = None):
+    def __init__(self, schema_ast: SchemaAST, type_registry: TypeRegistry | None = None):
         self.schema_ast = schema_ast
         self.type_registry = type_registry or TypeRegistry()
     

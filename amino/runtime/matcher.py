@@ -31,11 +31,11 @@ class MatchResult:
 class RuleMatcher:
     """Handles rule matching logic and result formatting."""
 
-    def __init__(self, options: MatchOptions = None):
+    def __init__(self, options: MatchOptions | None = None):
         self.options = options or MatchOptions()
 
     def process_matches(self, data_id: Any, rule_matches: List[tuple[Any, bool]],
-                       rule_metadata: Dict[Any, Dict] = None) -> MatchResult:
+                       rule_metadata: Dict[Any, Dict] | None = None) -> MatchResult:
         """Process rule evaluation results into final match result."""
         rule_metadata = rule_metadata or {}
 

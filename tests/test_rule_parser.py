@@ -134,5 +134,6 @@ def test_struct_field_access():
     """)
     rule_ast = parse_rule("person.age > 18", schema_ast)
     
+    assert isinstance(rule_ast.root, BinaryOp)
     assert isinstance(rule_ast.root.left, Variable)
     assert rule_ast.root.left.name == "person.age"

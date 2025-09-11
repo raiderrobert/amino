@@ -83,7 +83,7 @@ class SchemaParser:
     """Parser for schema definition language."""
     
     def __init__(self, content: str, strict: bool = False, 
-                 known_custom_types: set = None):
+                 known_custom_types: set | None = None):
         self.content = content
         self.strict = strict
         self.known_custom_types = known_custom_types or set()
@@ -373,7 +373,7 @@ class SchemaParser:
 
 
 def parse_schema(content: str, strict: bool = False, 
-                known_custom_types: set = None) -> SchemaAST:
+                known_custom_types: set | None = None) -> SchemaAST:
     """Parse schema content into AST.
     
     Args:

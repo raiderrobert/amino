@@ -8,7 +8,7 @@ from ..utils.errors import RuleEvaluationError
 class RuleEvaluator:
     """Evaluates compiled rules against data."""
     
-    def __init__(self, function_registry: Dict[str, Callable] = None):
+    def __init__(self, function_registry: Dict[str, Callable] | None = None):
         self.function_registry = function_registry or {}
     
     def evaluate_single(self, rule: CompiledRule, data: Dict[str, Any]) -> bool:

@@ -1,6 +1,5 @@
 """Rule optimization implementation."""
 
-from typing import List
 from .ast import RuleAST, RuleNode, BinaryOp, UnaryOp, Literal, Operator
 from ..schema.types import SchemaType
 

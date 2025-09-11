@@ -10,8 +10,8 @@ class CompiledRules:
     """Container for compiled rules with evaluation methods."""
     
     def __init__(self, rules: List[CompiledRule], 
-                 function_registry: Dict[str, Callable] = None,
-                 match_options: MatchOptions = None):
+                 function_registry: Dict[str, Callable] | None = None,
+                 match_options: MatchOptions | None = None):
         self.rules = rules
         self.evaluator = RuleEvaluator(function_registry)
         self.matcher = RuleMatcher(match_options)

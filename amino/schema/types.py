@@ -22,7 +22,7 @@ class SchemaType(enum.Enum):
 
 
 def parse_type(type_str: str, strict: bool = False, 
-               known_custom_types: set = None) -> SchemaType:
+               known_custom_types: set | None = None) -> SchemaType:
     """Parse a type string to SchemaType enum.
     
     Args:
