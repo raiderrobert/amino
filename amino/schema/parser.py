@@ -82,8 +82,11 @@ class Token:
 class SchemaParser:
     """Parser for schema definition language."""
     
-    def __init__(self, content: str):
+    def __init__(self, content: str, strict: bool = False, 
+                 known_custom_types: set = None):
         self.content = content
+        self.strict = strict
+        self.known_custom_types = known_custom_types or set()
         self.tokens = self._tokenize()
         self.pos = 0
     
@@ -225,7 +228,7 @@ class SchemaParser:
         input_types = []
         while self._peek() and self._peek().token_type != TokenType.RPAREN:
             type_token = self._expect(TokenType.WORD)
-            input_types.append(parse_type(type_token.value))
+            input_types.append(parse_type(type_token.value, self.strict, self.known_custom_types))
             if self._peek() and self._peek().token_type == TokenType.COMMA:
                 self._advance()
         
@@ -234,7 +237,7 @@ class SchemaParser:
         
         # Parse output type
         output_token = self._expect(TokenType.WORD)
-        output_type = parse_type(output_token.value)
+        output_type = parse_type(output_token.value, self.strict, self.known_custom_types)
         
         return FunctionDefinition(name_token.value, input_types, output_type, default_args)
     
@@ -312,7 +315,7 @@ class SchemaParser:
             }
         else:
             # Simple type
-            field_type = parse_type(type_name)
+            field_type = parse_type(type_name, self.strict, self.known_custom_types)
             return {
                 "type": field_type,
                 "name": type_name,
@@ -369,7 +372,15 @@ class SchemaParser:
                 self.tokens[self.pos + 3].token_type == TokenType.EQUALS)
 
 
-def parse_schema(content: str) -> SchemaAST:
-    """Parse schema content into AST."""
-    parser = SchemaParser(content)
+def parse_schema(content: str, strict: bool = False, 
+                known_custom_types: set = None) -> SchemaAST:
+    """Parse schema content into AST.
+    
+    Args:
+        content: Schema content to parse
+        strict: If True, raise error for unknown types instead of treating as custom
+        known_custom_types: Set of known custom type names for validation
+    """
+    parser = SchemaParser(content, strict=strict, 
+                         known_custom_types=known_custom_types)
     return parser.parse()

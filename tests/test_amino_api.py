@@ -148,9 +148,9 @@ def test_error_handling(schema_content, rule, test_data, expected_error_type, ex
     assert expected_error_contains in str(excinfo.value)
 
 
-@pytest.mark.skip(reason="Phase 3: Advanced error handling - parser too permissive")
 def test_invalid_schema():
-    """Test error handling for invalid schema."""
-    with pytest.raises(SchemaParseError):
-        amino.load_schema("invalid: unknown_type")
+    """Test error handling for invalid schema with strict mode."""
+    with pytest.raises(SchemaParseError) as exc_info:
+        amino.load_schema("invalid: unknown_type", strict=True)
+    assert "Unknown type" in str(exc_info.value)
 

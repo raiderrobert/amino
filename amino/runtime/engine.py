@@ -33,7 +33,7 @@ class RuleEngine:
         self.optimizer = RuleOptimizer()
     
     def compile_rules(self, rule_definitions: List[Union[RuleDefinition, Dict[str, Any]]], 
-                     match_options: Dict[str, Any] = None) -> CompiledRules:
+                     match: Dict[str, Any] = None) -> CompiledRules:
         """Compile a list of rule definitions."""
         # Normalize rule definitions
         rules = []
@@ -75,16 +75,19 @@ class RuleEngine:
         
         # Create match options
         options = MatchOptions()
-        if match_options:
-            if "match" in match_options:
-                match_config = match_options["match"]
-                if match_config.get("option") == "first":
-                    options.mode = MatchMode.FIRST
-                    options.ordering_key = match_config.get("key")
-                    options.ordering_direction = match_config.get("ordering", "asc")
+        if match:
+            # Handle both direct match config and nested match config
+            match_config = match.get("match", match)
+            if match_config.get("option") == "first":
+                options.mode = MatchMode.FIRST
+                options.ordering_key = match_config.get("key")
+                options.ordering_direction = match_config.get("ordering", "asc")
+        
+        # Optimize rule order for performance
+        optimized_rules = self._optimize_rule_order(compiled_rules, options)
         
         # Create compiled rules container
-        compiled = CompiledRules(compiled_rules, self.function_registry, options)
+        compiled = CompiledRules(optimized_rules, self.function_registry, options)
         
         # Add rule metadata
         for rule_id, metadata in rule_metadata.items():
@@ -114,3 +117,51 @@ class RuleEngine:
         """Remove a function from the registry."""
         if name in self.function_registry:
             del self.function_registry[name]
+    
+    def _optimize_rule_order(self, rules: List, options: MatchOptions) -> List:
+        """Optimize rule order for performance.
+        
+        Orders rules by complexity (simpler rules first) for better performance.
+        In FIRST mode, this can significantly reduce evaluation time.
+        """
+        if not rules:
+            return rules
+        
+        # For FIRST mode with explicit ordering, don't optimize (user ordering takes precedence)
+        if options.mode == MatchMode.FIRST and options.ordering_key:
+            return rules  # Keep original order for explicit ordering
+        
+        # For FIRST mode without explicit ordering, sort by complexity (simpler rules first)
+        if options.mode == MatchMode.FIRST:
+            return sorted(rules, key=self._estimate_rule_complexity)
+        
+        # For ALL mode, keep original order (no optimization benefit)
+        return rules
+    
+    def _estimate_rule_complexity(self, rule) -> int:
+        """Estimate the computational complexity of a rule.
+        
+        Returns a complexity score (lower = simpler/faster).
+        """
+        complexity = 0
+        
+        # Base complexity for any rule
+        complexity += 1
+        
+        # Add complexity for operators and functions in the rule string
+        rule_text = getattr(rule, 'rule_text', str(rule))
+        
+        # Count logical operators (AND/OR add complexity)
+        complexity += rule_text.lower().count(' and ') * 2
+        complexity += rule_text.lower().count(' or ') * 2
+        
+        # Count function calls (expensive operations)
+        complexity += rule_text.count('(') * 3
+        
+        # Count field references
+        complexity += rule_text.count('.') * 1
+        
+        # Longer rules are generally more complex
+        complexity += len(rule_text) // 20
+        
+        return complexity

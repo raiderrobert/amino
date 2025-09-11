@@ -15,16 +15,20 @@ class Schema:
     """Main schema class providing the public API."""
     
     def __init__(self, schema_content: str, type_registry: TypeRegistry = None, 
-                 funcs: Dict[str, Callable] = None):
+                 funcs: Dict[str, Callable] = None, strict: bool = False):
         """Initialize schema from content string."""
         # Set up type registry
         self.type_registry = type_registry or TypeRegistry()
         if not type_registry:  # Only register builtins if no custom registry
             register_builtin_types(self.type_registry)
         
+        # Get known custom types from registry for strict validation
+        known_custom_types = set(self.type_registry.get_registered_types()) if strict else None
+        
         # Parse schema
         try:
-            self.ast = parse_schema(schema_content)
+            self.ast = parse_schema(schema_content, strict=strict, 
+                                  known_custom_types=known_custom_types)
         except Exception as e:
             raise SchemaParseError(f"Failed to parse schema: {e}")
         
@@ -56,7 +60,7 @@ class Schema:
 
 
 def load_schema(schema_file_or_content: str, type_registry: TypeRegistry = None, 
-                funcs: Dict[str, Callable] = None) -> Schema:
+                funcs: Dict[str, Callable] = None, strict: bool = False) -> Schema:
     """Load schema from file path or content string."""
     # Try to read as file first, then treat as content
     try:
@@ -66,7 +70,7 @@ def load_schema(schema_file_or_content: str, type_registry: TypeRegistry = None,
         # Treat as direct content
         content = schema_file_or_content
     
-    return Schema(content, type_registry, funcs)
+    return Schema(content, type_registry, funcs, strict)
 
 
 # Convenience functions for backwards compatibility

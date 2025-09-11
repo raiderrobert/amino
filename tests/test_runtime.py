@@ -168,7 +168,6 @@ class TestMatchOptions:
         results = compiled.eval([{"id": "a", "amount": 150}])
         assert set(results[0].results) == {1, 2, 3}
 
-    @pytest.mark.skip(reason="Phase 3: API inconsistency - match parameter not implemented in compile_rules")
     def test_first_match_mode(self):
         """Test FIRST match mode with ordering."""
         schema_ast = parse_schema("amount: int")
@@ -183,7 +182,6 @@ class TestMatchOptions:
         results = compiled.eval([{"id": "a", "amount": 150}])
         assert results[0].results == [2]  # First by ordering
 
-    @pytest.mark.skip(reason="Phase 3: API inconsistency - match parameter not implemented in compile_rules") 
     def test_first_match_descending_order(self):
         """Test FIRST match mode with descending order."""
         schema_ast = parse_schema("amount: int")

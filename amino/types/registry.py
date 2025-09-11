@@ -55,6 +55,10 @@ class TypeRegistry:
         """Check if type is registered."""
         return name in self._types
     
+    def get_registered_types(self) -> List[str]:
+        """Get list of all registered type names."""
+        return list(self._types.keys())
+    
     def get_validator(self, type_name: str) -> Optional[Callable]:
         """Get validator function for a type."""
         return self._validators.get(type_name)
