@@ -1,9 +1,8 @@
 """Test runtime functionality."""
 
 import pytest
-from amino.runtime import RuleEngine, MatchResult, MatchMode
+from amino.runtime import RuleEngine, MatchResult
 from amino.runtime.engine import RuleDefinition
-from amino.runtime.matcher import MatchOptions
 from amino.schema.parser import parse_schema
 from amino.utils.errors import RuleParseError, RuleEvaluationError
 

@@ -1,9 +1,8 @@
 """Schema validation implementation."""
 
-from typing import Any, Dict, List, Optional
+from typing import List
 from .ast import SchemaAST, FieldDefinition, StructDefinition
 from .types import SchemaType
-from ..utils.errors import SchemaParseError
 
 
 class SchemaValidator:

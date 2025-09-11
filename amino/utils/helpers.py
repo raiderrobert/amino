@@ -1,6 +1,6 @@
 """Utility functions for Amino."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 def flatten_dict(data: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dict[str, Any]:

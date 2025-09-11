@@ -1,7 +1,7 @@
 """Schema AST definitions."""
 
 import dataclasses
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from .types import SchemaType
 
 

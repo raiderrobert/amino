@@ -2,7 +2,7 @@
 
 import pytest
 import amino
-from amino.utils.errors import SchemaParseError, RuleParseError, RuleEvaluationError
+from amino.utils.errors import SchemaParseError, RuleEvaluationError
 from amino.types import TypeRegistry
 
 

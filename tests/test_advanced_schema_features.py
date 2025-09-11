@@ -11,10 +11,9 @@ They define the expected behavior for:
 import pytest
 import amino
 from amino.schema.parser import parse_schema
-from amino.schema.ast import FieldDefinition, StructDefinition, FunctionDefinition
 from amino.schema.types import SchemaType
 from amino.rules.parser import parse_rule
-from amino.utils.errors import SchemaParseError, RuleParseError
+from amino.utils.errors import SchemaParseError
 
 
 @pytest.mark.parametrize(

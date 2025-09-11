@@ -1,11 +1,10 @@
 """Type validation implementation."""
 
 import dataclasses
-from typing import Any, List, Optional, Dict, Union
+from typing import Any, List, Dict
 from .registry import TypeRegistry
 from ..schema.ast import SchemaAST, FieldDefinition
 from ..schema.types import SchemaType
-from ..utils.errors import TypeValidationError
 
 
 @dataclasses.dataclass

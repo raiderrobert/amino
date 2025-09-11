@@ -2,7 +2,6 @@
 
 from typing import List, Dict, Any, Callable, Optional, Union
 from ..schema.ast import SchemaAST
-from ..rules.ast import RuleAST
 from ..rules.parser import parse_rule
 from ..rules.compiler import RuleCompiler
 from ..rules.optimizer import RuleOptimizer

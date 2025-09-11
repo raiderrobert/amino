@@ -1,6 +1,6 @@
 """Main Amino API implementation."""
 
-from typing import Dict, Any, List, Callable, Union, Optional
+from typing import Dict, Any, List, Callable, Union
 from .schema.parser import parse_schema
 from .schema.ast import SchemaAST
 from .schema.validator import SchemaValidator
@@ -8,7 +8,7 @@ from .runtime.engine import RuleEngine, RuleDefinition
 from .runtime.compiled_rules import CompiledRules
 from .types.registry import TypeRegistry
 from .types.builtin import register_builtin_types
-from .utils.errors import SchemaParseError, RuleParseError
+from .utils.errors import SchemaParseError
 
 
 class Schema:

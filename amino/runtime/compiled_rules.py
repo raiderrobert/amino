@@ -1,6 +1,6 @@
 """Compiled rules container and execution."""
 
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Callable
 from ..rules.compiler import CompiledRule
 from .evaluator import RuleEvaluator
 from .matcher import RuleMatcher, MatchResult, MatchOptions

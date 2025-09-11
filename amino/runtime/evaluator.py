@@ -1,6 +1,6 @@
 """Rule evaluation implementation."""
 
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Callable
 from ..rules.compiler import CompiledRule
 from ..utils.errors import RuleEvaluationError
 

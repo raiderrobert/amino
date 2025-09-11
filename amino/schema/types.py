@@ -1,7 +1,6 @@
 """Schema type definitions."""
 
 import enum
-from typing import Any, List, Union, Optional
 
 
 class SchemaType(enum.Enum):

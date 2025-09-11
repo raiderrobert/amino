@@ -3,7 +3,7 @@
 import dataclasses
 import enum
 import re
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Optional
 
 from ..utils.errors import RuleParseError
 from ..schema.ast import SchemaAST

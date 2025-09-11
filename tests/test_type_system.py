@@ -1,7 +1,7 @@
 """Test type system functionality."""
 
 import pytest
-from amino.types import TypeRegistry, register_builtin_types, ValidationResult, TypeValidator
+from amino.types import TypeRegistry, register_builtin_types, TypeValidator
 from amino.schema.parser import parse_schema
 from amino.utils.errors import TypeValidationError
 
