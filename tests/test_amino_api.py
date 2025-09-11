@@ -25,13 +25,11 @@ def test_load_schema_from_string(schema_content, expected_has_eval, expected_has
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_result",
     [
-        # Basic evaluations
         ("amount: int", "amount > 0", {"amount": 100}, True),
         ("amount: int", "amount > 0", {"amount": 0}, False),
         ("amount: int", "amount >= 100", {"amount": 100}, True),
         ("amount: int", "amount < 50", {"amount": 25}, True),
         
-        # Complex AND operations
         ("amount: int\nstate_code: str", "amount > 0 and state_code = 'CA'", 
          {"amount": 100, "state_code": "CA"}, True),
         ("amount: int\nstate_code: str", "amount > 0 and state_code = 'CA'", 
@@ -39,18 +37,15 @@ def test_load_schema_from_string(schema_content, expected_has_eval, expected_has
         ("amount: int\nstate_code: str", "amount > 0 and state_code = 'CA'", 
          {"amount": 0, "state_code": "CA"}, False),
          
-        # String operations
         ("name: str\nstatus: str", "name = 'John'", {"name": "John", "status": "active"}, True),
         ("name: str\nstatus: str", "name != 'Jane'", {"name": "John", "status": "active"}, True),
         ("name: str\nstatus: str", "name = 'Jane'", {"name": "John", "status": "active"}, False),
         
-        # Float operations
         ("price: float\npercentage: float", "price > 10.5 and percentage < 0.5",
          {"price": 20.0, "percentage": 0.3}, True),
         ("price: float\npercentage: float", "price > 10.5 and percentage < 0.5",
          {"price": 5.0, "percentage": 0.3}, False),
          
-        # Parentheses and precedence
         ("a: int\nb: int\nc: int", "a > 0 and b > 0 or c > 0",
          {"a": 0, "b": 0, "c": 1}, True),
         ("a: int\nb: int\nc: int", "a > 0 and (b > 0 or c > 0)",
@@ -96,19 +91,15 @@ class TestAminoAPI:
 
     def test_function_support(self):
         """Test external function support."""
-        # For now, test with just the basic schema without function declarations
         amn = amino.load_schema("amount: int")
         
-        # Add function to runtime
         amn.add_function("min_func", min)
         
-        # Test function with proper schema declaration
         amn2 = amino.load_schema("amount: int\nmin_func: (int, int) -> int")
         amn2.add_function("min_func", min)
         result = amn2.eval("min_func(amount, 1000) < 1000", {"amount": 100})
         assert result is True
         
-        # Test that we can add functions
         assert "min_func" in amn.engine.function_registry
 
 
@@ -120,7 +111,6 @@ class TestAminoAPI:
         
         amn = amino.load_schema("amount: positive_int", type_registry=registry)
         
-        # This should work with the rule evaluation
         result = amn.eval("amount > 0", {"amount": 100})
         assert result is True
 
@@ -128,11 +118,9 @@ class TestAminoAPI:
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_error_type,expected_error_contains",
     [
-        # Invalid rule syntax
         ("amount: int", "amount > unknown_var", {"amount": 100}, 
          RuleEvaluationError, "Unknown variable: unknown_var"),
         
-        # Missing data fields
         ("amount: int\nstate_code: str", "amount > 0", {"state_code": "CA"}, 
          RuleEvaluationError, "amount"),
          

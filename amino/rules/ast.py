@@ -8,7 +8,6 @@ from ..schema.types import SchemaType
 
 class Operator(enum.Enum):
     """Rule operators."""
-    # Comparison
     EQ = "="
     NE = "!="
     GT = ">"
@@ -16,16 +15,13 @@ class Operator(enum.Enum):
     GTE = ">="
     LTE = "<="
     
-    # Logical
     AND = "and"
     OR = "or"
     NOT = "not"
     
-    # Membership
     IN = "in"
     NOT_IN = "not in"
     
-    # Type checking
     TYPEOF = "typeof"
     IS_VALID = "is_valid"
 

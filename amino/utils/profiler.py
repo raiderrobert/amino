@@ -56,7 +56,6 @@ class RuleProfiler:
         """Context manager for profiling individual rule execution."""
         start_time = time.perf_counter()
         
-        # Initialize rule profile if not exists
         if rule_id not in self.rule_profiles:
             self.rule_profiles[rule_id] = RuleProfile(
                 rule_id=rule_id,
@@ -128,7 +127,6 @@ class RuleProfiler:
             print("PER-RULE PERFORMANCE:")
             print("-" * 60)
             
-            # Sort rules by total execution time (descending)
             sorted_rules = sorted(
                 profile.rule_profiles.values(),
                 key=lambda r: r.execution_time,
@@ -164,8 +162,6 @@ class RuleDebugger:
     @staticmethod
     def trace_rule_variables(rule_text: str, schema_ast) -> List[str]:
         """Extract and return all variables referenced in a rule."""
-        # This would integrate with the rule parser to extract variables
-        # For now, simple heuristic
         variables = []
         words = rule_text.split()
         
@@ -177,7 +173,6 @@ class RuleDebugger:
         return list(set(variables))
 
 
-# Global profiler instance
 _global_profiler = RuleProfiler()
 
 def get_profiler() -> RuleProfiler:

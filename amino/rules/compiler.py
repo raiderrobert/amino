@@ -29,10 +29,8 @@ class RuleCompiler:
     
     def compile_rule(self, rule_id: Any, ast: RuleAST) -> CompiledRule:
         """Compile a single rule AST."""
-        # Generate evaluator function
         evaluator_code = self._generate_evaluator(ast.root)
         
-        # Create evaluator function
         def evaluator(data: Dict[str, Any], functions: Dict[str, Callable] = None) -> bool:
             functions = functions or {}
             return evaluator_code(data, functions)

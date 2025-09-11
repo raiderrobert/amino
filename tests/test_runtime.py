@@ -76,22 +76,17 @@ class TestRuleEngine:
 
     def test_rule_with_functions(self):
         """Test rules with external functions."""
-        # For now, skip function declarations in schema
-        # Test with proper function declaration in schema
         schema_ast = parse_schema("a: int\nb: int\nmin_func: (int, int) -> int")
         engine = RuleEngine(schema_ast)
         engine.add_function("min_func", min)
         
-        # Test function evaluation
         result = engine.eval_single_rule("min_func(a, b) < 10", {"a": 5, "b": 15})
         assert result is True
         
-        # Test that functions can be added
         assert "min_func" in engine.function_registry
 
     def test_rule_optimization(self, simple_rule_engine):
         """Test rule optimization."""
-        # This rule should be optimized (true AND x = x)
         result = simple_rule_engine.eval_single_rule("amount > 0", {"amount": 100})
         assert result is True
 
@@ -113,7 +108,6 @@ class TestRuleEngine:
 @pytest.mark.parametrize(
     "schema_content,rules,expected_error_type,expected_error_contains",
     [
-        # Invalid rule syntax
         ("amount: int", [{"id": 1, "rule": "invalid > syntax >"}], 
          RuleParseError, "Unknown variable"),
          
@@ -217,7 +211,6 @@ class TestMatchOptions:
             {"id": 1, "rule": "amount > 0", "metadata": {"category": "basic"}},
         ])
         
-        # Metadata should be accessible through the compiled rules
         assert compiled.rule_metadata[1]["category"] == "basic"
 
 
@@ -266,5 +259,4 @@ class TestCompiledRules:
         ])
         
         functions = compiled.get_rule_functions()
-        # No functions in simple rule
         assert functions[1] == []

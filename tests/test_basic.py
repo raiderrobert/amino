@@ -7,7 +7,6 @@ from amino.schema.parser import SchemaParser
 
 def test_amino_import():
     """Test amino module import."""
-    # Import should not raise any errors
     assert hasattr(amino, 'load_schema')
     assert hasattr(amino, 'Schema')
 
@@ -25,7 +24,6 @@ def test_schema_parser_basic():
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_result",
     [
-        # Basic usage examples
         ('amount: int\nstate_code: str', 'amount > 0', 
          {'amount': 100, 'state_code': 'CA'}, True),
          

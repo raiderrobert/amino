@@ -20,7 +20,6 @@ from amino.utils.errors import SchemaParseError, RuleParseError
 @pytest.mark.parametrize(
     "schema_content,expected_functions,should_raise,expected_error",
     [
-        # Simple function declaration
         (
             """
             amount: int
@@ -30,7 +29,6 @@ from amino.utils.errors import SchemaParseError, RuleParseError
             False,
             None
         ),
-        # Function with default arguments
         (
             """
             MAX_AMOUNT: int = 1000
@@ -41,7 +39,6 @@ from amino.utils.errors import SchemaParseError, RuleParseError
             False,
             None
         ),
-        # Multiple functions
         (
             """
             process_data: (str, int) -> str
@@ -54,7 +51,6 @@ from amino.utils.errors import SchemaParseError, RuleParseError
             False,
             None
         ),
-        # Function with struct parameter
         (
             """
             struct person {
@@ -67,7 +63,6 @@ from amino.utils.errors import SchemaParseError, RuleParseError
             False,
             None
         ),
-        # Invalid function syntax - missing arrow
         (
             "invalid_func: (int) bool",
             [],
@@ -163,7 +158,6 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
     """Test end-to-end function evaluation."""
     amn = amino.load_schema(schema_def)
     
-    # Extract function name from schema
     ast = parse_schema(schema_def)
     func_name = ast.functions[0].name
     
@@ -175,7 +169,6 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
 @pytest.mark.parametrize(
     "schema_content,expected_structs,should_raise,expected_error",
     [
-        # Simple struct
         (
             """
             struct person {
@@ -187,7 +180,6 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
             False,
             None
         ),
-        # Struct with optional fields
         (
             """
             struct user {
@@ -200,7 +192,6 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
             False,
             None
         ),
-        # Multiple structs
         (
             """
             struct person {
@@ -219,7 +210,6 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
             False,
             None
         ),
-        # Struct with list fields
         (
             """
             struct user {
@@ -339,7 +329,6 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
 @pytest.mark.parametrize(
     "schema_content,expected_fields,should_raise,expected_error",
     [
-        # Homogeneous lists
         (
             """
             tags: list[str]
@@ -352,7 +341,6 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
             False,
             None
         ),
-        # Heterogeneous (union) lists
         (
             """
             mixed_data: list[int|str|float]
@@ -363,7 +351,6 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
             False,
             None
         ),
-        # Complex union types
         (
             """
             flexible: list[str|int]
@@ -376,7 +363,6 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
             False,
             None
         ),
-        # Invalid list syntax - missing closing bracket
         (
             "bad_list: list[str",
             [],
@@ -436,21 +422,18 @@ def test_list_operations_in_rules(rule_content, schema_content, expected_variabl
 @pytest.mark.parametrize(
     "schema_def,test_data,rule_expr,expected_result",
     [
-        # Homogeneous list validation
         (
             "tags: list[str]",
             {"tags": ["user", "admin", "guest"]},
             "'admin' in tags",
             True
         ),
-        # Heterogeneous list validation
         (
             "mixed: list[int|str|float]",
             {"mixed": [1, "hello", 3.14]},
             "1 in mixed",
             True
         ),
-        # List membership check
         (
             "numbers: list[int]",
             {"numbers": [10, 20, 30, 40]},
@@ -469,7 +452,6 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
 @pytest.mark.parametrize(
     "schema_content,expected_constraints,should_raise,expected_error",
     [
-        # String length constraints
         (
             """
             username: str {length: 8}
@@ -482,7 +464,6 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
             False,
             None
         ),
-        # Format constraints
         (
             """
             email: str {format: email}
@@ -495,7 +476,6 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
             False,
             None
         ),
-        # Numeric constraints
         (
             """
             age: int {min: 0, max: 150}
@@ -508,7 +488,6 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
             False,
             None
         ),
-        # Mixed constraints
         (
             """
             title: str {format: title, min: 5, max: 100}
@@ -541,35 +520,30 @@ def test_enhanced_constraints_parsing(schema_content, expected_constraints, shou
 @pytest.mark.parametrize(
     "schema_def,test_data,expected_valid,expected_error_contains",
     [
-        # Valid email constraint
         (
             "email: str {format: email}",
             {"email": "user@example.com"},
             True,
             None
         ),
-        # Invalid email constraint
         (
             "email: str {format: email}",
             {"email": "invalid-email"},
             False,
             "email"
         ),
-        # Valid numeric range
         (
             "age: int {min: 0, max: 150}",
             {"age": 25},
             True,
             None
         ),
-        # Invalid numeric range (too young)
         (
             "age: int {min: 18, max: 120}",
             {"age": 16},
             False,
             "minimum"
         ),
-        # Invalid numeric range (too old)
         (
             "age: int {min: 0, max: 120}",
             {"age": 150},
@@ -596,7 +570,6 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
 @pytest.mark.parametrize(
     "schema_def,function_impl,test_data,rule_expr,expected_result",
     [
-        # Comprehensive scenario with all Phase 2 features
         (
             """
             struct applicant {
@@ -623,7 +596,6 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
             """,
             True
         ),
-        # Complex struct with list operations
         (
             """
             struct user {
@@ -651,7 +623,6 @@ def test_comprehensive_phase2_integration(schema_def, function_impl, test_data, 
     """Test complex scenarios combining all Phase 2 features."""
     amn = amino.load_schema(schema_def)
     
-    # Extract function name from schema
     ast = parse_schema(schema_def)
     func_name = ast.functions[0].name
     

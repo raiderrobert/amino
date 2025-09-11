@@ -39,11 +39,9 @@ class TypeValidator:
         """Validate data against the schema."""
         result = ValidationResult(valid=True)
         
-        # Validate top-level fields
         for field_def in self.schema_ast.fields:
             self._validate_field(field_def, data, result)
         
-        # Validate struct fields if present
         for struct_def in self.schema_ast.structs:
             if struct_def.name in data:
                 struct_data = data[struct_def.name]
@@ -63,7 +61,6 @@ class TypeValidator:
         """Validate a single field value."""
         result = ValidationResult(valid=True)
         
-        # Find field definition
         field_def = None
         for field in self.schema_ast.fields:
             if field.name == field_name:
@@ -82,7 +79,6 @@ class TypeValidator:
         """Validate a field against its definition."""
         full_field_name = f"{prefix}{field_def.name}"
         
-        # Check if field is present
         if field_def.name not in data:
             if not field_def.optional:
                 result.add_error(full_field_name, f"Required field '{full_field_name}' missing")
@@ -90,7 +86,6 @@ class TypeValidator:
         
         value = data[field_def.name]
         
-        # Check for null/None values on optional fields
         if value is None and field_def.optional:
             return
         

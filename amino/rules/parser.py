@@ -14,7 +14,6 @@ from .ast import (
 )
 
 
-# Token patterns
 WHITESPACE = re.compile(r"[\s]+")
 NAME = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
 NUMBER = re.compile(r"\d+(\.\d+)?")
@@ -24,7 +23,6 @@ RPAREN = re.compile(r"\)")
 COMMA = re.compile(r",")
 DOT = re.compile(r"\.")
 
-# Operators (order matters for multi-char ops)
 OPERATORS = [
     (">=", Operator.GTE),
     ("<=", Operator.LTE), 
@@ -71,16 +69,12 @@ class RuleParser:
         self.tokens = self._tokenize()
         self.pos = 0
         
-        # Build lookup tables from schema
         self._variables = {f.name: f.field_type for f in schema_ast.fields}
         self._structs = {s.name: s for s in schema_ast.structs}
         self._functions = {f.name: f for f in schema_ast.functions}
         
-        # Add struct types as potential variables
         for struct in schema_ast.structs:
-            # The struct name itself can be used as a variable (instance of the struct)
             self._variables[struct.name] = SchemaType.struct
-            # Add struct fields to variables (flattened)
             for field in struct.fields:
                 var_name = f"{struct.name}.{field.name}"
                 self._variables[var_name] = field.field_type
@@ -91,17 +85,14 @@ class RuleParser:
         pos = 0
         
         while pos < len(self.rule):
-            # Skip whitespace
             match = WHITESPACE.match(self.rule, pos)
             if match:
                 pos = match.end()
                 continue
             
-            # Try operators first (including multi-word)
             matched = False
             for op_str, op_enum in OPERATORS:
                 if self.rule[pos:].startswith(op_str):
-                    # Make sure we match whole words for word operators
                     if op_str.isalpha():
                         if (pos + len(op_str) < len(self.rule) and 
                             self.rule[pos + len(op_str)].isalnum()):
@@ -114,7 +105,6 @@ class RuleParser:
             if matched:
                 continue
             
-            # Try other tokens
             for pattern, token_type in [
                 (STRING, TokenType.STRING),
                 (NUMBER, TokenType.NUMBER), 
@@ -140,7 +130,6 @@ class RuleParser:
         """Parse rule into AST."""
         root = self._parse_expression()
         
-        # Extract variables and functions referenced
         variables = []
         functions = []
         self._collect_references(root, variables, functions)
@@ -233,7 +222,6 @@ class RuleParser:
     def _parse_string(self) -> RuleNode:
         """Parse string literal."""
         token = self._advance()
-        # Remove quotes
         value = token.value[1:-1]
         return Literal(value, SchemaType.str)
     
@@ -242,15 +230,12 @@ class RuleParser:
         name_token = self._advance()
         name = name_token.value
         
-        # Check if it's a function call
         if self._peek() and self._peek().type == TokenType.LPAREN:
             return self._parse_function_call(name)
         
-        # Handle dotted names (struct fields)
         if self._peek() and self._peek().type == TokenType.DOT:
             return self._parse_dotted_name(name)
         
-        # Regular variable
         if name in self._variables:
             return Variable(name, self._variables[name])
         
@@ -271,7 +256,6 @@ class RuleParser:
         
         self._expect(TokenType.RPAREN)
         
-        # Look up function return type
         if name in self._functions:
             return_type = self._functions[name].output_type
         else:

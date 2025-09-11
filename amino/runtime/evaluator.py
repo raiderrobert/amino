@@ -30,7 +30,6 @@ class RuleEvaluator:
                     matched = self.evaluate_single(rule, data)
                     data_results.append((rule.rule_id, matched))
                 except RuleEvaluationError:
-                    # Rule failed to evaluate, treat as no match
                     data_results.append((rule.rule_id, False))
             results.append(data_results)
         

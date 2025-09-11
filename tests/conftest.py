@@ -8,7 +8,6 @@ from amino.types import TypeRegistry, register_builtin_types
 from amino.types import TypeValidator
 
 
-# Schema Fixtures
 @pytest.fixture
 def simple_int_schema():
     """Simple schema with just an integer field."""
@@ -53,7 +52,6 @@ def advanced_schema():
     """)
 
 
-# RuleEngine Fixtures
 @pytest.fixture
 def simple_rule_engine(simple_int_schema):
     """RuleEngine with simple integer schema."""
@@ -72,7 +70,6 @@ def person_rule_engine(person_schema):
     return RuleEngine(person_schema)
 
 
-# TypeRegistry Fixtures
 @pytest.fixture
 def type_registry():
     """Empty TypeRegistry."""
@@ -96,7 +93,6 @@ def custom_type_registry():
     return registry
 
 
-# Amino Instance Fixtures
 @pytest.fixture
 def amino_simple():
     """Amino instance with simple integer schema."""
@@ -115,7 +111,6 @@ def amino_person():
     return amino.load_schema("name: str\nage: int")
 
 
-# TypeValidator Fixtures
 @pytest.fixture
 def type_validator(ecommerce_schema):
     """TypeValidator with e-commerce schema."""
@@ -128,7 +123,6 @@ def person_type_validator(person_schema):
     return TypeValidator(person_schema)
 
 
-# Test Data Fixtures
 @pytest.fixture
 def sample_ecommerce_data():
     """Sample e-commerce test data for batch processing."""

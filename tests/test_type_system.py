@@ -63,7 +63,6 @@ class TestTypeRegistry:
         registry = TypeRegistry()
         register_builtin_types(registry)
         
-        # Test some built-in types
         assert registry.has_type("email")
         assert registry.has_type("credit_score")
         assert registry.has_type("currency")
@@ -90,22 +89,16 @@ class TestTypeRegistry:
 @pytest.mark.parametrize(
     "schema_content,data,expected_valid,expected_error_count,error_field,error_contains",
     [
-        # Basic validation success
         ("name: str\nage: int", {"name": "John", "age": 25}, True, 0, None, None),
         
-        # Missing required field
         ("name: str\nage: int", {"name": "John"}, False, 1, "age", "missing"),
         
-        # Wrong type validation
         ("name: str\nage: int", {"name": "John", "age": "25"}, False, 1, "age", None),
         
-        # Optional field with value
         ("name: str\nage: int?", {"name": "John", "age": 25}, True, 0, None, None),
         
-        # Optional field without value
         ("name: str\nage: int?", {"name": "John"}, True, 0, None, None),
         
-        # Optional field with None
         ("name: str\nage: int?", {"name": "John", "age": None}, True, 0, None, None),
     ]
 )
@@ -128,19 +121,14 @@ def test_basic_validation(schema_content, data, expected_valid, expected_error_c
 @pytest.mark.parametrize(
     "schema_content,data,expected_valid,error_contains",
     [
-        # Valid age
         ("age: int {min: 18, max: 120}", {"age": 25}, True, None),
         
-        # Too young
         ("age: int {min: 18, max: 120}", {"age": 16}, False, "minimum"),
         
-        # Too old
         ("age: int {min: 18, max: 120}", {"age": 150}, False, "maximum"),
         
-        # Valid email
         ("email: str {format: email}", {"email": "user@example.com"}, True, None),
         
-        # Invalid email
         ("email: str {format: email}", {"email": "invalid-email"}, False, "email"),
     ]
 )
@@ -168,11 +156,9 @@ class TestTypeValidator:
         schema_ast = parse_schema("score: positive_int")
         validator = TypeValidator(schema_ast, registry)
         
-        # Valid positive integer
         result = validator.validate_data({"score": 100})
         assert result.valid is True
         
-        # Invalid (negative)
         result = validator.validate_data({"score": -10})
         assert result.valid is False
 
@@ -187,12 +173,10 @@ def test_list_element_validation():
     ast = parse_schema(schema_content)
     validator = TypeValidator(ast)
     
-    # Valid data
     valid_data = {"numbers": [1, 2, 3], "mixed": [1, "hello", 2, "world"]}
     result = validator.validate_data(valid_data)
     assert result.valid is True
     
-    # Invalid data - string in int-only list
     invalid_data = {"numbers": [1, "hello", 3], "mixed": [1, 2, 3]}
     result = validator.validate_data(invalid_data)
     assert result.valid is False

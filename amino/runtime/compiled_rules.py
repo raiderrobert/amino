@@ -26,10 +26,8 @@ class CompiledRules:
             if item_id is None:
                 raise ValueError("Data items must have an 'id' field")
             
-            # Evaluate all rules for this data item
             rule_results = self.evaluator.evaluate_rules_for_data(self.rules, item)
             
-            # Process matches according to matching options
             match_result = self.matcher.process_matches(
                 item_id, rule_results, self.rule_metadata
             )
