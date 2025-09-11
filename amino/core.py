@@ -30,7 +30,7 @@ class Schema:
             self.ast = parse_schema(schema_content, strict=strict,
                                   known_custom_types=known_custom_types)
         except Exception as e:
-            raise SchemaParseError(f"Failed to parse schema: {e}")
+            raise SchemaParseError(f"Failed to parse schema: {e}") from e
 
         validator = SchemaValidator(self.ast)
         errors = validator.validate()

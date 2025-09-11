@@ -79,7 +79,9 @@ class RuleOptimizer:
 
         return UnaryOp(node.operator, operand, node.return_type)
 
-    def _evaluate_literal_binary_op(self, operator: Operator, left: Literal, right: Literal, original_node: BinaryOp) -> RuleNode:
+    def _evaluate_literal_binary_op(
+        self, operator: Operator, left: Literal, right: Literal, original_node: BinaryOp
+    ) -> RuleNode:
         """Evaluate binary operation on two literals."""
         if operator == Operator.EQ:
             return Literal(left.value == right.value, SchemaType.bool)

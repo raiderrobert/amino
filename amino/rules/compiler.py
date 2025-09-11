@@ -31,7 +31,7 @@ class CompiledRule:
         try:
             return self.evaluator(data, function_registry or {})
         except Exception as e:
-            raise RuleEvaluationError(f"Error evaluating rule {self.rule_id}: {e}")
+            raise RuleEvaluationError(f"Error evaluating rule {self.rule_id}: {e}") from e
 
 
 class RuleCompiler:

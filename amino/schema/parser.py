@@ -109,7 +109,9 @@ class SchemaParser:
                         break
 
                 if not matched:
-                    raise SchemaParseError(f"Unexpected character '{line[pos]}' at line {line_num + 1}, column {pos + 1}")
+                    raise SchemaParseError(
+                        f"Unexpected character '{line[pos]}' at line {line_num + 1}, column {pos + 1}"
+                    )
 
         return tokens
 

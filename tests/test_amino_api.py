@@ -77,7 +77,9 @@ class TestAminoAPI:
 
     def test_ordering_first_match(self, amino_ecommerce, ordered_rules):
         """Test first match with ordering."""
-        compiled = amino_ecommerce.compile(ordered_rules, match={"option": "first", "key": "ordering", "ordering": "asc"})
+        compiled = amino_ecommerce.compile(
+            ordered_rules, match={"option": "first", "key": "ordering", "ordering": "asc"}
+        )
 
         results = compiled.eval([
             {"id": 100, "amount": 100, "state_code": "CA"},

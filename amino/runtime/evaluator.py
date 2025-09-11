@@ -18,7 +18,7 @@ class RuleEvaluator:
         try:
             return rule.evaluate(data, self.function_registry)
         except Exception as e:
-            raise RuleEvaluationError(f"Error evaluating rule {rule.rule_id}: {e}")
+            raise RuleEvaluationError(f"Error evaluating rule {rule.rule_id}: {e}") from e
 
     def evaluate_batch(self, rules: list[CompiledRule],
                       data_list: list[dict[str, Any]]) -> list[list[tuple[Any, bool]]]:

@@ -28,7 +28,16 @@ from amino.utils.errors import TypeValidationError
         ("currency", "float", 10.123, False, False),
     ]
 )
-def test_type_validation(type_name, base_type, value, expected_valid, has_validator, type_registry, populated_type_registry, custom_type_registry):
+def test_type_validation(
+    type_name,
+    base_type,
+    value,
+    expected_valid,
+    has_validator,
+    type_registry,
+    populated_type_registry,
+    custom_type_registry,
+):
     """Test type validation for various types."""
     if has_validator:
         registry = custom_type_registry

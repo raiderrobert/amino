@@ -135,7 +135,10 @@ class RuleProfiler:
 
             for rule in sorted_rules:
                 avg_time_ms = (rule.execution_time / max(rule.evaluation_count, 1)) * 1000
-                print(f"{rule.rule_id!s:<15} {avg_time_ms:<15.3f} {rule.evaluation_count:<12} {rule.match_count:<8} {rule.error_count:<6}")
+                print(
+                    f"{rule.rule_id!s:<15} {avg_time_ms:<15.3f} "
+                    f"{rule.evaluation_count:<12} {rule.match_count:<8} {rule.error_count:<6}"
+                )
 
         print("=" * 60)
 

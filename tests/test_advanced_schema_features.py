@@ -188,7 +188,16 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
                 age: int?
             }
             """,
-            [("user", [("username", SchemaType.str, False), ("email", SchemaType.str, True), ("age", SchemaType.int, True)])],
+            [
+                (
+                    "user",
+                    [
+                        ("username", SchemaType.str, False),
+                        ("email", SchemaType.str, True),
+                        ("age", SchemaType.int, True),
+                    ],
+                )
+            ],
             False,
             None
         ),
@@ -218,7 +227,16 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
                 scores: list[int]
             }
             """,
-            [("user", [("name", SchemaType.str, False), ("tags", SchemaType.list, False), ("scores", SchemaType.list, False)])],
+            [
+                (
+                    "user",
+                    [
+                        ("name", SchemaType.str, False),
+                        ("tags", SchemaType.list, False),
+                        ("scores", SchemaType.list, False),
+                    ],
+                )
+            ],
             False,
             None
         )

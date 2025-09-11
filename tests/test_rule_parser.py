@@ -74,7 +74,9 @@ def test_rule_parsing(schema_content, rule, should_raise, expected_error):
         ("name: str", 'name = "Jane"', Operator.EQ, Variable, "name", Literal, "Jane", ["name"]),
     ]
 )
-def test_simple_comparisons(schema_content, rule, expected_operator, left_type, left_value, right_type, right_value, expected_variables):
+def test_simple_comparisons(
+    schema_content, rule, expected_operator, left_type, left_value, right_type, right_value, expected_variables
+):
     """Test parsing simple comparisons."""
     schema_ast = parse_schema(schema_content)
     rule_ast = parse_rule(rule, schema_ast)

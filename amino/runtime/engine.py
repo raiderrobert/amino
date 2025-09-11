@@ -72,7 +72,7 @@ class RuleEngine:
                 rule_metadata[rule_def.id] = metadata
 
             except Exception as e:
-                raise RuleParseError(f"Error compiling rule {rule_def.id}: {e}")
+                raise RuleParseError(f"Error compiling rule {rule_def.id}: {e}") from e
 
         # Create match options
         options = MatchOptions()
@@ -108,7 +108,7 @@ class RuleEngine:
             return evaluator.evaluate_single(compiled_rule, data)
 
         except Exception as e:
-            raise RuleEvaluationError(f"Error evaluating rule: {e}")
+            raise RuleEvaluationError(f"Error evaluating rule: {e}") from e
 
     def add_function(self, name: str, func: Callable):
         """Add a function to the registry."""
