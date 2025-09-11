@@ -175,3 +175,27 @@ class TestTypeValidator:
         # Invalid (negative)
         result = validator.validate_data({"score": -10})
         assert result.valid is False
+
+
+def test_list_element_validation():
+    """Test validation of list element types."""
+    schema_content = """
+    numbers: list[int]
+    mixed: list[int|str]
+    """
+    
+    ast = parse_schema(schema_content)
+    validator = TypeValidator(ast)
+    
+    # Valid data
+    valid_data = {"numbers": [1, 2, 3], "mixed": [1, "hello", 2, "world"]}
+    result = validator.validate_data(valid_data)
+    assert result.valid is True
+    
+    # Invalid data - string in int-only list
+    invalid_data = {"numbers": [1, "hello", 3], "mixed": [1, 2, 3]}
+    result = validator.validate_data(invalid_data)
+    assert result.valid is False
+    assert len(result.errors) == 1
+    assert "Element at index 1" in result.errors[0].message
+    assert "does not match allowed types [int]" in result.errors[0].message

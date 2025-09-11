@@ -102,12 +102,13 @@ class TestAminoAPI:
         # Add function to runtime
         amn.add_function("min_func", min)
         
-        # This would fail because min_func isn't declared in schema yet
-        # TODO: Implement proper function declaration parsing
-        # result = amn.eval("min_func(amount, 1000) < 1000", {"amount": 100})
-        # assert result is True
+        # Test function with proper schema declaration
+        amn2 = amino.load_schema("amount: int\nmin_func: (int, int) -> int")
+        amn2.add_function("min_func", min)
+        result = amn2.eval("min_func(amount, 1000) < 1000", {"amount": 100})
+        assert result is True
         
-        # For now, just test that we can add functions
+        # Test that we can add functions
         assert "min_func" in amn.engine.function_registry
 
 

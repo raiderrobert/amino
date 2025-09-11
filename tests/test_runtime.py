@@ -77,16 +77,16 @@ class TestRuleEngine:
     def test_rule_with_functions(self):
         """Test rules with external functions."""
         # For now, skip function declarations in schema
-        schema_ast = parse_schema("a: int\nb: int")
+        # Test with proper function declaration in schema
+        schema_ast = parse_schema("a: int\nb: int\nmin_func: (int, int) -> int")
         engine = RuleEngine(schema_ast)
         engine.add_function("min_func", min)
         
-        # TODO: Implement proper function declaration parsing
-        # For now, this will fail because min_func isn't in schema
-        # result = engine.eval_single_rule("min_func(a, b) < 10", {"a": 5, "b": 15})
-        # assert result is True
+        # Test function evaluation
+        result = engine.eval_single_rule("min_func(a, b) < 10", {"a": 5, "b": 15})
+        assert result is True
         
-        # Just test that functions can be added
+        # Test that functions can be added
         assert "min_func" in engine.function_registry
 
     def test_rule_optimization(self, simple_rule_engine):

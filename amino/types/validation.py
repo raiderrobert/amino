@@ -106,7 +106,9 @@ class TypeValidator:
                 result.add_error(field_name, f"Expected list for field '{field_name}'", value)
                 return
             
-            # TODO: Validate list element types
+            # Validate list element types
+            if field_def.element_types:
+                self._validate_list_elements(field_def, value, result, field_name)
             return
         
         # Handle custom types first
@@ -185,3 +187,30 @@ class TypeValidator:
                     from .builtin import BuiltinTypes
                     if not BuiltinTypes.validate_uuid(value):
                         result.add_error(field_name, f"Invalid UUID format: {value}")
+    
+    def _validate_list_elements(self, field_def: FieldDefinition, list_value: List[Any], 
+                               result: ValidationResult, field_name: str):
+        """Validate each element in a list against the allowed element types."""
+        for i, element in enumerate(list_value):
+            element_valid = False
+            
+            # Check if element matches any of the allowed types
+            for element_type in field_def.element_types:
+                if self._validate_element_type(element_type, element):
+                    element_valid = True
+                    break
+            
+            if not element_valid:
+                allowed_types = " | ".join(field_def.element_types)
+                result.add_error(field_name, 
+                               f"Element at index {i} does not match allowed types [{allowed_types}]", 
+                               element)
+    
+    def _validate_element_type(self, type_name: str, value: Any) -> bool:
+        """Validate a single value against a type name."""
+        # Check if it's a custom type in the registry
+        if self.type_registry.has_type(type_name):
+            return self.type_registry.validate_value(type_name, value)
+        
+        # Check built-in types
+        return self._validate_builtin_type(type_name, value)
