@@ -14,3 +14,13 @@ dev = [
     "ruff>=0.12.7",
     "ty>=0.0.1a20",
 ]
+
+[tool.ruff]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings  
+    "F",    # pyflakes (includes F401 unused imports)
+    "I",    # isort
+    "UP",   # pyupgrade
+]
+fix = true  # Enable auto-fix by default

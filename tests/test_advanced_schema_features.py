@@ -9,10 +9,11 @@ They define the expected behavior for:
 """
 
 import pytest
+
 import amino
+from amino.rules.parser import parse_rule
 from amino.schema.parser import parse_schema
 from amino.schema.types import SchemaType
-from amino.rules.parser import parse_rule
 from amino.utils.errors import SchemaParseError
 
 
@@ -79,7 +80,7 @@ def test_function_declarations(schema_content, expected_functions, should_raise,
     else:
         ast = parse_schema(schema_content)
         assert len(ast.functions) == len(expected_functions)
-        
+
         for i, (expected_name, expected_inputs, expected_output, expected_defaults) in enumerate(expected_functions):
             func = ast.functions[i]
             assert func.name == expected_name
@@ -118,10 +119,10 @@ def test_function_usage_in_rules(rule_content, schema_content, expected_function
     """Test using declared functions in rules."""
     schema_ast = parse_schema(schema_content)
     rule_ast = parse_rule(rule_content, schema_ast)
-    
+
     for func_name in expected_functions:
         assert func_name in rule_ast.functions
-    
+
     for var_name in expected_variables:
         assert var_name in rule_ast.variables
 
@@ -156,10 +157,10 @@ def test_function_usage_in_rules(rule_content, schema_content, expected_function
 def test_function_evaluation_integration(schema_def, function_impl, rule_expr, test_data, expected_result):
     """Test end-to-end function evaluation."""
     amn = amino.load_schema(schema_def)
-    
+
     ast = parse_schema(schema_def)
     func_name = ast.functions[0].name
-    
+
     amn.add_function(func_name, function_impl)
     result = amn.eval(rule_expr, test_data)
     assert result == expected_result
@@ -232,12 +233,12 @@ def test_struct_definitions(schema_content, expected_structs, should_raise, expe
     else:
         ast = parse_schema(schema_content)
         assert len(ast.structs) == len(expected_structs)
-        
+
         for i, (expected_name, expected_fields) in enumerate(expected_structs):
             struct = ast.structs[i]
             assert struct.name == expected_name
             assert len(struct.fields) == len(expected_fields)
-            
+
             for j, (field_name, field_type, is_optional) in enumerate(expected_fields):
                 field = struct.fields[j]
                 assert field.name == field_name
@@ -274,7 +275,7 @@ def test_struct_field_access_in_rules(rule_content, schema_content, expected_var
     """Test accessing struct fields in rules."""
     schema_ast = parse_schema(schema_content)
     rule_ast = parse_rule(rule_content, schema_ast)
-    
+
     for var_name in expected_variables:
         assert var_name in rule_ast.variables
 
@@ -379,7 +380,7 @@ def test_list_type_parsing(schema_content, expected_fields, should_raise, expect
     else:
         ast = parse_schema(schema_content)
         assert len(ast.fields) == len(expected_fields)
-        
+
         for i, (expected_name, expected_type, expected_type_name, expected_elements) in enumerate(expected_fields):
             field = ast.fields[i]
             assert field.name == expected_name
@@ -413,7 +414,7 @@ def test_list_operations_in_rules(rule_content, schema_content, expected_variabl
     """Test using list operations in rules."""
     schema_ast = parse_schema(schema_content)
     rule_ast = parse_rule(rule_content, schema_ast)
-    
+
     for var_name in expected_variables:
         assert var_name in rule_ast.variables
 
@@ -508,7 +509,7 @@ def test_enhanced_constraints_parsing(schema_content, expected_constraints, shou
     else:
         ast = parse_schema(schema_content)
         assert len(ast.fields) == len(expected_constraints)
-        
+
         for i, (expected_name, expected_constraint_dict) in enumerate(expected_constraints):
             field = ast.fields[i]
             assert field.name == expected_name
@@ -554,13 +555,13 @@ def test_enhanced_constraints_parsing(schema_content, expected_constraints, shou
 def test_constraint_validation_integration(schema_def, test_data, expected_valid, expected_error_contains):
     """Test constraint validation with type registry."""
     from amino.types.validation import TypeValidator
-    
+
     schema_ast = parse_schema(schema_def)
     validator = TypeValidator(schema_ast)
     result = validator.validate_data(test_data)
-    
+
     assert result.valid == expected_valid
-    
+
     if not expected_valid:
         assert len(result.errors) > 0
         assert any(expected_error_contains in error.message.lower() for error in result.errors)
@@ -621,10 +622,10 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
 def test_comprehensive_phase2_integration(schema_def, function_impl, test_data, rule_expr, expected_result):
     """Test complex scenarios combining all Phase 2 features."""
     amn = amino.load_schema(schema_def)
-    
+
     ast = parse_schema(schema_def)
     func_name = ast.functions[0].name
-    
+
     amn.add_function(func_name, function_impl)
     result = amn.eval(rule_expr, test_data)
     assert result == expected_result

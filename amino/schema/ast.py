@@ -1,7 +1,8 @@
 """Schema AST definitions."""
 
 import dataclasses
-from typing import List, Dict, Any
+from typing import Any
+
 from .types import SchemaType
 
 
@@ -11,31 +12,31 @@ class FieldDefinition:
     name: str
     field_type: SchemaType
     type_name: str = ""  # Original type name for custom types
-    element_types: List[str] = dataclasses.field(default_factory=list)  # For list[type] or list[type|type]
-    constraints: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    element_types: list[str] = dataclasses.field(default_factory=list)  # For list[type] or list[type|type]
+    constraints: dict[str, Any] = dataclasses.field(default_factory=dict)
     optional: bool = False
 
 
-@dataclasses.dataclass 
+@dataclasses.dataclass
 class StructDefinition:
     """Represents a struct definition in the schema."""
     name: str
-    fields: List[FieldDefinition]
+    fields: list[FieldDefinition]
 
 
 @dataclasses.dataclass
 class FunctionDefinition:
     """Represents a function declaration in the schema."""
     name: str
-    input_types: List[SchemaType]
+    input_types: list[SchemaType]
     output_type: SchemaType
-    default_args: List[str] = dataclasses.field(default_factory=list)
+    default_args: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
 class SchemaAST:
     """Root schema abstract syntax tree."""
-    fields: List[FieldDefinition] = dataclasses.field(default_factory=list)
-    structs: List[StructDefinition] = dataclasses.field(default_factory=list)
-    functions: List[FunctionDefinition] = dataclasses.field(default_factory=list)
-    constants: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    fields: list[FieldDefinition] = dataclasses.field(default_factory=list)
+    structs: list[StructDefinition] = dataclasses.field(default_factory=list)
+    functions: list[FunctionDefinition] = dataclasses.field(default_factory=list)
+    constants: dict[str, Any] = dataclasses.field(default_factory=dict)

@@ -1,12 +1,13 @@
 """Amino - Schema-first classification rules engine."""
 
 from .core import Schema, load_schema
-
 from .types import TypeRegistry, register_builtin_types
-
 from .utils.errors import (
-    AminoError, SchemaParseError, RuleParseError, 
-    TypeValidationError, RuleEvaluationError
+    AminoError,
+    RuleEvaluationError,
+    RuleParseError,
+    SchemaParseError,
+    TypeValidationError,
 )
 
 __version__ = "0.1.0"
@@ -14,12 +15,12 @@ __version__ = "0.1.0"
 __all__ = [
         'Schema',
     'load_schema',
-    
-        'TypeRegistry', 
+
+        'TypeRegistry',
     'register_builtin_types',
-    
+
         'AminoError',
-    'SchemaParseError', 
+    'SchemaParseError',
     'RuleParseError',
     'TypeValidationError',
     'RuleEvaluationError'

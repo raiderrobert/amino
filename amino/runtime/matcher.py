@@ -2,7 +2,7 @@
 
 import dataclasses
 import enum
-from typing import List, Any, Optional, Dict, Literal
+from typing import Any, Literal
 
 
 class MatchMode(enum.Enum):
@@ -16,7 +16,7 @@ class MatchMode(enum.Enum):
 class MatchOptions:
     """Options for rule matching."""
     mode: MatchMode = MatchMode.ALL
-    ordering_key: Optional[str] = None
+    ordering_key: str | None = None
     ordering_direction: Literal["asc", "desc"] = "asc"
 
 
@@ -24,8 +24,8 @@ class MatchOptions:
 class MatchResult:
     """Result of rule evaluation."""
     id: Any
-    results: List[Any] = dataclasses.field(default_factory=list)
-    metadata: Optional[Dict[str, Any]] = None
+    results: list[Any] = dataclasses.field(default_factory=list)
+    metadata: dict[str, Any] | None = None
 
 
 class RuleMatcher:
@@ -34,8 +34,8 @@ class RuleMatcher:
     def __init__(self, options: MatchOptions | None = None):
         self.options = options or MatchOptions()
 
-    def process_matches(self, data_id: Any, rule_matches: List[tuple[Any, bool]],
-                       rule_metadata: Dict[Any, Dict] | None = None) -> MatchResult:
+    def process_matches(self, data_id: Any, rule_matches: list[tuple[Any, bool]],
+                       rule_metadata: dict[Any, dict] | None = None) -> MatchResult:
         """Process rule evaluation results into final match result."""
         rule_metadata = rule_metadata or {}
 
@@ -60,7 +60,7 @@ class RuleMatcher:
             # For now, treat BEST the same as FIRST
             return self.process_matches(data_id, rule_matches, rule_metadata)
 
-    def _sort_rules(self, rule_ids: List[Any], metadata: Dict[Any, Dict]) -> List[Any]:
+    def _sort_rules(self, rule_ids: list[Any], metadata: dict[Any, dict]) -> list[Any]:
         """Sort rules by ordering key."""
         if not self.options.ordering_key:
             return rule_ids

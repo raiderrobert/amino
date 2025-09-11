@@ -1,9 +1,9 @@
 """Utility functions for Amino."""
 
-from typing import Any, Dict
+from typing import Any
 
 
-def flatten_dict(data: Dict[str, Any], parent_key: str = '', sep: str = '.') -> Dict[str, Any]:
+def flatten_dict(data: dict[str, Any], parent_key: str = '', sep: str = '.') -> dict[str, Any]:
     """Flatten a nested dictionary."""
     items = []
     for k, v in data.items():

@@ -1,7 +1,9 @@
 """Type registry implementation."""
 
 import dataclasses
-from typing import Dict, Any, Callable, Optional, List, Union
+from collections.abc import Callable
+from typing import Any
+
 from ..schema.types import SchemaType
 from ..utils.errors import TypeValidationError
 
@@ -10,29 +12,29 @@ from ..utils.errors import TypeValidationError
 class TypeDefinition:
     """Definition of a custom type."""
     name: str
-    base_type: Union[str, SchemaType]
-    validator: Optional[Callable[[Any], bool]] = None
-    constraints: Dict[str, Any] = dataclasses.field(default_factory=dict)
-    format_string: Optional[str] = None
-    description: Optional[str] = None
+    base_type: str | SchemaType
+    validator: Callable[[Any], bool] | None = None
+    constraints: dict[str, Any] = dataclasses.field(default_factory=dict)
+    format_string: str | None = None
+    description: str | None = None
 
 
 class TypeRegistry:
     """Registry for custom and built-in types."""
-    
+
     def __init__(self):
-        self._types: Dict[str, TypeDefinition] = {}
-        self._validators: Dict[str, Callable] = {}
-    
-    def register_type(self, name: str, base_type: Union[str, SchemaType], 
-                     validator: Optional[Callable] = None, 
-                     format_string: Optional[str] = None,
-                     description: Optional[str] = None,
+        self._types: dict[str, TypeDefinition] = {}
+        self._validators: dict[str, Callable] = {}
+
+    def register_type(self, name: str, base_type: str | SchemaType,
+                     validator: Callable | None = None,
+                     format_string: str | None = None,
+                     description: str | None = None,
                      **constraints) -> None:
         """Register a new custom type."""
         if name in self._types:
             raise TypeValidationError(f"Type '{name}' already registered")
-        
+
         type_def = TypeDefinition(
             name=name,
             base_type=base_type,
@@ -41,59 +43,59 @@ class TypeRegistry:
             format_string=format_string,
             description=description
         )
-        
+
         self._types[name] = type_def
-        
+
         if validator:
             self._validators[name] = validator
-    
-    def get_type(self, name: str) -> Optional[TypeDefinition]:
+
+    def get_type(self, name: str) -> TypeDefinition | None:
         """Get type definition by name."""
         return self._types.get(name)
-    
+
     def has_type(self, name: str) -> bool:
         """Check if type is registered."""
         return name in self._types
-    
-    def get_registered_types(self) -> List[str]:
+
+    def get_registered_types(self) -> list[str]:
         """Get list of all registered type names."""
         return list(self._types.keys())
-    
-    def get_validator(self, type_name: str) -> Optional[Callable]:
+
+    def get_validator(self, type_name: str) -> Callable | None:
         """Get validator function for a type."""
         return self._validators.get(type_name)
-    
+
     def validate_value(self, type_name: str, value: Any) -> bool:
         """Validate a value against a type."""
         type_def = self.get_type(type_name)
         if not type_def:
             # Check if it's a built-in type
             return self._validate_builtin_type(type_name, value)
-        
+
         # Validate base type first
         base_valid = True
         if isinstance(type_def.base_type, str):
             base_valid = self.validate_value(type_def.base_type, value)
         elif isinstance(type_def.base_type, SchemaType):
             base_valid = self._validate_schema_type(type_def.base_type, value)
-        
+
         if not base_valid:
             return False
-        
+
         # Apply custom validator if present
         if type_def.validator:
             try:
                 return type_def.validator(value)
             except Exception:
                 return False
-        
+
         # Apply constraints
         return self._validate_constraints(type_def.constraints, value)
-    
-    def list_types(self) -> List[str]:
+
+    def list_types(self) -> list[str]:
         """List all registered type names."""
         return list(self._types.keys())
-    
+
     def remove_type(self, name: str) -> bool:
         """Remove a type from registry."""
         if name in self._types:
@@ -102,7 +104,7 @@ class TypeRegistry:
                 del self._validators[name]
             return True
         return False
-    
+
     def _validate_builtin_type(self, type_name: str, value: Any) -> bool:
         """Validate against built-in types."""
         type_map = {
@@ -112,7 +114,7 @@ class TypeRegistry:
             "bool": bool,
             "any": lambda x: True
         }
-        
+
         if type_name in type_map:
             expected_type = type_map[type_name]
             if type_name == "any":
@@ -121,9 +123,9 @@ class TypeRegistry:
                 return isinstance(value, (int, float))
             else:
                 return isinstance(value, expected_type)
-        
+
         return False
-    
+
     def _validate_schema_type(self, schema_type: SchemaType, value: Any) -> bool:
         """Validate against SchemaType enum."""
         if schema_type == SchemaType.str:
@@ -140,8 +142,8 @@ class TypeRegistry:
             return isinstance(value, list)
         else:
             return False
-    
-    def _validate_constraints(self, constraints: Dict[str, Any], value: Any) -> bool:
+
+    def _validate_constraints(self, constraints: dict[str, Any], value: Any) -> bool:
         """Validate value against constraints."""
         for constraint, constraint_value in constraints.items():
             if constraint == "min":
@@ -157,5 +159,5 @@ class TypeRegistry:
                 # Format validation would go here
                 pass
             # Add more constraint types as needed
-        
+
         return True

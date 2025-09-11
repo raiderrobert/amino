@@ -1,4 +1,5 @@
 import pytest
+
 from amino.schema.parser import parse_schema
 from amino.schema.types import SchemaType
 from amino.utils.errors import SchemaParseError
@@ -8,9 +9,9 @@ from amino.utils.errors import SchemaParseError
     "test_input,expected_fields,should_raise,expected_error",
     [
         (
-            "foo: int", 
-            [("foo", SchemaType.int)], 
-            False, 
+            "foo: int",
+            [("foo", SchemaType.int)],
+            False,
             None
         ),
         (
@@ -22,7 +23,7 @@ from amino.utils.errors import SchemaParseError
             """,
             [
                 ("foo", SchemaType.int),
-                ("bar", SchemaType.str), 
+                ("bar", SchemaType.str),
                 ("baz", SchemaType.bool),
                 ("bat", SchemaType.any),
             ],
@@ -64,7 +65,7 @@ def test_schema_parsing(test_input, expected_fields, should_raise, expected_erro
     else:
         ast = parse_schema(test_input)
         assert len(ast.fields) == len(expected_fields)
-        
+
         for i, (expected_name, expected_type) in enumerate(expected_fields):
             field = ast.fields[i]
             assert field.name == expected_name
@@ -75,7 +76,7 @@ def test_schema_with_constraints():
     """Test schema parsing with constraints."""
     schema_content = "age: int {min: 18, max: 120}"
     ast = parse_schema(schema_content)
-    
+
     assert len(ast.fields) == 1
     field = ast.fields[0]
     assert field.name == "age"
@@ -85,10 +86,10 @@ def test_schema_with_constraints():
 
 
 def test_schema_with_optional_fields():
-    """Test schema parsing with optional fields.""" 
+    """Test schema parsing with optional fields."""
     schema_content = "name: str\nage: int?"
     ast = parse_schema(schema_content)
-    
+
     assert len(ast.fields) == 2
     assert ast.fields[0].name == "name"
     assert not ast.fields[0].optional
@@ -105,7 +106,7 @@ def test_schema_with_structs():
     }
     """
     ast = parse_schema(schema_content)
-    
+
     assert len(ast.structs) == 1
     struct = ast.structs[0]
     assert struct.name == "person"
@@ -118,7 +119,7 @@ def test_schema_with_constants():
     """Test schema parsing with constants."""
     schema_content = "MAX_AGE: int = 120\nname: str"
     ast = parse_schema(schema_content)
-    
+
     assert "MAX_AGE" in ast.constants
     assert ast.constants["MAX_AGE"] == 120
     assert len(ast.fields) == 1
@@ -132,7 +133,7 @@ def test_schema_with_comments():
     age: int
     """
     ast = parse_schema(schema_content)
-    
+
     assert len(ast.fields) == 2
     assert ast.fields[0].name == "name"
     assert ast.fields[1].name == "age"

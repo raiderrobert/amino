@@ -1,11 +1,11 @@
 """Shared pytest fixtures for the amino test suite."""
 
 import pytest
+
 import amino
-from amino.schema.parser import parse_schema
 from amino.runtime import RuleEngine
-from amino.types import TypeRegistry, register_builtin_types
-from amino.types import TypeValidator
+from amino.schema.parser import parse_schema
+from amino.types import TypeRegistry, TypeValidator, register_builtin_types
 
 
 @pytest.fixture
@@ -88,7 +88,7 @@ def populated_type_registry():
 def custom_type_registry():
     """TypeRegistry with custom positive_int type."""
     registry = TypeRegistry()
-    registry.register_type("positive_int", "int", 
+    registry.register_type("positive_int", "int",
                           validator=lambda x: isinstance(x, int) and x > 0)
     return registry
 

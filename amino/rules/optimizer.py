@@ -1,7 +1,7 @@
 """Rule optimization implementation."""
 
-from .ast import RuleAST, RuleNode, BinaryOp, UnaryOp, Literal, Operator
 from ..schema.types import SchemaType
+from .ast import BinaryOp, Literal, Operator, RuleAST, RuleNode, UnaryOp
 
 
 class RuleOptimizer:
