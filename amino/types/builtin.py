@@ -73,7 +73,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
     # Email type
     registry.register_type(
         "email",
-        "str",
+        "Str",
         validator=BuiltinTypes.validate_email,
         format_string="user@domain.com",
         description="Valid email address",
@@ -81,13 +81,13 @@ def register_builtin_types(registry: TypeRegistry) -> None:
 
     # URL type
     registry.register_type(
-        "url", "str", validator=BuiltinTypes.validate_url, format_string="https://example.com", description="Valid URL"
+        "url", "Str", validator=BuiltinTypes.validate_url, format_string="https://example.com", description="Valid URL"
     )
 
     # UUID type
     registry.register_type(
         "uuid",
-        "str",
+        "Str",
         validator=BuiltinTypes.validate_uuid,
         format_string="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
         description="Valid UUID",
@@ -96,7 +96,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
     # Phone number type
     registry.register_type(
         "phone",
-        "str",
+        "Str",
         validator=BuiltinTypes.validate_phone,
         format_string="(555) 123-4567",
         description="Valid phone number",
@@ -105,7 +105,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
     # SSN type
     registry.register_type(
         "ssn",
-        "str",
+        "Str",
         validator=BuiltinTypes.validate_ssn,
         format_string="###-##-####",
         description="Valid Social Security Number",
@@ -114,7 +114,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
     # Credit score type
     registry.register_type(
         "credit_score",
-        "int",
+        "Int",
         validator=BuiltinTypes.validate_credit_score,
         min=300,
         max=850,
@@ -124,7 +124,7 @@ def register_builtin_types(registry: TypeRegistry) -> None:
     # Currency type
     registry.register_type(
         "currency",
-        "float",
+        "Float",
         validator=BuiltinTypes.validate_currency,
         min=0,
         precision=2,
@@ -133,13 +133,13 @@ def register_builtin_types(registry: TypeRegistry) -> None:
 
     # Positive integer
     registry.register_type(
-        "positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0, min=1, description="Positive integer"
+        "positive_int", "Int", validator=lambda x: isinstance(x, int) and x > 0, min=1, description="Positive integer"
     )
 
     # Non-negative integer
     registry.register_type(
         "non_negative_int",
-        "int",
+        "Int",
         validator=lambda x: isinstance(x, int) and x >= 0,
         min=0,
         description="Non-negative integer",

@@ -10,9 +10,9 @@ from amino.utils.errors import RuleEvaluationError, SchemaParseError
 @pytest.mark.parametrize(
     "schema_content,expected_has_eval,expected_has_compile",
     [
-        ("amount: int", True, True),
-        ("amount: int\nstate_code: str", True, True),
-        ("name: str\nage: int\nemail: str", True, True),
+        ("amount: Int", True, True),
+        ("amount: Int\nstate_code: Str", True, True),
+        ("name: Str\nage: Int\nemail: Str", True, True),
     ],
 )
 def test_load_schema_from_string(schema_content, expected_has_eval, expected_has_compile):
@@ -26,35 +26,35 @@ def test_load_schema_from_string(schema_content, expected_has_eval, expected_has
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_result",
     [
-        ("amount: int", "amount > 0", {"amount": 100}, True),
-        ("amount: int", "amount > 0", {"amount": 0}, False),
-        ("amount: int", "amount >= 100", {"amount": 100}, True),
-        ("amount: int", "amount < 50", {"amount": 25}, True),
-        ("amount: int\nstate_code: str", "amount > 0 and state_code = 'CA'", {"amount": 100, "state_code": "CA"}, True),
+        ("amount: Int", "amount > 0", {"amount": 100}, True),
+        ("amount: Int", "amount > 0", {"amount": 0}, False),
+        ("amount: Int", "amount >= 100", {"amount": 100}, True),
+        ("amount: Int", "amount < 50", {"amount": 25}, True),
+        ("amount: Int\nstate_code: Str", "amount > 0 and state_code = 'CA'", {"amount": 100, "state_code": "CA"}, True),
         (
-            "amount: int\nstate_code: str",
+            "amount: Int\nstate_code: Str",
             "amount > 0 and state_code = 'CA'",
             {"amount": 100, "state_code": "NY"},
             False,
         ),
-        ("amount: int\nstate_code: str", "amount > 0 and state_code = 'CA'", {"amount": 0, "state_code": "CA"}, False),
-        ("name: str\nstatus: str", "name = 'John'", {"name": "John", "status": "active"}, True),
-        ("name: str\nstatus: str", "name != 'Jane'", {"name": "John", "status": "active"}, True),
-        ("name: str\nstatus: str", "name = 'Jane'", {"name": "John", "status": "active"}, False),
+        ("amount: Int\nstate_code: Str", "amount > 0 and state_code = 'CA'", {"amount": 0, "state_code": "CA"}, False),
+        ("name: Str\nstatus: Str", "name = 'John'", {"name": "John", "status": "active"}, True),
+        ("name: Str\nstatus: Str", "name != 'Jane'", {"name": "John", "status": "active"}, True),
+        ("name: Str\nstatus: Str", "name = 'Jane'", {"name": "John", "status": "active"}, False),
         (
-            "price: float\npercentage: float",
+            "price: Float\npercentage: Float",
             "price > 10.5 and percentage < 0.5",
             {"price": 20.0, "percentage": 0.3},
             True,
         ),
         (
-            "price: float\npercentage: float",
+            "price: Float\npercentage: Float",
             "price > 10.5 and percentage < 0.5",
             {"price": 5.0, "percentage": 0.3},
             False,
         ),
-        ("a: int\nb: int\nc: int", "a > 0 and b > 0 or c > 0", {"a": 0, "b": 0, "c": 1}, True),
-        ("a: int\nb: int\nc: int", "a > 0 and (b > 0 or c > 0)", {"a": 1, "b": 0, "c": 1}, True),
+        ("a: Int\nb: Int\nc: Int", "a > 0 and b > 0 or c > 0", {"a": 0, "b": 0, "c": 1}, True),
+        ("a: Int\nb: Int\nc: Int", "a > 0 and (b > 0 or c > 0)", {"a": 1, "b": 0, "c": 1}, True),
     ],
 )
 def test_rule_evaluation(schema_content, rule, test_data, expected_result):
@@ -100,11 +100,11 @@ class TestAminoAPI:
 
     def test_function_support(self):
         """Test external function support."""
-        amn = amino.load_schema("amount: int")
+        amn = amino.load_schema("amount: Int")
 
         amn.add_function("min_func", min)
 
-        amn2 = amino.load_schema("amount: int\nmin_func: (a: int, b: int) -> int")
+        amn2 = amino.load_schema("amount: Int\nmin_func: (a: Int, b: Int) -> int")
         amn2.add_function("min_func", min)
         result = amn2.eval("min_func(amount, 1000) < 1000", {"amount": 100})
         assert result is True
@@ -114,7 +114,7 @@ class TestAminoAPI:
     def test_type_registry_integration(self):
         """Test integration with custom type registry."""
         registry = TypeRegistry()
-        registry.register_type("positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0)
+        registry.register_type("positive_int", "Int", validator=lambda x: isinstance(x, int) and x > 0)
 
         amn = amino.load_schema("amount: positive_int", type_registry=registry)
 
@@ -125,9 +125,9 @@ class TestAminoAPI:
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_error_type,expected_error_contains",
     [
-        ("amount: int", "amount > unknown_var", {"amount": 100}, RuleEvaluationError, "Unknown variable: unknown_var"),
-        ("amount: int\nstate_code: str", "amount > 0", {"state_code": "CA"}, RuleEvaluationError, "amount"),
-        ("amount: int\nstate_code: str", "state_code = 'CA'", {"amount": 100}, RuleEvaluationError, "state_code"),
+        ("amount: Int", "amount > unknown_var", {"amount": 100}, RuleEvaluationError, "Unknown variable: unknown_var"),
+        ("amount: Int\nstate_code: Str", "amount > 0", {"state_code": "CA"}, RuleEvaluationError, "amount"),
+        ("amount: Int\nstate_code: Str", "state_code = 'CA'", {"amount": 100}, RuleEvaluationError, "state_code"),
     ],
 )
 def test_error_handling(schema_content, rule, test_data, expected_error_type, expected_error_contains):

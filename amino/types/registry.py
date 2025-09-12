@@ -112,13 +112,26 @@ class TypeRegistry:
 
     def _validate_builtin_type(self, type_name: str, value: Any) -> bool:
         """Validate against built-in types."""
-        type_map = {"str": str, "int": int, "float": float, "bool": bool, "any": lambda x: True}
+        type_map = {
+            # Capitalized types (new standard)
+            "Str": str,
+            "Int": int,
+            "Float": float,
+            "Bool": bool,
+            "Any": lambda x: True,
+            # Lowercase types (backward compatibility)
+            "str": str,
+            "int": int,
+            "float": float,
+            "bool": bool,
+            "any": lambda x: True,
+        }
 
         if type_name in type_map:
             expected_type = type_map[type_name]
-            if type_name == "any":
+            if type_name in ("any", "Any"):
                 return expected_type(value)  # Lambda function
-            elif type_name == "float":
+            elif type_name in ("float", "Float"):
                 return isinstance(value, (int, float))
             else:
                 return isinstance(value, expected_type)

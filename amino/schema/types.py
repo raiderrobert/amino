@@ -6,16 +6,16 @@ import enum
 class SchemaType(enum.Enum):
     """Built-in schema types."""
 
-    str = "str"
-    int = "int"
-    float = "float"
-    bool = "bool"
-    decimal = "decimal"
-    any = "any"
+    str = "Str"
+    int = "Int"
+    float = "Float"
+    bool = "Bool"
+    decimal = "Decimal"
+    any = "Any"
 
     # Complex types
-    list = "list"
-    struct = "struct"
+    list = "List"
+    struct = "Struct"
 
     # Special types
     custom = "custom"
@@ -30,6 +30,16 @@ def parse_type(type_str: str, strict: bool = False, known_custom_types: set | No
         known_custom_types: Set of known custom type names for validation
     """
     type_map = {
+        # Capitalized types (new standard)
+        "Str": SchemaType.str,
+        "Int": SchemaType.int,
+        "Float": SchemaType.float,
+        "Bool": SchemaType.bool,
+        "Decimal": SchemaType.decimal,
+        "Any": SchemaType.any,
+        "List": SchemaType.list,
+        "Struct": SchemaType.struct,
+        # Lowercase types (backward compatibility)
         "str": SchemaType.str,
         "int": SchemaType.int,
         "float": SchemaType.float,
@@ -43,8 +53,8 @@ def parse_type(type_str: str, strict: bool = False, known_custom_types: set | No
     if type_str in type_map:
         return type_map[type_str]
 
-    # Handle list types like list[int]
-    if type_str.startswith("list[") and type_str.endswith("]"):
+    # Handle list types like List[Int] or list[int] (backward compatibility)
+    if (type_str.startswith("List[") or type_str.startswith("list[")) and type_str.endswith("]"):
         return SchemaType.list
 
     # Check if it's a known custom type

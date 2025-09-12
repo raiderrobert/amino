@@ -13,8 +13,8 @@ const-identifier = 1*UPPER *(ALPHA / DIGIT / "_")  ; Constants are UPPER_CASE
 
 ; Types
 type = primitive-type / list-type / identifier  ; identifier for custom types
-primitive-type = "int" / "str" / "float" / "bool"
-list-type = "list" "[" list-element-types "]"
+primitive-type = "Int" / "Str" / "Float" / "Bool"
+list-type = "List" "[" list-element-types "]"
 list-element-types = type *( "|" type )
 
 ; Field Definition

@@ -22,8 +22,8 @@ from amino.utils.errors import SchemaParseError
     [
         (
             """
-            amount: int
-            calculate_tax: (amount: int, rate: float) -> float
+            amount: Int
+            calculate_tax: (amount: Int, rate: Float) -> float
             """,
             [("calculate_tax", [("amount", SchemaType.int), ("rate", SchemaType.float)], SchemaType.float)],
             False,
@@ -31,8 +31,8 @@ from amino.utils.errors import SchemaParseError
         ),
         (
             """
-            process_data: (input: str, count: int) -> str
-            validate_input: (flag: bool) -> bool
+            process_data: (input: Str, count: Int) -> str
+            validate_input: (flag: Bool) -> bool
             """,
             [
                 ("process_data", [("input", SchemaType.str), ("count", SchemaType.int)], SchemaType.str),
@@ -44,8 +44,8 @@ from amino.utils.errors import SchemaParseError
         (
             """
             struct person {
-                name: str,
-                age: int
+                name: Str,
+                age: Int
             }
             validate_person: (p: person) -> bool
             """,
@@ -53,7 +53,7 @@ from amino.utils.errors import SchemaParseError
             False,
             None,
         ),
-        ("invalid_func: (param: int) bool", [], True, "Expected"),
+        ("invalid_func: (param: Int) bool", [], True, "Expected"),
     ],
 )
 def test_function_declarations(schema_content, expected_functions, should_raise, expected_error):
@@ -82,9 +82,9 @@ def test_function_declarations(schema_content, expected_functions, should_raise,
         (
             "calculate_tax(amount, tax_rate) > 100.0",
             """
-            amount: int
-            tax_rate: float
-            calculate_tax: (amt: int, rate: float) -> float
+            amount: Int
+            tax_rate: Float
+            calculate_tax: (amt: Int, rate: Float) -> float
             """,
             ["calculate_tax"],
             ["amount", "tax_rate"],
@@ -92,10 +92,10 @@ def test_function_declarations(schema_content, expected_functions, should_raise,
         (
             "validate_data(user_input, threshold) and result > 0",
             """
-            user_input: str
-            threshold: int
-            result: float
-            validate_data: (input: str, thresh: int) -> float
+            user_input: Str
+            threshold: Int
+            result: Float
+            validate_data: (input: Str, thresh: Int) -> float
             """,
             ["validate_data"],
             ["user_input", "threshold", "result"],
@@ -119,9 +119,9 @@ def test_function_usage_in_rules(rule_content, schema_content, expected_function
     [
         (
             """
-            amount: int
-            tax_rate: float
-            calculate_tax: (amt: int, rate: float) -> float
+            amount: Int
+            tax_rate: Float
+            calculate_tax: (amt: Int, rate: Float) -> float
             """,
             lambda amount, rate: amount * rate,
             "calculate_tax(amount, tax_rate) > 50",
@@ -130,9 +130,9 @@ def test_function_usage_in_rules(rule_content, schema_content, expected_function
         ),
         (
             """
-            value: int
-            threshold: int
-            check_range: (val: int, thresh: int) -> bool
+            value: Int
+            threshold: Int
+            check_range: (val: Int, thresh: Int) -> bool
             """,
             lambda val, thresh: 0 <= val <= thresh,
             "check_range(value, threshold)",
@@ -159,8 +159,8 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
         (
             """
             struct person {
-                name: str,
-                age: int
+                name: Str,
+                age: Int
             }
             """,
             [("person", [("name", SchemaType.str, False), ("age", SchemaType.int, False)])],
@@ -170,9 +170,9 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
         (
             """
             struct user {
-                username: str,
-                email: str?,
-                age: int?
+                username: Str,
+                email: Str?,
+                age: Int?
             }
             """,
             [
@@ -191,12 +191,12 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
         (
             """
             struct person {
-                name: str,
-                age: int
+                name: Str,
+                age: Int
             }
             struct address {
-                street: str,
-                city: str?
+                street: Str,
+                city: Str?
             }
             """,
             [
@@ -209,9 +209,9 @@ def test_function_evaluation_integration(schema_def, function_impl, rule_expr, t
         (
             """
             struct user {
-                name: str,
-                tags: list[str],
-                scores: list[int]
+                name: Str,
+                tags: List[Str],
+                scores: List[Int]
             }
             """,
             [
@@ -258,8 +258,8 @@ def test_struct_definitions(schema_content, expected_structs, should_raise, expe
             "person.age >= 18 and person.name != 'admin'",
             """
             struct person {
-                name: str,
-                age: int
+                name: Str,
+                age: Int
             }
             """,
             ["person.age", "person.name"],
@@ -268,8 +268,8 @@ def test_struct_definitions(schema_content, expected_structs, should_raise, expe
             "user.active and user.name = 'test'",
             """
             struct user {
-                name: str,
-                active: bool
+                name: Str,
+                active: Bool
             }
             """,
             ["user.active", "user.name"],
@@ -291,9 +291,9 @@ def test_struct_field_access_in_rules(rule_content, schema_content, expected_var
         (
             """
             struct applicant {
-                name: str,
-                age: int,
-                state: str
+                name: Str,
+                age: Int,
+                state: Str
             }
             """,
             {"applicant": {"name": "John Doe", "age": 25, "state": "CA"}},
@@ -303,8 +303,8 @@ def test_struct_field_access_in_rules(rule_content, schema_content, expected_var
         (
             """
             struct user {
-                username: str,
-                active: bool
+                username: Str,
+                active: Bool
             }
             """,
             {"user": {"username": "alice", "active": False}},
@@ -325,10 +325,10 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
     [
         (
             """
-            tags: list[str]
-            scores: list[int]
+            tags: List[Str]
+            scores: List[Int]
             """,
-            [("tags", SchemaType.list, "list[str]", ["str"]), ("scores", SchemaType.list, "list[int]", ["int"])],
+            [("tags", SchemaType.list, "List[Str]", ["Str"]), ("scores", SchemaType.list, "List[Int]", ["Int"])],
             False,
             None,
         ),
@@ -336,7 +336,7 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
             """
             mixed_data: list[int|str|float]
             """,
-            [("mixed_data", SchemaType.list, "list[int|str|float]", ["int", "str", "float"])],
+            [("mixed_data", SchemaType.list, "list[Int|Str|Float]", ["Int", "Str", "Float"])],
             False,
             None,
         ),
@@ -346,8 +346,8 @@ def test_struct_field_evaluation(schema_def, test_data, rule_expr, expected_resu
             very_mixed: list[bool|float|str]
             """,
             [
-                ("flexible", SchemaType.list, "list[str|int]", ["str", "int"]),
-                ("very_mixed", SchemaType.list, "list[bool|float|str]", ["bool", "float", "str"]),
+                ("flexible", SchemaType.list, "list[Str|Int]", ["Str", "Int"]),
+                ("very_mixed", SchemaType.list, "list[Bool|Float|Str]", ["Bool", "Float", "Str"]),
             ],
             False,
             None,
@@ -379,16 +379,16 @@ def test_list_type_parsing(schema_content, expected_fields, should_raise, expect
         (
             "user_role in tags",
             """
-            tags: list[str]
-            user_role: str
+            tags: List[Str]
+            user_role: Str
             """,
             ["tags", "user_role"],
         ),
         (
             "'admin' in permissions and level > 1",
             """
-            permissions: list[str]
-            level: int
+            permissions: List[Str]
+            level: Int
             """,
             ["permissions", "level"],
         ),
@@ -406,9 +406,9 @@ def test_list_operations_in_rules(rule_content, schema_content, expected_variabl
 @pytest.mark.parametrize(
     "schema_def,test_data,rule_expr,expected_result",
     [
-        ("tags: list[str]", {"tags": ["user", "admin", "guest"]}, "'admin' in tags", True),
+        ("tags: List[Str]", {"tags": ["user", "admin", "guest"]}, "'admin' in tags", True),
         ("mixed: list[int|str|float]", {"mixed": [1, "hello", 3.14]}, "1 in mixed", True),
-        ("numbers: list[int]", {"numbers": [10, 20, 30, 40]}, "25 in numbers", False),
+        ("numbers: List[Int]", {"numbers": [10, 20, 30, 40]}, "25 in numbers", False),
     ],
 )
 def test_list_validation_and_operations(schema_def, test_data, rule_expr, expected_result):
@@ -423,8 +423,8 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
     [
         (
             """
-            username: str {length: 8}
-            password: str {min: 8, max: 32}
+            username: Str {length: 8}
+            password: Str {min: 8, max: 32}
             """,
             [("username", {"length": 8}), ("password", {"min": 8, "max": 32})],
             False,
@@ -432,8 +432,8 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
         ),
         (
             """
-            email: str {format: email}
-            phone: str {format: phone}
+            email: Str {format: email}
+            phone: Str {format: phone}
             """,
             [("email", {"format": "email"}), ("phone", {"format": "phone"})],
             False,
@@ -441,8 +441,8 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
         ),
         (
             """
-            age: int {min: 0, max: 150}
-            score: float {min: 0.0, max: 100.0}
+            age: Int {min: 0, max: 150}
+            score: Float {min: 0.0, max: 100.0}
             """,
             [("age", {"min": 0, "max": 150}), ("score", {"min": 0, "max": 100})],
             False,
@@ -450,7 +450,7 @@ def test_list_validation_and_operations(schema_def, test_data, rule_expr, expect
         ),
         (
             """
-            title: str {format: title, min: 5, max: 100}
+            title: Str {format: title, min: 5, max: 100}
             """,
             [("title", {"format": "title", "min": 5, "max": 100})],
             False,
@@ -478,11 +478,11 @@ def test_enhanced_constraints_parsing(schema_content, expected_constraints, shou
 @pytest.mark.parametrize(
     "schema_def,test_data,expected_valid,expected_error_contains",
     [
-        ("email: str {format: email}", {"email": "user@example.com"}, True, None),
-        ("email: str {format: email}", {"email": "invalid-email"}, False, "email"),
-        ("age: int {min: 0, max: 150}", {"age": 25}, True, None),
-        ("age: int {min: 18, max: 120}", {"age": 16}, False, "minimum"),
-        ("age: int {min: 0, max: 120}", {"age": 150}, False, "maximum"),
+        ("email: Str {format: email}", {"email": "user@example.com"}, True, None),
+        ("email: Str {format: email}", {"email": "invalid-email"}, False, "email"),
+        ("age: Int {min: 0, max: 150}", {"age": 25}, True, None),
+        ("age: Int {min: 18, max: 120}", {"age": 16}, False, "minimum"),
+        ("age: Int {min: 0, max: 120}", {"age": 150}, False, "maximum"),
     ],
 )
 def test_constraint_validation_integration(schema_def, test_data, expected_valid, expected_error_contains):
@@ -506,13 +506,13 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
         (
             """
             struct applicant {
-                name: str,
-                age: int,
-                tags: list[str]
+                name: Str,
+                age: Int,
+                tags: List[Str]
             }
 
-            MIN_AGE: int = 18
-            validate_eligibility: (app: applicant, min_age: int) -> bool
+            MIN_AGE: Int = 18
+            validate_eligibility: (app: applicant, min_age: Int) -> bool
             """,
             lambda applicant, min_age: applicant["age"] >= min_age,
             {"applicant": {"name": "John", "age": 25, "tags": ["premium", "verified"]}},
@@ -526,12 +526,12 @@ def test_constraint_validation_integration(schema_def, test_data, expected_valid
         (
             """
             struct user {
-                username: str,
-                permissions: list[str],
-                level: int
+                username: Str,
+                permissions: List[Str],
+                level: Int
             }
 
-            check_access: (u: user, required_perm: str) -> bool
+            check_access: (u: user, required_perm: Str) -> bool
             """,
             lambda user, required_perm: required_perm in user["permissions"] and user["level"] >= 1,
             {"user": {"username": "alice", "permissions": ["read", "write", "admin"], "level": 2}},

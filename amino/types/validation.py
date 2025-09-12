@@ -95,9 +95,9 @@ class TypeValidator:
         """Validate a field value against its type and constraints."""
 
         # Handle list types
-        if field_def.field_type.value == "list":
+        if field_def.field_type.value == "List":
             if not isinstance(value, list):
-                result.add_error(field_name, f"Expected list for field '{field_name}'", value)
+                result.add_error(field_name, f"Expected List for field '{field_name}'", value)
                 return
 
             # Validate list element types
@@ -131,12 +131,22 @@ class TypeValidator:
     def _validate_builtin_type(self, type_name: str, value: Any) -> bool:
         """Validate against built-in types."""
         type_validators = {
+            # Capitalized types (new standard)
+            "Str": lambda x: isinstance(x, str),
+            "Int": lambda x: isinstance(x, int),
+            "Float": lambda x: isinstance(x, (int, float)),
+            "Bool": lambda x: isinstance(x, bool),
+            "Decimal": lambda x: isinstance(x, (int, float)),
+            "Any": lambda x: True,
+            "List": lambda x: isinstance(x, list),
+            # Lowercase types (backward compatibility)
             "str": lambda x: isinstance(x, str),
             "int": lambda x: isinstance(x, int),
             "float": lambda x: isinstance(x, (int, float)),
             "bool": lambda x: isinstance(x, bool),
             "decimal": lambda x: isinstance(x, (int, float)),
             "any": lambda x: True,
+            "list": lambda x: isinstance(x, list),
         }
 
         validator = type_validators.get(type_name)

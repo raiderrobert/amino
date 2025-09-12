@@ -11,19 +11,19 @@ from amino.types import TypeRegistry, TypeValidator, register_builtin_types
 @pytest.fixture
 def simple_int_schema():
     """Simple schema with just an integer field."""
-    return parse_schema("amount: int")
+    return parse_schema("amount: Int")
 
 
 @pytest.fixture
 def ecommerce_schema():
     """E-commerce schema with amount and state_code fields."""
-    return parse_schema("amount: int\nstate_code: str")
+    return parse_schema("amount: Int\nstate_code: Str")
 
 
 @pytest.fixture
 def person_schema():
     """Schema with name and age fields."""
-    return parse_schema("name: str\nage: int")
+    return parse_schema("name: Str\nage: Int")
 
 
 @pytest.fixture
@@ -31,8 +31,8 @@ def person_struct_schema():
     """Schema with person struct definition."""
     return parse_schema("""
     struct person {
-        name: str,
-        age: int
+        name: Str,
+        age: Int
     }
     """)
 
@@ -42,12 +42,12 @@ def advanced_schema():
     """Complex schema with struct, functions, and constraints."""
     return parse_schema("""
     struct applicant {
-        name: str,
-        age: int,
-        tags: list[str]
+        name: Str,
+        age: Int,
+        tags: List[Str]
     }
 
-    MIN_AGE: int = 18
+    MIN_AGE: Int = 18
     validate_eligibility: (applicant, int) -> bool
     """)
 
@@ -88,26 +88,26 @@ def populated_type_registry():
 def custom_type_registry():
     """TypeRegistry with custom positive_int type."""
     registry = TypeRegistry()
-    registry.register_type("positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0)
+    registry.register_type("positive_int", "Int", validator=lambda x: isinstance(x, int) and x > 0)
     return registry
 
 
 @pytest.fixture
 def amino_simple():
     """Amino instance with simple integer schema."""
-    return amino.load_schema("amount: int")
+    return amino.load_schema("amount: Int")
 
 
 @pytest.fixture
 def amino_ecommerce():
     """Amino instance with e-commerce schema."""
-    return amino.load_schema("amount: int\nstate_code: str")
+    return amino.load_schema("amount: Int\nstate_code: Str")
 
 
 @pytest.fixture
 def amino_person():
     """Amino instance with person schema."""
-    return amino.load_schema("name: str\nage: int")
+    return amino.load_schema("name: Str\nage: Int")
 
 
 @pytest.fixture

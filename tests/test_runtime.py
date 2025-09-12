@@ -11,10 +11,10 @@ from amino.utils.errors import RuleEvaluationError, RuleParseError
 @pytest.mark.parametrize(
     "schema_content,rules,expected_rule_count",
     [
-        ("amount: int", [{"id": 1, "rule": "amount > 0"}], 1),
-        ("amount: int\nstate: str", [{"id": 1, "rule": "amount > 0"}, {"id": 2, "rule": "state = 'CA'"}], 2),
+        ("amount: Int", [{"id": 1, "rule": "amount > 0"}], 1),
+        ("amount: Int\nstate: Str", [{"id": 1, "rule": "amount > 0"}, {"id": 2, "rule": "state = 'CA'"}], 2),
         (
-            "a: int\nb: int\nc: int",
+            "a: Int\nb: Int\nc: Int",
             [{"id": 1, "rule": "a > 0"}, {"id": 2, "rule": "b > 0"}, {"id": 3, "rule": "c > 0"}],
             3,
         ),
@@ -33,12 +33,12 @@ def test_rule_compilation(schema_content, rules, expected_rule_count):
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_result",
     [
-        ("amount: int", "amount > 100", {"amount": 150}, True),
-        ("amount: int", "amount > 100", {"amount": 50}, False),
-        ("amount: int", "amount >= 100", {"amount": 100}, True),
-        ("amount: int", "amount < 50", {"amount": 25}, True),
-        ("name: str", "name = 'John'", {"name": "John"}, True),
-        ("name: str", "name != 'John'", {"name": "Jane"}, True),
+        ("amount: Int", "amount > 100", {"amount": 150}, True),
+        ("amount: Int", "amount > 100", {"amount": 50}, False),
+        ("amount: Int", "amount >= 100", {"amount": 100}, True),
+        ("amount: Int", "amount < 50", {"amount": 25}, True),
+        ("name: Str", "name = 'John'", {"name": "John"}, True),
+        ("name: Str", "name != 'John'", {"name": "Jane"}, True),
     ],
 )
 def test_single_rule_evaluation(schema_content, rule, test_data, expected_result):
@@ -77,7 +77,7 @@ class TestRuleEngine:
 
     def test_rule_with_functions(self):
         """Test rules with external functions."""
-        schema_ast = parse_schema("a: int\nb: int\nmin_func: (x: int, y: int) -> int")
+        schema_ast = parse_schema("a: Int\nb: Int\nmin_func: (x: Int, y: Int) -> int")
         engine = RuleEngine(schema_ast)
         engine.add_function("min_func", min)
 
@@ -104,8 +104,8 @@ class TestRuleEngine:
 @pytest.mark.parametrize(
     "schema_content,rules,expected_error_type,expected_error_contains",
     [
-        ("amount: int", [{"id": 1, "rule": "invalid > syntax >"}], RuleParseError, "Unknown variable"),
-        ("amount: int", [{"id": 1, "rule": "amount > 0 and"}], RuleParseError, "Unexpected end"),
+        ("amount: Int", [{"id": 1, "rule": "invalid > syntax >"}], RuleParseError, "Unknown variable"),
+        ("amount: Int", [{"id": 1, "rule": "amount > 0 and"}], RuleParseError, "Unexpected end"),
     ],
 )
 def test_invalid_rule_compilation(schema_content, rules, expected_error_type, expected_error_contains):
@@ -121,8 +121,8 @@ def test_invalid_rule_compilation(schema_content, rules, expected_error_type, ex
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_error_type,expected_error_contains",
     [
-        ("amount: int", "unknown_var > 0", {"amount": 100}, RuleEvaluationError, "Unknown variable: unknown_var"),
-        ("amount: int", "missing_field > 0", {"amount": 100}, RuleEvaluationError, "Unknown variable: missing_field"),
+        ("amount: Int", "unknown_var > 0", {"amount": 100}, RuleEvaluationError, "Unknown variable: unknown_var"),
+        ("amount: Int", "missing_field > 0", {"amount": 100}, RuleEvaluationError, "Unknown variable: missing_field"),
     ],
 )
 def test_rule_evaluation_errors(schema_content, rule, test_data, expected_error_type, expected_error_contains):
@@ -140,7 +140,7 @@ class TestMatchOptions:
 
     def test_all_matches_mode(self):
         """Test ALL matches mode (default)."""
-        schema_ast = parse_schema("amount: int")
+        schema_ast = parse_schema("amount: Int")
         engine = RuleEngine(schema_ast)
 
         compiled = engine.compile_rules(
@@ -156,7 +156,7 @@ class TestMatchOptions:
 
     def test_first_match_mode(self):
         """Test FIRST match mode with ordering."""
-        schema_ast = parse_schema("amount: int")
+        schema_ast = parse_schema("amount: Int")
         engine = RuleEngine(schema_ast)
 
         compiled = engine.compile_rules(
@@ -173,7 +173,7 @@ class TestMatchOptions:
 
     def test_first_match_descending_order(self):
         """Test FIRST match mode with descending order."""
-        schema_ast = parse_schema("amount: int")
+        schema_ast = parse_schema("amount: Int")
         engine = RuleEngine(schema_ast)
 
         compiled = engine.compile_rules(
@@ -190,7 +190,7 @@ class TestMatchOptions:
 
     def test_no_matches(self):
         """Test handling when no rules match."""
-        schema_ast = parse_schema("amount: int")
+        schema_ast = parse_schema("amount: Int")
         engine = RuleEngine(schema_ast)
 
         compiled = engine.compile_rules(
@@ -204,7 +204,7 @@ class TestMatchOptions:
 
     def test_metadata_preservation(self):
         """Test that rule metadata is preserved."""
-        schema_ast = parse_schema("amount: int")
+        schema_ast = parse_schema("amount: Int")
         engine = RuleEngine(schema_ast)
 
         compiled = engine.compile_rules(
@@ -234,7 +234,7 @@ class TestCompiledRules:
 
     def test_function_addition(self):
         """Test adding functions to compiled rules."""
-        schema_ast = parse_schema("a: int\nb: int")
+        schema_ast = parse_schema("a: Int\nb: Int")
         engine = RuleEngine(schema_ast)
 
         compiled = engine.compile_rules(
