@@ -17,8 +17,8 @@ upgrade-dependencies:
 
 .PHONY: tidy
 tidy:
-    tidy-ruff
-    tidy-ty
+	tidy-ruff
+	tidy-ty
 
 .PHONY: tidy-ruff
 tidy-ruff:
@@ -35,4 +35,4 @@ tidy-ty:
 
 .PHONY: test
 test:
-	PYTHONPATH=amino uv run --locked pytest --cov-report=term --cov-report=xml --cov-config=pyproject.toml --cov=amino
+	uv run --locked pytest tests --cov-report=term --cov-report=xml --cov-config=pyproject.toml --cov=amino
