@@ -7,11 +7,23 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "abnf"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/29/3e6a069ffc06a53742cb086155e3bcb5cfc9069c01d9620d25e83262a1a0/abnf-2.4.0.tar.gz", hash = "sha256:78a36eb74d2f7fbbb81a0bc7c237ac29977d5db1cf69cf68099e2ecda6ee3cac", size = 321750 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/30/3ba0d00ffc522a71982e49f97ec774fc52c6f036ad8dcb083fea28a9cb71/abnf-2.4.0-py3-none-any.whl", hash = "sha256:a496e3de97ccb7b5a48249f27e75e82d00b3e9ca25049a7261b9b6225e68c48c", size = 49332 },
+]
+
+[[package]]
 name = "amino"
 version = "0.1.0"
 source = { virtual = "." }
 
 [package.optional-dependencies]
+abnf = [
+    { name = "abnf" },
+]
 dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -21,12 +33,13 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "abnf", marker = "extra == 'abnf'", specifier = ">=2.4.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.7" },
     { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.1a20" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "abnf"]
 
 [[package]]
 name = "colorama"

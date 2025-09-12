@@ -14,6 +14,9 @@ dev = [
     "ruff>=0.12.7",
     "ty>=0.0.1a20",
 ]
+abnf = [
+    "abnf>=2.4.0",
+]
 
 [tool.ruff]
 line-length = 120  # More reasonable line length
