@@ -30,3 +30,9 @@ select = [
     "C4",    # flake8-comprehensions
     "RUF",   # ruff-specific rules
 ]
+
+[tool.ty.src]
+exclude = [
+    "examples/**",
+]
+
