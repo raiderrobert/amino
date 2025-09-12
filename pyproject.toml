@@ -1,26 +1,32 @@
-[tool.poetry]
+[project]
 name = "amino"
 version = "0.1.0"
 description = "A framework to build custom domain specific languages"
-authors = ["Robert Roskam <raiderrobert@gmail.com>"]
-license = "MIT"
+authors = [{name = "Robert Roskam", email = "raiderrobert@gmail.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
 
-[tool.poetry.dependencies]
-python = "^3.10"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov",
+    "ruff>=0.12.7",
+    "ty>=0.0.1a20",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.2"
-pytest-cov = "*"
-pytest-lazy-fixture = "*"
-ipython  = "*"
-black = "*"
-flake8 = "*"
-py = "^1.11.0"
+[tool.ruff]
+line-length = 120  # More reasonable line length
+fix = true  # Enable auto-fix by default
 
-[build-system]
-requires = ["poetry-core>=1.0.0a5"]
-build-backend = "poetry.core.masonry.api"
-
-
-[tool.black]
-line-length = 120
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings  
+    "F",     # pyflakes (includes F401 unused imports)
+    "I",     # isort import sorting
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "RUF",   # ruff-specific rules
+]

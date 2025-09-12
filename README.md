@@ -1,12 +1,58 @@
 # amino
+
 A toolkit and DSL for classification rules engines—sometimes called expert systems. Much focus has been given toward AI and machine learning tooling to help take humans out of the loop. However, there are exist a wide variety of current and future applications for custom rules engines.
 
-Amino inverts the problem space and placing a schema at the center, not unlike how GraphQL has done so for APIs.
+Amino inverts the problem space by placing a schema at the center, not unlike how GraphQL has done so for APIs.
 
-Amino has three parts:
-- a schema definition like graphql or protobuf for the data space it operates on
-- a pre-built small and extensible DSL for conditional logic to operate on these schemas
-- a runtime to evaluate the rules against the data set
+## Features
+
+Amino has three key components:
+- **Schema definition**: Like GraphQL or Protobuf for the data space it operates on
+- **DSL**: A pre-built, small and extensible domain-specific language for conditional logic
+- **Runtime**: Fast evaluation of rules against data sets
+
+## Quick Start
+
+### Installation
+
+```bash
+pip install amino
+```
+
+### Development Installation
+
+```bash
+git clone https://github.com/yourusername/amino.git
+cd amino
+pip install -e .[dev]
+```
+
+### Requirements
+
+- Python 3.10+
+
+### Your First Schema
+
+Create a schema file `schema.amn`:
+```
+amount: int
+state_code: str
+```
+
+Then use it in Python:
+```python
+import amino
+
+# Load schema
+amn = amino.load_schema("schema.amn")
+
+# Evaluate a simple rule
+result = amn.eval("amount > 0 and state_code = 'CA'", {
+    "amount": 100, 
+    "state_code": "CA"
+})
+print(result)  # True
+```
 
 
 ## How to Use
@@ -150,7 +196,7 @@ schema.amn
 amount: int
 state_code: str
 
-smallest_number: (int, int) -> int
+smallest_number: (first: int, second: int) -> int
 
 ```
 
@@ -164,31 +210,27 @@ Note the passing of `min` and passing it into the `funcs` argument while loading
 True
 ```
 
-#### Default Arguments
+#### Function Parameters
 
-Functions also support more complex cases, such as referencing other variables in the schema:
+Functions require named parameters that clearly document their purpose:
 
 schema.amn
 ```
-COMPANY_MAX_LOAN_AMT: int = 100_000
-
-loan_amount: int
-approved_amount: int
+amount: int
 state_code: str
 
-within_tolerances: (COMPANY_MAX_LOAN_AMT)(loan_amount, approved_amount) -> bool
+calculate_tax: (amount: int, rate: float) -> float
 
 ```
 
-Note the passing of `within_tolerances` and passing it into the `funcs` argument while loading the schema.
-
-At runtime, three variables in the order provided will be passed to `within_tolerances`
+Note the passing of `calculate_tax` and passing it into the `funcs` argument while loading the schema.
 
 ```
->>> import custom_module
->>> amn = amino.load_schema("schema.amn", {'within_tolerances': custom_module.within_tolerances})
+>>> def tax_calculator(amount, rate):
+...     return amount * rate
+>>> amn = amino.load_schema("schema.amn", {'calculate_tax': tax_calculator})
 >>> data = {"amount": 100, "state_code": "CA"}
->>> rule = "within_tolerances(10_000, 90_000) and state_code = 'CA'"
+>>> rule = "calculate_tax(amount, 0.08) > 5.0 and state_code = 'CA'"
 >>> amn.eval(rule, data)
 True
 ```
@@ -233,3 +275,8 @@ and
 or
 
 ```
+
+## Documentation
+
+- [Development Guide](DEVELOPMENT.md) - Setup, testing, and contribution guidelines
+- [Examples](examples/README.md) - Additional examples and use cases

@@ -1,0 +1,46 @@
+# IoT Smart Home Automation Schema
+
+struct sensor_data {
+    device_id: str,
+    temperature: float,
+    humidity: float,
+    light_level: int,
+    motion_detected: bool,
+    air_quality_index: int,
+    timestamp: str
+}
+
+struct device_state {
+    device_id: str,
+    device_type: str,  # "thermostat", "lights", "security", "fan", "blinds"
+    is_online: bool,
+    current_setting: float,
+    power_consumption: float,
+    last_updated: str
+}
+
+struct home_context {
+    occupancy_status: str,  # "home", "away", "sleep"
+    security_mode: str,     # "armed", "disarmed", "night"
+    time_of_day: str,       # "morning", "day", "evening", "night"
+    season: str,            # "spring", "summer", "fall", "winter"
+    energy_saving_mode: bool
+}
+
+struct user_preferences {
+    preferred_temp_home: float,
+    preferred_temp_away: float,
+    preferred_temp_sleep: float,
+    auto_lights: bool,
+    energy_conscious: bool,
+    notification_threshold_temp: float
+}
+
+# Utility functions for IoT logic  
+time_in_range: (current_time: str, start: str, end: str) -> bool
+calculate_energy_cost: (power_kw: float, hours: float) -> float
+get_weather_forecast: (location: str) -> str  # Returns "sunny", "rainy", "cloudy"
+send_notification: (user_id: str, message: str) -> bool
+get_average_consumption: (device_id: str, days: int) -> float
+temp_above_preferred: (current_temp: float, preferred_temp: float, threshold: float) -> bool
+power_above_threshold: (current_power: float, average_power: float, multiplier: float) -> bool
