@@ -1,6 +1,6 @@
 # Amino Constraints System Design
 
-## Executive Summary
+## Summary
 
 This document outlines the design for extending amino's constraint validation system from its current basic support to a comprehensive, extensible validation framework. Based on research of 10+ modern validation libraries and schema languages, this design provides a roadmap for enhancing amino's expressiveness while maintaining its simplicity.
 

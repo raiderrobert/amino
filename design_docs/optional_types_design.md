@@ -1,6 +1,6 @@
 # Amino Optional Types Design
 
-## Executive Summary
+## Summary
 
 This document outlines the design for adding optional field support to amino using the `?` syntax marker. Optional fields allow schema authors to specify that certain fields may be absent or null, providing flexibility in data validation while maintaining type safety.
 
