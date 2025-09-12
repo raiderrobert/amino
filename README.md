@@ -35,8 +35,8 @@ pip install -e .[dev]
 
 Create a schema file `schema.amn`:
 ```
-amount: int
-state_code: str
+amount: Int
+state_code: Str
 ```
 
 Then use it in Python:
@@ -64,8 +64,8 @@ Declare a schema
 
 schema.amn
 ```
-amount: int
-state_code: str
+amount: Int
+state_code: Str
 ```
 
 Import schema and evaluate a rule to see if it matches the matching variables passed in.
@@ -86,8 +86,8 @@ Declare a schema
 
 schema.amn
 ```
-amount: int
-state_code: str
+amount: Int
+state_code: Str
 ```
 
 Import schema and use it in your code. ( Note: You don't need to specify `id` for just one data set or one rule, but
@@ -154,8 +154,8 @@ We support comments with the `#` symbol. Anything to the right of the comment sy
 schema.amn
 ```
 # this is a comment
-amount: int  # this is too
-state_code: str
+amount: Int  # this is too
+state_code: Str
 ```
 
 
@@ -165,11 +165,11 @@ We support C-like structs with the `struct` keyword
 schema.amn
 ```
 struct applicant {
-    state_code: str,
+    state_code: Str,
 }
 
 struct loan {
-    amount: int
+    amount: Int
 }
 
 ```
@@ -193,10 +193,10 @@ project (e.g. Python, TypeScript, etc.) is the guest language.
 
 schema.amn
 ```
-amount: int
-state_code: str
+amount: Int
+state_code: Str
 
-smallest_number: (first: int, second: int) -> int
+smallest_number: (first: Int, second: Int) -> Int
 
 ```
 
@@ -216,10 +216,10 @@ Functions require named parameters that clearly document their purpose:
 
 schema.amn
 ```
-amount: int
-state_code: str
+amount: Int
+state_code: Str
 
-calculate_tax: (amount: int, rate: float) -> float
+calculate_tax: (amount: Int, rate: Float) -> Float
 
 ```
 
@@ -243,9 +243,9 @@ We support homogenous or heterogeneous arrays with the `list` keyword
 
 schema.amn
 ```
-state_code: str
-amounts: list[int]
-things: list[int|str|float]
+state_code: Str
+amounts: List[Int]
+things: List[Int|Str|Float]
 ```
 
 
