@@ -1,5 +1,7 @@
 # Amino Constraints System Design
 
+Status: Draft
+
 ## Summary
 
 This document outlines the design for extending amino's constraint validation system from its current basic support to a comprehensive, extensible validation framework. Based on research of 10+ modern validation libraries and schema languages, this design provides a roadmap for enhancing amino's expressiveness while maintaining its simplicity.
@@ -142,7 +144,7 @@ temperature: Int {exclusiveMin: -273, exclusiveMax: 1000}
 
 ### String Constraints
 ```amino
-# Length constraints  
+# Length constraints
 name: Str {minLength: 2, maxLength: 50}
 code: Str {exactLength: 6}
 
@@ -199,7 +201,7 @@ constraint = constraint-name ":" SP constraint-value
 **Extended constraint syntax:**
 ```abnf
 constraint-name = "min" / "max" / "exclusiveMin" / "exclusiveMax" /
-                  "minLength" / "maxLength" / "exactLength" / 
+                  "minLength" / "maxLength" / "exactLength" /
                   "minItems" / "maxItems" / "exactItems" /
                   "pattern" / "oneOf" / "unique" / "custom"
 constraint-value = number / string / array / boolean
@@ -216,7 +218,7 @@ This feature will require changes to:
 ## Backward Compatibility
 
 All existing schemas continue to work unchanged:
-- Current basic constraints remain supported  
+- Current basic constraints remain supported
 - No breaking changes to existing constraint syntax
 - New constraint types are additive
 
@@ -240,8 +242,8 @@ struct Product {
 ```amino
 struct UserRegistration {
     username: Str {
-        minLength: 3, 
-        maxLength: 20, 
+        minLength: 3,
+        maxLength: 20,
         pattern: "^[a-zA-Z0-9_]+$"
     },
     email: Str {format: "email"},

@@ -1,5 +1,7 @@
 # Amino Optional Types Design
 
+Status: Draft
+
 ## Summary
 
 This document outlines the design for adding optional field support to amino using the `?` syntax marker. Optional fields allow schema authors to specify that certain fields may be absent or null, providing flexibility in data validation while maintaining type safety.
@@ -199,7 +201,7 @@ struct UserProfile {
     id: Str,
     username: Str,
     email: Str,
-    
+
     # Optional fields
     first_name: Str?,
     last_name: Str?,
@@ -207,7 +209,7 @@ struct UserProfile {
     bio: Str?,
     avatar_url: Str?,
     birth_date: Str?,
-    
+
     # Optional with constraints
     age: Int? {min: 13, max: 120}
 }
@@ -219,7 +221,7 @@ struct ApiResponse {
     # Always present
     success: Bool,
     timestamp: Str,
-    
+
     # Optional depending on success
     data: Str?,
     error_message: Str?,
@@ -238,7 +240,7 @@ handle_request: (path: Str, method: Str, headers: List[Str]?) -> ApiResponse
 - **Clear Intent**: Explicitly express which fields are essential vs nice-to-have
 - **API Design**: Better support for PATCH operations and partial updates
 
-### For Data Validation  
+### For Data Validation
 - **Realistic Validation**: Handle incomplete data gracefully
 - **Better Error Messages**: Distinguish between missing required vs optional fields
 - **Partial Validation**: Validate only the fields that are present

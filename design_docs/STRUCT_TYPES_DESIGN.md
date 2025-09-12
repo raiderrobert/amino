@@ -1,5 +1,7 @@
 # Amino Struct-as-Type Support Design
 
+Status: Draft
+
 ## Summary
 
 This document outlines the design for extending amino's struct system to support using structs as first-class types in field definitions, function parameters, and validation contexts.
@@ -30,7 +32,7 @@ struct User {
     age: Int
 }
 
-# Field definitions  
+# Field definitions
 name: Str
 age: Int
 active: Bool
@@ -241,7 +243,7 @@ struct User {
 ### Current Grammar
 ```abnf
 field-type = primitive-type / custom-type
-primitive-type = "Int" / "Str" / "Float" / "Bool"  
+primitive-type = "Int" / "Str" / "Float" / "Bool"
 custom-type = WORD
 ```
 
