@@ -42,57 +42,59 @@ def validate_abnf_syntax(filename: str) -> tuple[list[str], dict[str, Rule] | No
     try:
         with open(filename) as f:
             content = f.read()
-        
+
         # Parse each rule separately
-        lines = content.split('\n')
+        lines = content.split("\n")
         current_rule = ""
-        
+
         for line_num, line in enumerate(lines, 1):
             line = line.strip()
-            
+
             # Skip empty lines and comments
-            if not line or line.startswith(';'):
+            if not line or line.startswith(";"):
                 continue
-                
+
             # If line doesn't start with space, it's a new rule
-            if not line.startswith(' ') and '=' in line:
+            if not line.startswith(" ") and "=" in line:
                 # Process previous rule if exists
                 if current_rule:
                     try:
                         rule = Rule(current_rule)
-                        rule_name = current_rule.split('=')[0].strip()
+                        rule_name = current_rule.split("=")[0].strip()
                         rules[rule_name] = rule
                     except Exception as e:
-                        errors.append(f"Error parsing rule at line {line_num-1}: {e}")
-                
+                        errors.append(f"Error parsing rule at line {line_num - 1}: {e}")
+
                 # Start new rule
                 current_rule = line
             else:
                 # Continuation of current rule
                 current_rule += " " + line
-        
+
         # Process the last rule
         if current_rule:
             try:
                 rule = Rule(current_rule)
-                rule_name = current_rule.split('=')[0].strip()
+                rule_name = current_rule.split("=")[0].strip()
                 rules[rule_name] = rule
             except Exception as e:
                 errors.append(f"Error parsing final rule: {e}")
-        
+
         return errors, rules if rules else None
-        
+
     except abnf.GrammarError as e:
         errors.append(f"ABNF Grammar Error: {e}")
     except abnf.ParseError as e:
         errors.append(f"ABNF Parse Error: {e}")
     except Exception as e:
         errors.append(f"Error parsing ABNF file: {e}")
-    
+
     return errors, None
 
 
-def validate_schema_examples(example_files: list[str], rules: dict[str, Rule] | None = None) -> tuple[list[str], list[str]]:
+def validate_schema_examples(
+    example_files: list[str], rules: dict[str, Rule] | None = None
+) -> tuple[list[str], list[str]]:
     """Validate schema examples against ABNF grammar rules."""
     issues = []
     validated_files = []
@@ -180,7 +182,7 @@ def _validate_with_regex(example_file: str, content: str) -> list[str]:
             continue  # Handled above
         else:
             issues.append(f"{example_file}:{i} - Unrecognized syntax: {line}")
-    
+
     return issues
 
 
@@ -246,7 +248,11 @@ def compare_abnf_with_parser() -> dict[str, Any]:
 
 
 def generate_report(
-    abnf_errors: list[str], schema_issues: list[str], validated_files: list[str], comparison: dict[str, Any], rules: dict[str, Rule] | None = None
+    abnf_errors: list[str],
+    schema_issues: list[str],
+    validated_files: list[str],
+    comparison: dict[str, Any],
+    rules: dict[str, Rule] | None = None,
 ) -> str:
     """Generate a comprehensive validation report."""
 
