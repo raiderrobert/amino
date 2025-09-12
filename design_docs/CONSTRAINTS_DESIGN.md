@@ -8,29 +8,18 @@ This document outlines the design for extending amino's constraint validation sy
 
 ### What Works Today
 
-Amino currently supports basic constraints with this syntax:
+Amino currently supports only using types as a constraint:
 ```amino
-age: Int {min: 18, max: 120}
-name: Str {length: 5}
-email: Str {format: "email"}
+age: Int
+name: Str
+email: Str
 ```
-
-**Implemented Constraints:**
-- `min`, `max` - Numeric range validation
-- `length` - Exact string/list length
-- `format` - Limited format validation (`email`, `url`, `uuid`)
-
-**Current Architecture:**
-- Grammar support: `field-constraints = "{" SP *(constraint SP) "}"`
-- Parser: `_parse_constraints()` in `amino/schema/parser.py`
-- Validation: `_validate_constraints()` in `amino/types/validation.py`
-- Storage: `constraints: dict[str, Any]` in `FieldDefinition`
 
 ### Current Limitations
 
-1. **Limited Constraint Types**: Only 4 constraint types supported
+1. **Limited Constraint Types**: No constraint types supported
 2. **Basic Error Messages**: No context or field path information
-3. **No Composition**: Cannot combine multiple constraints meaningfully
+3. **No Composition**: Can only do unions on types
 4. **No Custom Validation**: No extensibility mechanism
 5. **No Cross-Field Validation**: Cannot validate relationships between fields
 6. **No Conditional Logic**: Cannot apply constraints based on other field values

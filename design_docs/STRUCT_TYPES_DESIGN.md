@@ -12,14 +12,12 @@ Based on analysis of 10+ DSL languages (GraphQL, Protocol Buffers, Terraform HCL
 - **Definition Keywords**: `struct`, `type`, `record`, `message`, `interface`
 - **Reference Patterns**: Direct name references (`user: User`) vs path references (`$ref: "#/defs/User"`)
 - **Composition**: Embedding, inheritance, union types, intersections
-- **Optionality**: Optional field support (see separate optional types design document)
 
 ### Best Practices Identified
 1. **Clear separation** between definition and usage
 2. **Simple, direct references** preferred over complex path syntax
 3. **PascalCase naming** for type names is most common
-4. **Validation constraints** at the schema level
-5. **Support for nested/composed types**
+4. **Support for nested/composed types**
 
 ## Current Amino State
 
@@ -171,28 +169,6 @@ struct Company extends BaseEntity {
 }
 ```
 
-### 4. Constraint Propagation
-
-Struct-level constraints and validations:
-
-```amino
-struct Email {
-    address: Str,
-    verified: Bool,
-    domain: Str
-}
-
-struct User {
-    id: Str {min_length: 1, max_length: 50},
-    email: Email,
-    age: Int {min: 0, max: 150}
-} {
-    # Struct-level constraints
-    constraint: age >= 13 or email.verified == true,
-    unique_fields: [id, email.address]
-}
-```
-
 ## Implementation Strategy
 
 ### Phase 1: Basic Struct References (MVP)
@@ -264,7 +240,6 @@ struct User {
 - Union types (`A | B`)
 - Generic structs (`Container[T]`)
 - Inheritance (`extends` keyword)
-- Struct-level constraints
 
 ### Phase 4: Developer Experience
 
@@ -324,7 +299,6 @@ class FieldDefinition:
     field_type: Union[SchemaType, StructReference, UnionType]
     type_name: str
     element_types: list[str] = dataclasses.field(default_factory=list)
-    constraints: dict[str, Any] = dataclasses.field(default_factory=list)
     struct_ref: StructReference | None = None  # New field
 ```
 
@@ -345,7 +319,7 @@ class ValidationContext:
 ### E-commerce Schema
 ```amino
 struct Money {
-    amount: Float {min: 0},
+    amount: Float,
     currency: Str
 }
 
@@ -375,7 +349,7 @@ struct Product {
 
 struct OrderItem {
     product: Product,
-    quantity: Int {min: 1},
+    quantity: Int,
     unit_price: Money
 }
 
@@ -384,7 +358,7 @@ struct Order {
     customer: Customer,
     items: List[OrderItem],
     total: Money,
-    status: Str {enum: [pending, confirmed, shipped, delivered, cancelled]}
+    status: Str
 }
 
 # Functions using struct types
@@ -397,9 +371,9 @@ process_order: (order: Order) -> Bool
 ```amino
 struct User {
     id: Str,
-    username: Str {min_length: 3},
+    username: Str,
     email: Str,
-    role: Str {enum: [admin, editor, author, viewer]}
+    role: Str
 }
 
 struct Tag {
@@ -410,7 +384,7 @@ struct Tag {
 
 struct Article {
     id: Str,
-    title: Str {max_length: 200},
+    title: Str,
     content: Str,
     author: User,
     tags: List[Tag],
@@ -422,7 +396,7 @@ struct Comment {
     id: Str,
     article: Article,
     author: User,
-    content: Str {max_length: 1000},
+    content: Str,
     created_at: Str
 }
 
@@ -442,7 +416,6 @@ moderate_comment: (comment: Comment, moderator: User) -> Bool
 1. **Identify Patterns**: Find repeated field patterns in existing schemas
 2. **Extract Structs**: Create struct definitions for common patterns  
 3. **Update References**: Replace repeated patterns with struct references
-4. **Add Validation**: Enhance with struct-level constraints
 
 ### Example Migration
 ```amino
