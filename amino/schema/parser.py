@@ -143,8 +143,10 @@ class SchemaParser:
         """Parse schema content into AST."""
         ast = SchemaAST()
 
-        while self._peek():
+        while True:
             token = self._peek()
+            if not token:
+                break
 
             if token.value == "struct":
                 ast.structs.append(self._parse_struct())
@@ -187,13 +189,15 @@ class SchemaParser:
 
         # Handle optional type (ending with ?)
         optional = False
-        if self._peek() and self._peek().token_type == TokenType.QUESTION:
+        peek_token = self._peek()
+        if peek_token and peek_token.token_type == TokenType.QUESTION:
             optional = True
             self._advance()
 
         # Parse constraints if present
         constraints = {}
-        if self._peek() and self._peek().token_type == TokenType.LBRACE:
+        peek_token = self._peek()
+        if peek_token and peek_token.token_type == TokenType.LBRACE:
             constraints = self._parse_constraints()
 
         return FieldDefinition(name_token.value, field_type, type_name, element_types, constraints, optional)
@@ -205,9 +209,13 @@ class SchemaParser:
         self._expect(TokenType.LBRACE)
 
         fields = []
-        while self._peek() and self._peek().token_type != TokenType.RBRACE:
+        while True:
+            peek_token = self._peek()
+            if not peek_token or peek_token.token_type == TokenType.RBRACE:
+                break
             fields.append(self._parse_field())
-            if self._peek() and self._peek().token_type == TokenType.COMMA:
+            peek_token = self._peek()
+            if peek_token and peek_token.token_type == TokenType.COMMA:
                 self._advance()
 
         self._expect(TokenType.RBRACE)
@@ -222,7 +230,11 @@ class SchemaParser:
         self._expect(TokenType.LPAREN)
         parameters = []
 
-        while self._peek() and self._peek().token_type != TokenType.RPAREN:
+        while True:
+            peek_token = self._peek()
+            if not peek_token or peek_token.token_type == TokenType.RPAREN:
+                break
+
             # Get parameter name
             param_name_token = self._expect(TokenType.WORD)
             self._expect(TokenType.COLON)
@@ -234,7 +246,8 @@ class SchemaParser:
             parameters.append(FunctionParameter(param_name_token.value, param_type))
 
             # Handle comma if there are more parameters
-            if self._peek() and self._peek().token_type == TokenType.COMMA:
+            peek_token = self._peek()
+            if peek_token and peek_token.token_type == TokenType.COMMA:
                 self._advance()
 
         self._expect(TokenType.RPAREN)
@@ -269,10 +282,17 @@ class SchemaParser:
         self._expect(TokenType.LBRACE)
         constraints = {}
 
-        while self._peek() and self._peek().token_type != TokenType.RBRACE:
+        while True:
+            peek_token = self._peek()
+            if not peek_token or peek_token.token_type == TokenType.RBRACE:
+                break
+
             key_token = self._expect(TokenType.WORD)
             self._expect(TokenType.COLON)
             value_token = self._advance()
+
+            if not value_token:
+                raise SchemaParseError("Expected value in constraint")
 
             # Convert value based on key and type
             if key_token.value in ("min", "max", "length"):
@@ -284,7 +304,8 @@ class SchemaParser:
             else:
                 constraints[key_token.value] = value_token.value.strip("\"'")
 
-            if self._peek() and self._peek().token_type == TokenType.COMMA:
+            peek_token = self._peek()
+            if peek_token and peek_token.token_type == TokenType.COMMA:
                 self._advance()
 
         self._expect(TokenType.RBRACE)
@@ -296,21 +317,27 @@ class SchemaParser:
         type_name = type_token.value
 
         # Check if this is a list type with element specification
-        if type_name.lower() == "list" and self._peek() and self._peek().token_type == TokenType.LBRACKET:
+        peek_token = self._peek()
+        if type_name.lower() == "list" and peek_token and peek_token.token_type == TokenType.LBRACKET:
             self._advance()  # consume '['
 
             # Parse element types (can be type1|type2|type3)
             element_types = []
-            while self._peek() and self._peek().token_type != TokenType.RBRACKET:
+            while True:
+                peek_token = self._peek()
+                if not peek_token or peek_token.token_type == TokenType.RBRACKET:
+                    break
+
                 elem_token = self._expect(TokenType.WORD)
                 # Normalize element type names to capitalized form
                 normalized_type = self._normalize_type_name(elem_token.value)
                 element_types.append(normalized_type)
 
                 # Check for union type separator '|'
-                if self._peek() and self._peek().token_type == TokenType.PIPE:
+                peek_token = self._peek()
+                if peek_token and peek_token.token_type == TokenType.PIPE:
                     self._advance()  # consume '|'
-                elif self._peek() and self._peek().token_type != TokenType.RBRACKET:
+                elif peek_token and peek_token.token_type != TokenType.RBRACKET:
                     raise SchemaParseError("Expected '|' or ']' in list type definition")
 
             self._expect(TokenType.RBRACKET)  # consume ']'

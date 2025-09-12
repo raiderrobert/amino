@@ -327,7 +327,9 @@ class TestTypeValidator:
                 "decimal": "decimal",
                 "any": "any",
             }
-            schema_type = getattr(SchemaType, type_attr_map.get(type_name, type_name))
+            attr_name = type_attr_map.get(type_name, type_name)
+            assert attr_name is not None  # type: ignore
+            schema_type = getattr(SchemaType, attr_name)
             field_def = FieldDefinition("test_field", schema_type, optional=False)
             self.schema_ast.fields = [field_def]
 
