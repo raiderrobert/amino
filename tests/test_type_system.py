@@ -10,22 +10,22 @@ from amino.utils.errors import TypeValidationError
 @pytest.mark.parametrize(
     "type_name,base_type,value,expected_valid,has_validator",
     [
-        ("positive_int", "int", 5, True, True),
-        ("positive_int", "int", -5, False, True),
-        ("positive_int", "int", "5", False, True),
-        ("email", "str", "user@example.com", True, False),
-        ("email", "str", "invalid-email", False, False),
-        ("email", "str", "user@", False, False),
-        ("credit_score", "int", 750, True, False),
-        ("credit_score", "int", 300, True, False),
-        ("credit_score", "int", 850, True, False),
-        ("credit_score", "int", 299, False, False),
-        ("credit_score", "int", 851, False, False),
-        ("currency", "float", 100, True, False),
-        ("currency", "float", 100.50, True, False),
-        ("currency", "float", 0, True, False),
-        ("currency", "float", -10, False, False),
-        ("currency", "float", 10.123, False, False),
+        ("positive_int", "Int", 5, True, True),
+        ("positive_int", "Int", -5, False, True),
+        ("positive_int", "Int", "5", False, True),
+        ("email", "Str", "user@example.com", True, False),
+        ("email", "Str", "invalid-email", False, False),
+        ("email", "Str", "user@", False, False),
+        ("credit_score", "Int", 750, True, False),
+        ("credit_score", "Int", 300, True, False),
+        ("credit_score", "Int", 850, True, False),
+        ("credit_score", "Int", 299, False, False),
+        ("credit_score", "Int", 851, False, False),
+        ("currency", "Float", 100, True, False),
+        ("currency", "Float", 100.50, True, False),
+        ("currency", "Float", 0, True, False),
+        ("currency", "Float", -10, False, False),
+        ("currency", "Float", 10.123, False, False),
     ],
 )
 def test_type_validation(
@@ -51,11 +51,11 @@ def test_type_validation(
 @pytest.mark.parametrize(
     "type_name,base_type,constraints,value,expected_valid",
     [
-        ("limited_int", "int", {"min": 10, "max": 100}, 50, True),
-        ("limited_int", "int", {"min": 10, "max": 100}, 10, True),
-        ("limited_int", "int", {"min": 10, "max": 100}, 100, True),
-        ("limited_int", "int", {"min": 10, "max": 100}, 5, False),
-        ("limited_int", "int", {"min": 10, "max": 100}, 150, False),
+        ("limited_int", "Int", {"min": 10, "max": 100}, 50, True),
+        ("limited_int", "Int", {"min": 10, "max": 100}, 10, True),
+        ("limited_int", "Int", {"min": 10, "max": 100}, 100, True),
+        ("limited_int", "Int", {"min": 10, "max": 100}, 5, False),
+        ("limited_int", "Int", {"min": 10, "max": 100}, 150, False),
     ],
 )
 def test_type_constraints(type_name, base_type, constraints, value, expected_valid, type_registry):
@@ -80,15 +80,15 @@ class TestTypeRegistry:
     def test_duplicate_registration_error(self):
         """Test error on duplicate type registration."""
         registry = TypeRegistry()
-        registry.register_type("custom", "int")
+        registry.register_type("custom", "Int")
 
         with pytest.raises(TypeValidationError):
-            registry.register_type("custom", "str")
+            registry.register_type("custom", "Str")
 
     def test_type_removal(self):
         """Test type removal from registry."""
         registry = TypeRegistry()
-        registry.register_type("temp_type", "int")
+        registry.register_type("temp_type", "Int")
 
         assert registry.has_type("temp_type")
         assert registry.remove_type("temp_type") is True
@@ -99,12 +99,12 @@ class TestTypeRegistry:
 @pytest.mark.parametrize(
     "schema_content,data,expected_valid,expected_error_count,error_field,error_contains",
     [
-        ("name: str\nage: int", {"name": "John", "age": 25}, True, 0, None, None),
-        ("name: str\nage: int", {"name": "John"}, False, 1, "age", "missing"),
-        ("name: str\nage: int", {"name": "John", "age": "25"}, False, 1, "age", None),
-        ("name: str\nage: int?", {"name": "John", "age": 25}, True, 0, None, None),
-        ("name: str\nage: int?", {"name": "John"}, True, 0, None, None),
-        ("name: str\nage: int?", {"name": "John", "age": None}, True, 0, None, None),
+        ("name: Str\nage: Int", {"name": "John", "age": 25}, True, 0, None, None),
+        ("name: Str\nage: Int", {"name": "John"}, False, 1, "age", "missing"),
+        ("name: Str\nage: Int", {"name": "John", "age": "25"}, False, 1, "age", None),
+        ("name: Str\nage: Int?", {"name": "John", "age": 25}, True, 0, None, None),
+        ("name: Str\nage: Int?", {"name": "John"}, True, 0, None, None),
+        ("name: Str\nage: Int?", {"name": "John", "age": None}, True, 0, None, None),
     ],
 )
 def test_basic_validation(schema_content, data, expected_valid, expected_error_count, error_field, error_contains):
@@ -126,11 +126,11 @@ def test_basic_validation(schema_content, data, expected_valid, expected_error_c
 @pytest.mark.parametrize(
     "schema_content,data,expected_valid,error_contains",
     [
-        ("age: int {min: 18, max: 120}", {"age": 25}, True, None),
-        ("age: int {min: 18, max: 120}", {"age": 16}, False, "minimum"),
-        ("age: int {min: 18, max: 120}", {"age": 150}, False, "maximum"),
-        ("email: str {format: email}", {"email": "user@example.com"}, True, None),
-        ("email: str {format: email}", {"email": "invalid-email"}, False, "email"),
+        ("age: Int {min: 18, max: 120}", {"age": 25}, True, None),
+        ("age: Int {min: 18, max: 120}", {"age": 16}, False, "minimum"),
+        ("age: Int {min: 18, max: 120}", {"age": 150}, False, "maximum"),
+        ("email: Str {format: email}", {"email": "user@example.com"}, True, None),
+        ("email: Str {format: email}", {"email": "invalid-email"}, False, "email"),
     ],
 )
 def test_constraint_validation(schema_content, data, expected_valid, error_contains):
@@ -151,7 +151,7 @@ class TestTypeValidator:
     def test_custom_type_validation(self):
         """Test validation with custom types."""
         registry = TypeRegistry()
-        registry.register_type("positive_int", "int", validator=lambda x: isinstance(x, int) and x > 0)
+        registry.register_type("positive_int", "Int", validator=lambda x: isinstance(x, int) and x > 0)
 
         schema_ast = parse_schema("score: positive_int")
         validator = TypeValidator(schema_ast, registry)
@@ -166,7 +166,7 @@ class TestTypeValidator:
 def test_list_element_validation():
     """Test validation of list element types."""
     schema_content = """
-    numbers: list[int]
+    numbers: List[Int]
     mixed: list[int|str]
     """
 
@@ -182,4 +182,4 @@ def test_list_element_validation():
     assert result.valid is False
     assert len(result.errors) == 1
     assert "Element at index 1" in result.errors[0].message
-    assert "does not match allowed types [int]" in result.errors[0].message
+    assert "does not match allowed types [Int]" in result.errors[0].message

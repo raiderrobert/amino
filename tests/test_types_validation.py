@@ -213,7 +213,7 @@ class TestTypeValidator:
         result = self.validator.validate_field_value("age", "not an int")
 
         assert result.valid is False
-        assert "Expected int for field 'age'" in result.errors[0].message
+        assert "Expected Int for field 'age'" in result.errors[0].message
 
     def test_validate_list_type_valid(self):
         """Test validating valid list type."""
@@ -232,11 +232,11 @@ class TestTypeValidator:
         result = self.validator.validate_data({"items": "not a list"})
 
         assert result.valid is False
-        assert "Expected list for field 'items'" in result.errors[0].message
+        assert "Expected List for field 'items'" in result.errors[0].message
 
     def test_validate_list_elements_valid(self):
         """Test validating list with valid elements."""
-        field_def = FieldDefinition("items", SchemaType.list, optional=False, element_types=["str"])
+        field_def = FieldDefinition("items", SchemaType.list, optional=False, element_types=["Str"])
         self.schema_ast.fields = [field_def]
 
         result = self.validator.validate_data({"items": ["a", "b", "c"]})
@@ -245,17 +245,17 @@ class TestTypeValidator:
 
     def test_validate_list_elements_invalid(self):
         """Test validating list with invalid elements."""
-        field_def = FieldDefinition("items", SchemaType.list, optional=False, element_types=["str"])
+        field_def = FieldDefinition("items", SchemaType.list, optional=False, element_types=["Str"])
         self.schema_ast.fields = [field_def]
 
         result = self.validator.validate_data({"items": ["a", 123, "c"]})
 
         assert result.valid is False
-        assert "Element at index 1 does not match allowed types [str]" in result.errors[0].message
+        assert "Element at index 1 does not match allowed types [Str]" in result.errors[0].message
 
     def test_validate_list_elements_multiple_types(self):
         """Test validating list with multiple allowed element types."""
-        field_def = FieldDefinition("items", SchemaType.list, optional=False, element_types=["str", "int"])
+        field_def = FieldDefinition("items", SchemaType.list, optional=False, element_types=["Str", "Int"])
         self.schema_ast.fields = [field_def]
 
         result = self.validator.validate_data({"items": ["a", 123, "c"]})
@@ -265,7 +265,7 @@ class TestTypeValidator:
     def test_validate_custom_type_valid(self):
         """Test validating custom type that's valid."""
         # Register custom type
-        self.type_registry.register_type("positive_int", "int", validator=lambda x: x > 0)
+        self.type_registry.register_type("positive_int", "Int", validator=lambda x: x > 0)
 
         field_def = FieldDefinition("score", SchemaType.custom, optional=False, type_name="positive_int")
         self.schema_ast.fields = [field_def]
@@ -277,7 +277,7 @@ class TestTypeValidator:
     def test_validate_custom_type_invalid(self):
         """Test validating custom type that's invalid."""
         # Register custom type
-        self.type_registry.register_type("positive_int", "int", validator=lambda x: x > 0)
+        self.type_registry.register_type("positive_int", "Int", validator=lambda x: x > 0)
 
         field_def = FieldDefinition("score", SchemaType.custom, optional=False, type_name="positive_int")
         self.schema_ast.fields = [field_def]
@@ -289,7 +289,7 @@ class TestTypeValidator:
 
     def test_validate_registered_builtin_type(self):
         """Test validating registered built-in type."""
-        self.type_registry.register_type("email", "str", validator=lambda x: "@" in x)
+        self.type_registry.register_type("email", "Str", validator=lambda x: "@" in x)
 
         # Create a custom field type
         field_def = FieldDefinition("contact", SchemaType.custom, optional=False, type_name="email")
@@ -303,22 +303,32 @@ class TestTypeValidator:
     def test_validate_builtin_types(self):
         """Test validating various built-in types."""
         test_cases = [
-            ("str", "hello", True),
-            ("str", 123, False),
-            ("int", 123, True),
-            ("int", "hello", False),
-            ("float", 3.14, True),
-            ("float", 123, True),  # int is valid for float
-            ("float", "hello", False),
-            ("bool", True, True),
-            ("bool", 1, False),  # int is not bool
+            ("Str", "hello", True),
+            ("Str", 123, False),
+            ("Int", 123, True),
+            ("Int", "hello", False),
+            ("Float", 3.14, True),
+            ("Float", 123, True),  # int is valid for float
+            ("Float", "hello", False),
+            ("Bool", True, True),
+            ("Bool", 1, False),  # int is not bool
             ("decimal", 3.14, True),
             ("decimal", 123, True),
             ("any", "anything", True),
         ]
 
         for type_name, value, should_be_valid in test_cases:
-            field_def = FieldDefinition("test_field", getattr(SchemaType, type_name), optional=False)
+            # Map capitalized type names to lowercase enum attributes
+            type_attr_map = {
+                "Str": "str",
+                "Int": "int",
+                "Float": "float",
+                "Bool": "bool",
+                "decimal": "decimal",
+                "any": "any",
+            }
+            schema_type = getattr(SchemaType, type_attr_map.get(type_name, type_name))
+            field_def = FieldDefinition("test_field", schema_type, optional=False)
             self.schema_ast.fields = [field_def]
 
             result = self.validator.validate_data({"test_field": value})
@@ -476,7 +486,7 @@ class TestTypeValidator:
     def test_validate_element_type_custom_type(self):
         """Test validating list elements with custom types."""
         # Register custom type
-        self.type_registry.register_type("positive_int", "int", validator=lambda x: x > 0)
+        self.type_registry.register_type("positive_int", "Int", validator=lambda x: x > 0)
 
         field_def = FieldDefinition("scores", SchemaType.list, optional=False, element_types=["positive_int"])
         self.schema_ast.fields = [field_def]
@@ -493,7 +503,7 @@ class TestTypeValidator:
             FieldDefinition("name", SchemaType.str, optional=False, constraints={"length": 5}),
             FieldDefinition("age", SchemaType.int, optional=False, constraints={"min": 18, "max": 100}),
             FieldDefinition("email", SchemaType.str, optional=True, constraints={"format": "email"}),
-            FieldDefinition("scores", SchemaType.list, optional=False, element_types=["int"]),
+            FieldDefinition("scores", SchemaType.list, optional=False, element_types=["Int"]),
         ]
         self.schema_ast.fields = fields
 

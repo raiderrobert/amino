@@ -158,6 +158,19 @@ class SchemaParser:
 
         return ast
 
+    def _normalize_type_name(self, type_name: str) -> str:
+        """Normalize type name to capitalized form."""
+        type_map = {
+            "str": "Str",
+            "int": "Int",
+            "float": "Float",
+            "bool": "Bool",
+            "decimal": "Decimal",
+            "any": "Any",
+            "list": "List",
+        }
+        return type_map.get(type_name, type_name)
+
     def _parse_field(self) -> FieldDefinition:
         """Parse a field definition."""
         name_token = self._expect(TokenType.WORD)
@@ -241,10 +254,10 @@ class SchemaParser:
         self._expect(TokenType.EQUALS)
         value_token = self._expect(TokenType.NUMBER)
 
-        # Convert value based on type
-        if type_token.value == "int":
+        # Convert value based on type (support both capitalized and lowercase for backward compatibility)
+        if type_token.value in ("int", "Int"):
             value = int(value_token.value)
-        elif type_token.value == "float":
+        elif type_token.value in ("float", "Float"):
             value = float(value_token.value)
         else:
             value = value_token.value
@@ -283,14 +296,16 @@ class SchemaParser:
         type_name = type_token.value
 
         # Check if this is a list type with element specification
-        if type_name == "list" and self._peek() and self._peek().token_type == TokenType.LBRACKET:
+        if type_name.lower() == "list" and self._peek() and self._peek().token_type == TokenType.LBRACKET:
             self._advance()  # consume '['
 
             # Parse element types (can be type1|type2|type3)
             element_types = []
             while self._peek() and self._peek().token_type != TokenType.RBRACKET:
                 elem_token = self._expect(TokenType.WORD)
-                element_types.append(elem_token.value)
+                # Normalize element type names to capitalized form
+                normalized_type = self._normalize_type_name(elem_token.value)
+                element_types.append(normalized_type)
 
                 # Check for union type separator '|'
                 if self._peek() and self._peek().token_type == TokenType.PIPE:
@@ -300,7 +315,11 @@ class SchemaParser:
 
             self._expect(TokenType.RBRACKET)  # consume ']'
 
-            return {"type": SchemaType.list, "name": f"list[{'|'.join(element_types)}]", "element_types": element_types}
+            return {
+                "type": SchemaType.list,
+                "name": f"{type_name}[{'|'.join(element_types)}]",
+                "element_types": element_types,
+            }
         else:
             # Simple type
             field_type = parse_type(type_name, self.strict, self.known_custom_types)

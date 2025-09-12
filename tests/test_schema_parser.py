@@ -8,12 +8,12 @@ from amino.utils.errors import SchemaParseError
 @pytest.mark.parametrize(
     "test_input,expected_fields,should_raise,expected_error",
     [
-        ("foo: int", [("foo", SchemaType.int)], False, None),
+        ("foo: Int", [("foo", SchemaType.int)], False, None),
         (
             """
-            foo: int
-            bar: str
-            baz: bool
+            foo: Int
+            bar: Str
+            baz: Bool
             bat: any
             """,
             [
@@ -38,13 +38,13 @@ from amino.utils.errors import SchemaParseError
             None,
         ),
         (
-            "amount: float",
+            "amount: Float",
             [("amount", SchemaType.float)],
             False,
             None,
         ),
         (
-            "email: str {format: email}",
+            "email: Str {format: email}",
             [("email", SchemaType.str)],
             False,
             None,
@@ -69,7 +69,7 @@ def test_schema_parsing(test_input, expected_fields, should_raise, expected_erro
 
 def test_schema_with_constraints():
     """Test schema parsing with constraints."""
-    schema_content = "age: int {min: 18, max: 120}"
+    schema_content = "age: Int {min: 18, max: 120}"
     ast = parse_schema(schema_content)
 
     assert len(ast.fields) == 1
@@ -82,7 +82,7 @@ def test_schema_with_constraints():
 
 def test_schema_with_optional_fields():
     """Test schema parsing with optional fields."""
-    schema_content = "name: str\nage: int?"
+    schema_content = "name: Str\nage: Int?"
     ast = parse_schema(schema_content)
 
     assert len(ast.fields) == 2
@@ -96,8 +96,8 @@ def test_schema_with_structs():
     """Test schema parsing with struct definitions."""
     schema_content = """
     struct person {
-        name: str,
-        age: int
+        name: Str,
+        age: Int
     }
     """
     ast = parse_schema(schema_content)
@@ -112,7 +112,7 @@ def test_schema_with_structs():
 
 def test_schema_with_constants():
     """Test schema parsing with constants."""
-    schema_content = "MAX_AGE: int = 120\nname: str"
+    schema_content = "MAX_AGE: Int = 120\nname: Str"
     ast = parse_schema(schema_content)
 
     assert "MAX_AGE" in ast.constants
@@ -124,8 +124,8 @@ def test_schema_with_comments():
     """Test schema parsing with comments."""
     schema_content = """
     # This is a comment
-    name: str  # Another comment
-    age: int
+    name: Str  # Another comment
+    age: Int
     """
     ast = parse_schema(schema_content)
 

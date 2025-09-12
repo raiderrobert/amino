@@ -1,30 +1,30 @@
 # E-commerce Schema for Pricing Rules
 
 struct customer {
-    id: str,
-    tier: str,
-    purchase_count: int,
-    total_spent: float,
-    signup_date: str
+    id: Str,
+    tier: Str,
+    purchase_count: Int,
+    total_spent: Float,
+    signup_date: Str
 }
 
 struct product {
-    id: str,
-    category: str,
-    price: float,
-    inventory_count: int,
-    brand: str
+    id: Str,
+    category: Str,
+    price: Float,
+    inventory_count: Int,
+    brand: Str
 }
 
 struct order {
-    id: str,
-    total: float,
-    item_count: int,
-    shipping_zip: str,
-    date: str
+    id: Str,
+    total: Float,
+    item_count: Int,
+    shipping_zip: Str,
+    date: Str
 }
 
 # Custom functions available in rules
-calculate_discount: (tier_discount: float, volume_discount: float) -> float
-is_holiday_season: (date: str) -> bool
-get_shipping_cost: (zip_code: str, weight: float) -> float
+calculate_discount: (tier_discount: Float, volume_discount: Float) -> Float
+is_holiday_season: (date: Str) -> Bool
+get_shipping_cost: (zip_code: Str, weight: Float) -> Float

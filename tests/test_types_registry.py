@@ -17,7 +17,7 @@ class TestTypeDefinition:
 
         type_def = TypeDefinition(
             name="test_type",
-            base_type="str",
+            base_type="Str",
             validator=validator,
             constraints=constraints,
             format_string="test format",
@@ -25,7 +25,7 @@ class TestTypeDefinition:
         )
 
         assert type_def.name == "test_type"
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.validator == validator
         assert type_def.constraints == constraints
         assert type_def.format_string == "test format"
@@ -33,10 +33,10 @@ class TestTypeDefinition:
 
     def test_type_definition_minimal(self):
         """Test creating a TypeDefinition with minimal fields."""
-        type_def = TypeDefinition(name="test_type", base_type="str")
+        type_def = TypeDefinition(name="test_type", base_type="Str")
 
         assert type_def.name == "test_type"
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.validator is None
         assert type_def.constraints == {}
         assert type_def.format_string is None
@@ -58,18 +58,18 @@ class TestTypeRegistry:
 
     def test_register_type_basic(self):
         """Test basic type registration."""
-        self.registry.register_type("custom_type", "str")
+        self.registry.register_type("custom_type", "Str")
 
         assert self.registry.has_type("custom_type")
         type_def = self.registry.get_type("custom_type")
         assert type_def is not None
         assert type_def.name == "custom_type"
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
 
     def test_register_type_with_validator(self):
         """Test type registration with validator."""
         validator = lambda x: len(x) > 5
-        self.registry.register_type("long_string", "str", validator=validator)
+        self.registry.register_type("long_string", "Str", validator=validator)
 
         assert self.registry.has_type("long_string")
         assert self.registry.get_validator("long_string") == validator
@@ -83,23 +83,23 @@ class TestTypeRegistry:
 
     def test_register_type_with_constraints(self):
         """Test type registration with constraints."""
-        self.registry.register_type("bounded_int", "int", min=0, max=100)
+        self.registry.register_type("bounded_int", "Int", min=0, max=100)
 
         type_def = self.registry.get_type("bounded_int")
         assert type_def.constraints == {"min": 0, "max": 100}
 
     def test_register_type_duplicate_error(self):
         """Test that registering duplicate type raises error."""
-        self.registry.register_type("test_type", "str")
+        self.registry.register_type("test_type", "Str")
 
         with pytest.raises(TypeValidationError) as exc_info:
-            self.registry.register_type("test_type", "int")
+            self.registry.register_type("test_type", "Int")
 
         assert "Type 'test_type' already registered" in str(exc_info.value)
 
     def test_get_type_exists(self):
         """Test getting an existing type."""
-        self.registry.register_type("test_type", "str")
+        self.registry.register_type("test_type", "Str")
         type_def = self.registry.get_type("test_type")
 
         assert type_def is not None
@@ -112,7 +112,7 @@ class TestTypeRegistry:
 
     def test_has_type_exists(self):
         """Test has_type for existing type."""
-        self.registry.register_type("test_type", "str")
+        self.registry.register_type("test_type", "Str")
         assert self.registry.has_type("test_type") is True
 
     def test_has_type_not_exists(self):
@@ -121,8 +121,8 @@ class TestTypeRegistry:
 
     def test_get_registered_types(self):
         """Test getting list of registered types."""
-        self.registry.register_type("type1", "str")
-        self.registry.register_type("type2", "int")
+        self.registry.register_type("type1", "Str")
+        self.registry.register_type("type2", "Int")
 
         types = self.registry.get_registered_types()
         assert set(types) == {"type1", "type2"}
@@ -135,7 +135,7 @@ class TestTypeRegistry:
     def test_get_validator_exists(self):
         """Test getting validator for type with validator."""
         validator = lambda x: True
-        self.registry.register_type("test_type", "str", validator=validator)
+        self.registry.register_type("test_type", "Str", validator=validator)
 
         result = self.registry.get_validator("test_type")
         assert result == validator
@@ -147,14 +147,14 @@ class TestTypeRegistry:
 
     def test_get_validator_no_validator(self):
         """Test getting validator for type without validator."""
-        self.registry.register_type("test_type", "str")
+        self.registry.register_type("test_type", "Str")
         result = self.registry.get_validator("test_type")
         assert result is None
 
     def test_list_types(self):
         """Test listing all types."""
-        self.registry.register_type("type1", "str")
-        self.registry.register_type("type2", "int")
+        self.registry.register_type("type1", "Str")
+        self.registry.register_type("type2", "Int")
 
         types = self.registry.list_types()
         assert set(types) == {"type1", "type2"}
@@ -167,7 +167,7 @@ class TestTypeRegistry:
     def test_remove_type_exists(self):
         """Test removing an existing type."""
         validator = lambda x: True
-        self.registry.register_type("test_type", "str", validator=validator)
+        self.registry.register_type("test_type", "Str", validator=validator)
 
         result = self.registry.remove_type("test_type")
         assert result is True
@@ -181,25 +181,25 @@ class TestTypeRegistry:
 
     def test_validate_value_builtin_str(self):
         """Test validating value against builtin str type."""
-        assert self.registry.validate_value("str", "hello") is True
-        assert self.registry.validate_value("str", 123) is False
+        assert self.registry.validate_value("Str", "hello") is True
+        assert self.registry.validate_value("Str", 123) is False
 
     def test_validate_value_builtin_int(self):
         """Test validating value against builtin int type."""
-        assert self.registry.validate_value("int", 123) is True
-        assert self.registry.validate_value("int", "hello") is False
+        assert self.registry.validate_value("Int", 123) is True
+        assert self.registry.validate_value("Int", "hello") is False
 
     def test_validate_value_builtin_float(self):
         """Test validating value against builtin float type."""
-        assert self.registry.validate_value("float", 3.14) is True
-        assert self.registry.validate_value("float", 123) is True  # int is valid for float
-        assert self.registry.validate_value("float", "hello") is False
+        assert self.registry.validate_value("Float", 3.14) is True
+        assert self.registry.validate_value("Float", 123) is True  # int is valid for float
+        assert self.registry.validate_value("Float", "hello") is False
 
     def test_validate_value_builtin_bool(self):
         """Test validating value against builtin bool type."""
-        assert self.registry.validate_value("bool", True) is True
-        assert self.registry.validate_value("bool", False) is True
-        assert self.registry.validate_value("bool", 1) is False  # int is not bool
+        assert self.registry.validate_value("Bool", True) is True
+        assert self.registry.validate_value("Bool", False) is True
+        assert self.registry.validate_value("Bool", 1) is False  # int is not bool
 
     def test_validate_value_builtin_any(self):
         """Test validating value against builtin any type."""
@@ -214,7 +214,7 @@ class TestTypeRegistry:
     def test_validate_value_custom_type_with_validator(self):
         """Test validating value against custom type with validator."""
         validator = lambda x: len(x) > 3
-        self.registry.register_type("long_string", "str", validator=validator)
+        self.registry.register_type("long_string", "Str", validator=validator)
 
         assert self.registry.validate_value("long_string", "hello") is True
         assert self.registry.validate_value("long_string", "hi") is False
@@ -225,14 +225,14 @@ class TestTypeRegistry:
         def bad_validator(x):
             raise ValueError("Validation error")
 
-        self.registry.register_type("bad_type", "str", validator=bad_validator)
+        self.registry.register_type("bad_type", "Str", validator=bad_validator)
 
         assert self.registry.validate_value("bad_type", "value") is False
 
     def test_validate_value_custom_type_base_type_validation(self):
         """Test that base type validation is performed first."""
         validator = lambda x: True  # Always passes
-        self.registry.register_type("strict_int", "int", validator=validator)
+        self.registry.register_type("strict_int", "Int", validator=validator)
 
         assert self.registry.validate_value("strict_int", 123) is True
         assert self.registry.validate_value("strict_int", "hello") is False  # Fails base type
@@ -296,7 +296,7 @@ class TestTypeRegistry:
 
     def test_validate_constraints_min(self):
         """Test min constraint validation."""
-        self.registry.register_type("bounded_int", "int", min=10)
+        self.registry.register_type("bounded_int", "Int", min=10)
 
         assert self.registry.validate_value("bounded_int", 15) is True
         assert self.registry.validate_value("bounded_int", 10) is True  # Equal to min
@@ -304,7 +304,7 @@ class TestTypeRegistry:
 
     def test_validate_constraints_max(self):
         """Test max constraint validation."""
-        self.registry.register_type("bounded_int", "int", max=100)
+        self.registry.register_type("bounded_int", "Int", max=100)
 
         assert self.registry.validate_value("bounded_int", 50) is True
         assert self.registry.validate_value("bounded_int", 100) is True  # Equal to max
@@ -312,7 +312,7 @@ class TestTypeRegistry:
 
     def test_validate_constraints_length(self):
         """Test length constraint validation."""
-        self.registry.register_type("fixed_string", "str", length=5)
+        self.registry.register_type("fixed_string", "Str", length=5)
 
         assert self.registry.validate_value("fixed_string", "hello") is True
         assert self.registry.validate_value("fixed_string", "hi") is False
@@ -320,7 +320,7 @@ class TestTypeRegistry:
 
     def test_validate_constraints_format(self):
         """Test format constraint (currently no-op)."""
-        self.registry.register_type("formatted", "str", format="email")
+        self.registry.register_type("formatted", "Str", format="email")
 
         # Format constraint is currently not implemented, so should pass
         assert self.registry.validate_value("formatted", "anything") is True
@@ -346,7 +346,7 @@ class TestTypeRegistry:
     def test_recursive_type_validation(self):
         """Test recursive validation with custom base types."""
         # Register a base custom type
-        self.registry.register_type("positive_int", "int", validator=lambda x: x > 0)
+        self.registry.register_type("positive_int", "Int", validator=lambda x: x > 0)
 
         # Register a type based on the custom type
         self.registry.register_type("big_positive_int", "positive_int", validator=lambda x: x > 100)
@@ -357,7 +357,7 @@ class TestTypeRegistry:
 
     def test_register_type_without_validator_in_validators_dict(self):
         """Test that types without validators don't get added to validators dict."""
-        self.registry.register_type("simple_type", "str")
+        self.registry.register_type("simple_type", "Str")
 
         assert "simple_type" not in self.registry._validators
         assert self.registry.get_validator("simple_type") is None

@@ -14,20 +14,20 @@ def test_amino_import():
 
 def test_schema_parser_basic():
     """Test basic schema parser functionality."""
-    parser = SchemaParser("amount: int")
+    parser = SchemaParser("amount: Int")
     ast = parser.parse()
 
     assert len(ast.fields) == 1
     assert ast.fields[0].name == "amount"
-    assert ast.fields[0].field_type.value == "int"
+    assert ast.fields[0].field_type.value == "Int"
 
 
 @pytest.mark.parametrize(
     "schema_content,rule,test_data,expected_result",
     [
-        ("amount: int\nstate_code: str", "amount > 0", {"amount": 100, "state_code": "CA"}, True),
-        ("amount: int\nstate_code: str", 'amount > 0 and state_code = "CA"', {"amount": 100, "state_code": "CA"}, True),
-        ("amount: int\nstate_code: str", 'amount > 0 and state_code = "CA"', {"amount": 0, "state_code": "CA"}, False),
+        ("amount: Int\nstate_code: Str", "amount > 0", {"amount": 100, "state_code": "CA"}, True),
+        ("amount: Int\nstate_code: Str", 'amount > 0 and state_code = "CA"', {"amount": 100, "state_code": "CA"}, True),
+        ("amount: Int\nstate_code: Str", 'amount > 0 and state_code = "CA"', {"amount": 0, "state_code": "CA"}, False),
     ],
 )
 def test_integration_basic_usage(schema_content, rule, test_data, expected_result):
@@ -39,7 +39,7 @@ def test_integration_basic_usage(schema_content, rule, test_data, expected_resul
 
 def test_integration_batch_processing():
     """Test batch processing integration like README examples."""
-    amn = amino.load_schema("amount: int\nstate_code: str")
+    amn = amino.load_schema("amount: Int\nstate_code: Str")
     compiled = amn.compile(
         [
             {"id": 1, "rule": "amount > 0 and state_code = 'CA'"},
@@ -67,7 +67,7 @@ def test_integration_batch_processing():
 
 def test_integration_ordering():
     """Test ordering feature integration."""
-    amn = amino.load_schema("amount: int\nstate_code: str")
+    amn = amino.load_schema("amount: Int\nstate_code: Str")
     compiled = amn.compile(
         [
             {"id": 1, "rule": "amount > 0 and state_code = 'CA'", "ordering": 3},

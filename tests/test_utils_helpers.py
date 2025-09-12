@@ -39,7 +39,7 @@ class TestFlattenDict:
             "number": 42,
             "boolean": True,
             "none": None,
-            "list": [1, 2, 3],
+            "List": [1, 2, 3],
             "nested": {"inner": "value"},
         }
         result = flatten_dict(data)
@@ -48,7 +48,7 @@ class TestFlattenDict:
             "number": 42,
             "boolean": True,
             "none": None,
-            "list": [1, 2, 3],
+            "List": [1, 2, 3],
             "nested.inner": "value",
         }
         assert result == expected

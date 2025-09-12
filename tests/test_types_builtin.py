@@ -273,7 +273,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("email")
         assert type_def is not None
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.format_string == "user@domain.com"
         assert type_def.description == "Valid email address"
         assert callable(type_def.validator)
@@ -285,7 +285,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("url")
         assert type_def is not None
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.format_string == "https://example.com"
         assert type_def.description == "Valid URL"
         assert callable(type_def.validator)
@@ -297,7 +297,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("uuid")
         assert type_def is not None
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.format_string == "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
         assert type_def.description == "Valid UUID"
         assert callable(type_def.validator)
@@ -309,7 +309,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("phone")
         assert type_def is not None
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.format_string == "(555) 123-4567"
         assert type_def.description == "Valid phone number"
         assert callable(type_def.validator)
@@ -321,7 +321,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("ssn")
         assert type_def is not None
-        assert type_def.base_type == "str"
+        assert type_def.base_type == "Str"
         assert type_def.format_string == "###-##-####"
         assert type_def.description == "Valid Social Security Number"
         assert callable(type_def.validator)
@@ -333,7 +333,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("credit_score")
         assert type_def is not None
-        assert type_def.base_type == "int"
+        assert type_def.base_type == "Int"
         assert type_def.constraints["min"] == 300
         assert type_def.constraints["max"] == 850
         assert type_def.description == "Valid credit score (300-850)"
@@ -346,7 +346,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("currency")
         assert type_def is not None
-        assert type_def.base_type == "float"
+        assert type_def.base_type == "Float"
         assert type_def.constraints["min"] == 0
         assert type_def.constraints["precision"] == 2
         assert type_def.description == "Non-negative currency amount"
@@ -359,7 +359,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("positive_int")
         assert type_def is not None
-        assert type_def.base_type == "int"
+        assert type_def.base_type == "Int"
         assert type_def.constraints["min"] == 1
         assert type_def.description == "Positive integer"
         assert callable(type_def.validator)
@@ -371,7 +371,7 @@ class TestRegisterBuiltinTypes:
 
         type_def = registry.get_type("non_negative_int")
         assert type_def is not None
-        assert type_def.base_type == "int"
+        assert type_def.base_type == "Int"
         assert type_def.constraints["min"] == 0
         assert type_def.description == "Non-negative integer"
         assert callable(type_def.validator)
