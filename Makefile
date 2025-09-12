@@ -16,7 +16,9 @@ upgrade-dependencies:
 ###########
 
 .PHONY: tidy
-tidy: tidy-ruff
+tidy:
+    tidy-ruff
+    tidy-ty
 
 .PHONY: tidy-ruff
 tidy-ruff:

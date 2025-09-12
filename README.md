@@ -1,12 +1,58 @@
 # amino
+
 A toolkit and DSL for classification rules engines—sometimes called expert systems. Much focus has been given toward AI and machine learning tooling to help take humans out of the loop. However, there are exist a wide variety of current and future applications for custom rules engines.
 
-Amino inverts the problem space and placing a schema at the center, not unlike how GraphQL has done so for APIs.
+Amino inverts the problem space by placing a schema at the center, not unlike how GraphQL has done so for APIs.
 
-Amino has three parts:
-- a schema definition like graphql or protobuf for the data space it operates on
-- a pre-built small and extensible DSL for conditional logic to operate on these schemas
-- a runtime to evaluate the rules against the data set
+## Features
+
+Amino has three key components:
+- **Schema definition**: Like GraphQL or Protobuf for the data space it operates on
+- **DSL**: A pre-built, small and extensible domain-specific language for conditional logic
+- **Runtime**: Fast evaluation of rules against data sets
+
+## Quick Start
+
+### Installation
+
+```bash
+pip install amino
+```
+
+### Development Installation
+
+```bash
+git clone https://github.com/yourusername/amino.git
+cd amino
+pip install -e .[dev]
+```
+
+### Requirements
+
+- Python 3.10+
+
+### Your First Schema
+
+Create a schema file `schema.amn`:
+```
+amount: int
+state_code: str
+```
+
+Then use it in Python:
+```python
+import amino
+
+# Load schema
+amn = amino.load_schema("schema.amn")
+
+# Evaluate a simple rule
+result = amn.eval("amount > 0 and state_code = 'CA'", {
+    "amount": 100, 
+    "state_code": "CA"
+})
+print(result)  # True
+```
 
 
 ## How to Use
@@ -229,3 +275,8 @@ and
 or
 
 ```
+
+## Documentation
+
+- [Development Guide](DEVELOPMENT.md) - Setup, testing, and contribution guidelines
+- [Examples](examples/README.md) - Additional examples and use cases

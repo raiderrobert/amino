@@ -191,10 +191,6 @@ my_function: (text: str, count: int) -> bool
 ## 💡 Need Help?
 
 - Check the main [Amino README](../README.md) for core concepts
-- Review the [API documentation](../docs/) for detailed usage
 - Look at test files for additional examples
 - Open an issue for questions or suggestions
 
----
-
-*These examples demonstrate the power of Amino to make complex business logic accessible to domain experts, enabling rapid iteration without technical bottlenecks.*
