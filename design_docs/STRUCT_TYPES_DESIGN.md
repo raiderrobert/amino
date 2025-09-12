@@ -169,85 +169,72 @@ struct Company extends BaseEntity {
 }
 ```
 
-## Implementation Strategy
+## Design Alternatives
 
-### Phase 1: Basic Struct References (MVP)
+### Reference Syntax Options
 
-**Goals:**
-- Allow struct names as types in field definitions
-- Support struct parameters in functions  
-- Basic validation of struct-typed fields
-
-**Changes Required:**
-1. **Parser Changes (`amino/schema/parser.py`)**
-   - Update `_parse_type_expression()` to recognize struct names
-   - Add struct name validation during parsing
-   - Handle struct references in function parameters
-
-2. **AST Changes (`amino/schema/ast.py`)**
-   - Add `struct_reference` type to field definitions
-   - Update `FieldDefinition` to track referenced struct names
-   - Extend function parameter types
-
-3. **Type System (`amino/schema/types.py`)**
-   - Add `SchemaType.struct_ref` enum value
-   - Update `parse_type()` to handle struct references
-   - Add struct name resolution logic
-
-4. **Validation (`amino/types/validation.py`)**
-   - Extend `TypeValidator` to validate struct-typed fields
-   - Add struct instance validation logic
-   - Handle nested validation
-
-**Syntax:**
+**Direct name references (chosen):**
 ```amino
-struct User {
-    name: Str,
-    age: Int
-}
-
-# Basic usage
-current_user: User
-admin: User
-
-validate_user: (user: User) -> Bool
+user: User
 ```
 
-### Phase 2: Nested Structs and Lists
-
-**Goals:**
-- Support `List[StructType]`
-- Enable nested struct definitions
-- Add struct composition
-
-**New Features:**
+**Path-based references (alternative):**
 ```amino
-struct Address {
-    street: Str,
-    city: Str  
-}
+user: $ref("#/structs/User")
+```
 
-struct User {
-    name: Str,
-    address: Address,
-    previous_addresses: List[Address]
+**Rationale**: Direct references are simpler and more familiar to developers from other typed languages.
+
+### Union Type Syntax Options
+
+**Pipe syntax (chosen):**
+```amino
+customer: IndividualCustomer | BusinessCustomer
+```
+
+**Enum-style (alternative):**
+```amino
+customer: Union[IndividualCustomer, BusinessCustomer]
+```
+
+**Rationale**: Pipe syntax is more concise and widely adopted across modern languages.
+
+### Generic/Parameterized Struct Options
+
+**Angle bracket syntax (chosen):**
+```amino
+struct Container[T] {
+    item: T
 }
 ```
 
-### Phase 3: Advanced Features
+**Function-style (alternative):**
+```amino
+struct Container(T) {
+    item: T
+}
+```
 
-**Goals:**
-- Union types (`A | B`)
-- Generic structs (`Container[T]`)
-- Inheritance (`extends` keyword)
+**Rationale**: Angle brackets clearly distinguish type parameters from value parameters.
 
-### Phase 4: Developer Experience
+### Inheritance vs Composition
 
-**Goals:**
-- Better error messages for struct validation failures
-- Schema introspection and documentation generation
-- IDE support and auto-completion
-- Migration tools for existing schemas
+**Inheritance approach:**
+```amino
+struct User extends BaseEntity {
+    name: Str
+}
+```
+
+**Composition approach:**
+```amino
+struct User {
+    base: BaseEntity,
+    name: Str
+}
+```
+
+**Mixed approach (chosen):** Support both patterns, with inheritance for "is-a" relationships and composition for "has-a" relationships.
 
 ## Grammar Changes (ABNF)
 
@@ -258,61 +245,27 @@ primitive-type = "Int" / "Str" / "Float" / "Bool"
 custom-type = WORD
 ```
 
-### Proposed Grammar (Phase 1)
-```abnf
-field-type = primitive-type / list-type / struct-type / custom-type
-primitive-type = "Int" / "Str" / "Float" / "Bool"
-list-type = ("List" / "list") "[" field-type "]"
-struct-type = struct-name
-struct-name = WORD  ; Must reference a defined struct
-custom-type = WORD
-```
-
-### Extended Grammar (Phase 3)
+### Extended Grammar
 ```abnf
 field-type = primitive-type / list-type / struct-type / union-type / generic-type / custom-type
+primitive-type = "Int" / "Str" / "Float" / "Bool"
+list-type = "List" "[" field-type "]"
+struct-type = struct-name
+struct-name = WORD  ; Must reference a defined struct
 union-type = field-type "|" field-type
 generic-type = generic-name "[" type-args "]"
 type-args = field-type *("," field-type)
 generic-name = WORD
+custom-type = WORD
 ```
 
-## Data Structures
+## Implementation Impact
 
-### Extended AST Nodes
-
-```python
-@dataclasses.dataclass
-class StructReference:
-    """Reference to a struct type."""
-    struct_name: str
-    generic_args: list[str] = dataclasses.field(default_factory=list)
-
-@dataclasses.dataclass  
-class UnionType:
-    """Union of multiple types."""
-    types: list[Union[SchemaType, StructReference]]
-
-@dataclasses.dataclass
-class FieldDefinition:
-    name: str
-    field_type: Union[SchemaType, StructReference, UnionType]
-    type_name: str
-    element_types: list[str] = dataclasses.field(default_factory=list)
-    struct_ref: StructReference | None = None  # New field
-```
-
-### Validation Context
-
-```python
-@dataclasses.dataclass
-class ValidationContext:
-    """Context for struct validation."""
-    schema_ast: SchemaAST
-    struct_definitions: dict[str, StructDefinition]
-    validation_path: list[str] = dataclasses.field(default_factory=list)
-    circular_refs: set[str] = dataclasses.field(default_factory=set)
-```
+This feature will require changes to:
+- Parser: Recognize struct names as valid type expressions
+- AST: Extend type system to include struct references
+- Type System: Add struct reference validation and resolution
+- Validation Engine: Handle nested struct validation
 
 ## Examples
 
@@ -405,39 +358,12 @@ can_publish_article: (user: User, article: Article) -> Bool
 moderate_comment: (comment: Comment, moderator: User) -> Bool
 ```
 
-## Migration Strategy
+## Backward Compatibility
 
-### Backward Compatibility
-- All existing schemas continue to work unchanged
+All existing schemas continue to work unchanged:
 - Struct definitions remain optional
 - No breaking changes to current syntax
-
-### Migration Path
-1. **Identify Patterns**: Find repeated field patterns in existing schemas
-2. **Extract Structs**: Create struct definitions for common patterns  
-3. **Update References**: Replace repeated patterns with struct references
-
-### Example Migration
-```amino
-# Before (repeated pattern)
-user_name: Str
-user_email: Str
-user_active: Bool
-
-admin_name: Str  
-admin_email: Str
-admin_active: Bool
-
-# After (with struct)
-struct User {
-    name: Str,
-    email: Str,
-    active: Bool
-}
-
-user: User
-admin: User
-```
+- Primitive types and current features unaffected
 
 ## Benefits
 
@@ -458,42 +384,23 @@ admin: User
 - **IDE Support**: Auto-completion and validation
 - **Testing**: Generate test data structures
 
-## Risks and Considerations
+## Trade-offs and Considerations
 
-### Complexity
-- **Learning Curve**: More concepts for users to understand
-- **Implementation Complexity**: More code to maintain and test
-- **Performance**: Validation overhead for nested structures
+### Complexity vs Expressiveness
+- **Pro**: Eliminates code duplication, clearer data modeling
+- **Con**: Additional concepts for users to learn
+- **Decision**: Benefits outweigh learning curve for non-trivial schemas
 
-### Migration Challenges  
-- **Breaking Changes**: Future advanced features might require changes
-- **Tooling Updates**: All tools need to support new features
-- **Documentation**: Need comprehensive examples and guides
+### Performance vs Features
+- **Pro**: Better structured validation, clearer error messages
+- **Con**: Additional validation overhead for nested structures
+- **Decision**: Performance impact acceptable for improved data modeling
 
-### Design Decisions
-- **Syntax Choices**: Balance familiarity vs expressiveness
-- **Feature Scope**: How much to implement in each phase
-- **Performance vs Features**: Trade-offs in validation complexity
-
-## Success Metrics
-
-### Adoption Metrics
-- Percentage of schemas using struct types
-- Reduction in schema line count due to DRY
-- Number of struct definitions created
-
-### Quality Metrics
-- Improved validation accuracy
-- Reduced validation errors due to better structure
-- Developer satisfaction surveys
-
-### Technical Metrics
-- Performance impact of struct validation
-- Memory usage of complex schemas
-- Test coverage of new features
+### Syntax Familiarity
+- **Pro**: Direct references (`user: User`) familiar from typed languages
+- **Con**: Differs from JSON Schema's path-based references
+- **Decision**: Prioritize developer familiarity over existing schema language consistency
 
 ## Conclusion
 
-Adding struct-as-type support to amino will significantly enhance its expressiveness while maintaining simplicity. The phased approach allows for gradual implementation and testing, ensuring stability and backward compatibility.
-
-The design draws from proven patterns in other DSL languages while staying true to amino's philosophy of clarity and ease of use. This enhancement positions amino as a more powerful tool for complex validation and schema definition scenarios.
+Adding struct-as-type support enhances amino's expressiveness for complex data modeling while maintaining its core simplicity. The design follows familiar patterns from modern typed languages, prioritizing developer experience and clear syntax over alternative approaches.

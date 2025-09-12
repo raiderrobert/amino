@@ -101,74 +101,94 @@ get_user_by_email: (email: Str) -> User?
 update_user: (id: Str, data: User) -> Bool?
 ```
 
-## Implementation Strategy
+## Design Alternatives
 
-### Phase 1: Basic Optional Fields (MVP)
+### Optional Field Syntax Options
 
-**Goals:**
-- Add `?` syntax for primitive types
-- Update parser to handle optional markers
-- Modify validation to allow missing optional fields
+**Suffix syntax (chosen):**
+```amino
+name: Str?
+age: Int?
+```
 
-**Changes Required:**
+**Prefix syntax (alternative):**
+```amino
+name: ?Str
+age: ?Int
+```
 
-1. **Grammar Updates (`amino.abnf`)**
+**Wrapper type syntax (alternative):**
+```amino
+name: Optional[Str]
+age: Optional[Int]
+```
+
+**Rationale**: Suffix syntax is familiar from TypeScript, Swift, Kotlin and visually lightweight.
+
+### Null vs Missing Semantics
+
+**Treat null and missing as equivalent (chosen):**
+- Both `null` and absent fields are valid for optional types
+- Simpler mental model for developers
+
+**Distinguish null from missing (alternative):**
+- `field?: Type` allows missing or null
+- `field: Type | null` allows null but field must be present
+- More precise but adds complexity
+
+**Rationale**: Equivalent treatment covers most use cases with simpler semantics.
+
+### Optional Collection Elements
+
+**Element-level optionality:**
+```amino
+scores: List[Int?]  # List of optional integers
+```
+
+**Collection-level optionality:**
+```amino
+scores: List[Int]?  # Optional list of integers
+```
+
+**Both (chosen):**
+```amino
+scores: List[Int?]?  # Optional list of optional integers
+```
+
+**Rationale**: Maximum flexibility for complex data structures.
+
+## Grammar Impact
+
+**Current field syntax:**
+```abnf
+field-definition = identifier ":" SP type [field-constraints] [comment]
+```
+
+**Extended field syntax:**
 ```abnf
 field-definition = identifier ":" SP type [field-optional] [field-constraints] [comment]
 field-optional = "?"
 ```
 
-2. **Parser Changes (`amino/schema/parser.py`)**
-```python
-def _parse_field(self) -> FieldDefinition:
-    """Parse a field definition with optional support."""
-    name_token = self._expect(TokenType.WORD)
-    self._expect(TokenType.COLON)
-    
-    # Parse the type
-    type_info = self._parse_type_expression()
-    field_type = type_info["type"]
-    type_name = type_info["name"]
-    element_types = type_info.get("element_types", [])
-    
-    # Handle optional type (ending with ?)
-    optional = False
-    peek_token = self._peek()
-    if peek_token and peek_token.token_type == TokenType.QUESTION:
-        optional = True
-        self._advance()
-    
-    # ... rest of parsing logic
-    
-    return FieldDefinition(name_token.value, field_type, type_name, element_types, constraints, optional)
-```
+## Validation Semantics
 
-## Data Validation Semantics
-
-### Missing vs Null Values
-
-**Missing Field (Field not present in data):**
-```json
-{
-  "name": "John",
-  "age": 25
-  // email is missing
-}
-```
-
-**Null Field (Field present but null):**
-```json
-{
-  "name": "John", 
-  "age": 25,
-  "email": null
-}
-```
+**Missing vs Null Values:**
+- Missing field: Key absent from data object
+- Null field: Key present with `null` value
+- Both are valid for optional fields
 
 **Validation Rules:**
-1. **Required fields**: Must be present and non-null
-2. **Optional fields**: Can be missing or null
-3. **Optional with constraints**: If present and non-null, must satisfy constraints
+- Required fields: Must be present and non-null
+- Optional fields: Can be missing or null
+- Optional with constraints: If present and non-null, must satisfy constraints
+
+## Implementation Impact
+
+This feature will require changes to:
+- Parser: Recognize `?` suffix and track optional flag
+- Validation Engine: Allow missing/null values for optional fields
+- AST: Extend field definitions to include optional metadata
+- Error Reporting: Distinguish required vs optional field violations
 
 ## Examples
 
@@ -224,30 +244,30 @@ handle_request: (path: Str, method: Str, headers: List[Str]?) -> ApiResponse
 - **Partial Validation**: Validate only the fields that are present
 - **Null Safety**: Explicit handling of null values
 
-## Migration Strategy
+## Backward Compatibility
 
-### Backward Compatibility
 All existing schemas continue to work unchanged:
-```amino
-# Current schemas remain valid
-name: Str
-age: Int
-active: Bool
-```
+- No breaking changes to current required field syntax
+- Optional syntax is purely additive
+- Validation behavior unchanged for existing schemas
 
-### Gradual Adoption
-```amino
-# Phase 1: Add optional fields to existing schemas
-name: Str      # Keep required fields as-is
-age: Int       # Keep required fields as-is  
-email: Str?    # Add new optional fields
+## Trade-offs and Considerations
 
-# Phase 2: Convert appropriate fields to optional
-name: Str      # Keep essential fields required
-age: Int?      # Make non-essential fields optional
-email: Str?    # Make non-essential fields optional
-```
+### Simplicity vs Precision
+- **Pro**: Simple `?` syntax is easy to understand and use
+- **Con**: Doesn't distinguish between null and missing values
+- **Decision**: Simplicity wins for most use cases, precision can be added later if needed
+
+### Type System Complexity
+- **Pro**: Optional types are foundational for realistic data modeling
+- **Con**: Adds another dimension to the type system
+- **Decision**: Essential feature that justifies the complexity
+
+### Validation Performance
+- **Pro**: Clearer validation semantics for incomplete data
+- **Con**: Additional checks for optional field handling
+- **Decision**: Minimal performance impact for significant usability gain
 
 ## Conclusion
 
-Adding optional field support to amino is a foundational enhancement that will significantly improve its usability for real-world data validation scenarios. The `?` syntax is familiar to developers from many modern languages and provides a clear, concise way to express field optionality.
+Optional field support is foundational for real-world data validation. The `?` syntax follows familiar patterns from modern typed languages while maintaining amino's simplicity and clarity.
