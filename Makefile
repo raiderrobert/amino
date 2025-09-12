@@ -10,15 +10,15 @@ install-dependencies:
 upgrade-dependencies:
 	@uv sync --all-groups --all-extras --upgrade
 
+.PHONY: qa
+qa: tidy test
 
 ###########
 #  TIDY   #
 ###########
 
 .PHONY: tidy
-tidy:
-	tidy-ruff
-	tidy-ty
+tidy: tidy-ruff tidy-ty
 
 .PHONY: tidy-ruff
 tidy-ruff:

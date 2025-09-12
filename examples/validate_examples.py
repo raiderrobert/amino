@@ -116,8 +116,9 @@ class ExampleValidator:
                 for line in lines:
                     if "passed in" in line and re.search(r"(\d+) passed", line):
                         match = re.search(r"(\d+) passed", line)
-                        passed_count = int(match.group(1))
-                        break
+                        if match:
+                            passed_count = int(match.group(1))
+                            break
 
                 if passed_count == 0:
                     # Fallback: count individual PASSED lines

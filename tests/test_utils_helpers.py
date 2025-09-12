@@ -1,6 +1,5 @@
 """Tests for amino.utils.helpers module."""
 
-import pytest
 from amino.utils.helpers import flatten_dict, is_reserved_name
 
 
@@ -21,28 +20,14 @@ class TestFlattenDict:
 
     def test_nested_dict(self):
         """Test flattening a nested dictionary."""
-        data = {
-            "user": {"name": "John", "age": 30},
-            "config": {"debug": True, "version": "1.0"}
-        }
+        data = {"user": {"name": "John", "age": 30}, "config": {"debug": True, "version": "1.0"}}
         result = flatten_dict(data)
-        expected = {
-            "user.name": "John",
-            "user.age": 30,
-            "config.debug": True,
-            "config.version": "1.0"
-        }
+        expected = {"user.name": "John", "user.age": 30, "config.debug": True, "config.version": "1.0"}
         assert result == expected
 
     def test_deeply_nested_dict(self):
         """Test flattening a deeply nested dictionary."""
-        data = {
-            "level1": {
-                "level2": {
-                    "level3": {"value": "deep"}
-                }
-            }
-        }
+        data = {"level1": {"level2": {"level3": {"value": "deep"}}}}
         result = flatten_dict(data)
         expected = {"level1.level2.level3.value": "deep"}
         assert result == expected
@@ -55,7 +40,7 @@ class TestFlattenDict:
             "boolean": True,
             "none": None,
             "list": [1, 2, 3],
-            "nested": {"inner": "value"}
+            "nested": {"inner": "value"},
         }
         result = flatten_dict(data)
         expected = {
@@ -64,7 +49,7 @@ class TestFlattenDict:
             "boolean": True,
             "none": None,
             "list": [1, 2, 3],
-            "nested.inner": "value"
+            "nested.inner": "value",
         }
         assert result == expected
 
