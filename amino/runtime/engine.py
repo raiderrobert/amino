@@ -130,9 +130,15 @@ class RuleEngine:
         if not rules:
             return rules
 
-        # For FIRST mode with explicit ordering, don't optimize (user ordering takes precedence)
+        # For FIRST mode with explicit ordering, sort by the user-specified key
         if options.mode == MatchMode.FIRST and options.ordering_key:
-            return rules  # Keep original order for explicit ordering
+            reverse = options.ordering_direction == "desc"
+
+            def get_ordering_value(rule):
+                assert options.ordering_key is not None  # Help type checker
+                return getattr(rule, options.ordering_key, 0)
+
+            return sorted(rules, key=get_ordering_value, reverse=reverse)
 
         # For FIRST mode without explicit ordering, sort by complexity (simpler rules first)
         if options.mode == MatchMode.FIRST:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for e-commerce pricing engine example."""
 
-
 import pytest
 from pricing_engine import PricingEngine
 
