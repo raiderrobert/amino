@@ -12,7 +12,7 @@ Based on analysis of 10+ DSL languages (GraphQL, Protocol Buffers, Terraform HCL
 - **Definition Keywords**: `struct`, `type`, `record`, `message`, `interface`
 - **Reference Patterns**: Direct name references (`user: User`) vs path references (`$ref: "#/defs/User"`)
 - **Composition**: Embedding, inheritance, union types, intersections
-- **Optionality**: Optional markers (`?`, `optional`), required fields arrays, union with null
+- **Optionality**: Optional field support (see separate optional types design document)
 
 ### Best Practices Identified
 1. **Clear separation** between definition and usage
@@ -46,9 +46,10 @@ validate_user: (name: Str, age: Int) -> Bool
 - No way to reference structs in function parameters
 - No composition or nesting capabilities
 - Validation only works on primitive types
-- No support for optional fields
 
 ## Proposed Design
+
+**Note**: This design focuses on struct-as-type functionality. For optional field support (`field: Type?`), see the separate `optional_types_design.md` document.
 
 ### 1. Basic Struct-as-Type Support
 
@@ -59,7 +60,7 @@ struct User {
     id: Str,
     name: Str,
     email: Str,
-    age: Int?
+    age: Int
 }
 
 struct Company {
@@ -71,11 +72,11 @@ struct Company {
 # Use structs as field types
 user: User
 company: Company
-admin: User?
+admin: User
 
 # Use in functions
 create_user: (data: User) -> Bool
-get_company: (id: Str) -> Company?
+get_company: (id: Str) -> Company
 ```
 
 ### 2. Nested Struct Support
@@ -93,14 +94,14 @@ struct User {
     id: Str,
     name: Str,
     email: Str,
-    address: Address?,
+    address: Address,
     secondary_addresses: List[Address]
 }
 
 # Multi-level nesting
 struct Department {
     name: Str,
-    manager: User?,
+    manager: User,
     employees: List[User]
 }
 
@@ -118,7 +119,7 @@ struct Company {
 struct IndividualCustomer {
     first_name: Str,
     last_name: Str,
-    ssn: Str?
+    ssn: Str
 }
 
 struct BusinessCustomer {
@@ -135,8 +136,8 @@ customer: IndividualCustomer | BusinessCustomer
 ```amino
 struct ApiResponse[T] {
     success: Bool,
-    data: T?,
-    error: Str?
+    data: T,
+    error: Str
 }
 
 struct PaginatedList[T] {
@@ -231,7 +232,7 @@ struct User {
 
 # Basic usage
 current_user: User
-admin: User?
+admin: User
 
 validate_user: (user: User) -> Bool
 ```
@@ -324,7 +325,6 @@ class FieldDefinition:
     type_name: str
     element_types: list[str] = dataclasses.field(default_factory=list)
     constraints: dict[str, Any] = dataclasses.field(default_factory=list)
-    optional: bool = False
     struct_ref: StructReference | None = None  # New field
 ```
 
@@ -362,7 +362,7 @@ struct Customer {
     email: Str,
     name: Str,
     billing_address: Address,
-    shipping_address: Address?
+    shipping_address: Address
 }
 
 struct Product {
@@ -415,7 +415,7 @@ struct Article {
     author: User,
     tags: List[Tag],
     published: Bool,
-    published_at: Str?
+    published_at: Str
 }
 
 struct Comment {
