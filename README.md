@@ -29,7 +29,7 @@ pip install -e .[dev]
 
 ## Quick Start
 
-Create a schema file `user_policy.amino`:
+Create a schema file `user_policy.amn`:
 ```
 struct user {
     age: Int,
@@ -45,7 +45,7 @@ Use it in Python:
 import amino
 
 # Load schema with custom function
-amn = amino.load_schema("user_policy.amino", funcs={
+amn = amino.load_schema("user_policy.amn", funcs={
     'can_access_premium': lambda age: age >= 18
 })
 
@@ -62,7 +62,21 @@ print(result)  # True
 For production systems, compile multiple rules for batch evaluation:
 
 ```python
-# E-commerce pricing example
+# First define schema with needed structs
+schema = """
+struct customer {
+    tier: Str
+}
+struct order {
+    total: Float,
+    item_count: Int  
+}
+struct product {
+    inventory_count: Int
+}
+"""
+
+# Then compile rules
 pricing_rules = amn.compile([
     {"id": "gold_discount", "rule": "customer.tier = 'gold' and order.total > 100", "ordering": 1},
     {"id": "bulk_discount", "rule": "order.item_count > 10", "ordering": 2},
@@ -82,6 +96,14 @@ results = pricing_rules.eval([
 Use `match="first"` to return only the highest priority rule:
 
 ```python
+# Schema includes content struct and toxicity function
+schema = """
+struct content {
+    text: Str
+}
+toxicity_score: (text: Str) -> Float
+"""
+
 safety_rules = amn.compile([
     {"id": "immediate_block", "rule": "toxicity_score(content.text) > 0.9", "ordering": 1},
     {"id": "flag_review", "rule": "toxicity_score(content.text) > 0.7", "ordering": 2}
@@ -161,24 +183,28 @@ amn = amino.load_schema("schema.amn", funcs={
 
 ## Operators
 
-Built-in operators.
+**Comparison**: `=`, `!=`, `>`, `<`, `>=`, `<=`  
+**Logical**: `and`, `or`, `not`  
+**Membership**: `in`, `not in`
 
+```python
+# Examples
+"customer.tier in ['gold', 'platinum']"
+"order.total >= 100 and not customer.new_user" 
+"product.category != 'restricted'"
 ```
-!=
-=
->
-<
->=
-<=
-in
-not in
-not
-and
-or
 
-```
+## Real-World Examples
+
+Amino supports rule engines across use cases:
+
+- **[E-commerce Pricing](examples/ecommerce/)** - Dynamic discounts and promotions
+- **[Content Moderation](examples/content_moderation/)** - Safety systems  
+- **[IoT Automation](examples/iot_automation/)** - Smart home device coordination
+
+Each example includes complete schemas, Python implementations, and tests.
 
 ## Documentation
 
+- [Examples](examples/README.md) - Complete working examples and use cases
 - [Development Guide](DEVELOPMENT.md) - Setup, testing, and contribution guidelines
-- [Examples](examples/README.md) - Additional examples and use cases
