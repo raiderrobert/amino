@@ -4,6 +4,10 @@ A toolkit and DSL for classification rules engines—sometimes called expert sys
 
 Amino inverts the problem space by placing a schema at the center, not unlike how GraphQL has done so for APIs.
 
+## Motivation
+
+Amino is designed to be a safe, flexible, and extensible rules engine that can be easily integrated into existing systems. It provides a simple and intuitive way to define and evaluate rules against data sets, making it a great choice for applications that require end users to create custom logic and decision-making.
+
 ## Features
 
 Amino has three key components:
@@ -20,7 +24,7 @@ pip install amino
 ### Development Installation
 
 ```bash
-git clone https://github.com/yourusername/amino.git
+git clone https://github.com/raiderrobert/amino.git
 cd amino
 pip install -e .[dev]
 ```
@@ -29,92 +33,76 @@ pip install -e .[dev]
 
 ## Quick Start
 
-Create a schema file `user_policy.amn`:
+Create a schema file `auto_loan.amn`:
 ```
-struct user {
-    age: Int,
-    location: Str,
-    verified: Bool
-}
-
-can_access_premium: (age: Int) -> Bool
+amount: Int
+state_code: Str
+credit_score: Int
+income: Int
 ```
 
 Use it in Python:
 ```python
 import amino
 
-# Load schema with custom function
-amn = amino.load_schema("user_policy.amn", funcs={
-    'can_access_premium': lambda age: age >= 18
-})
+# Load schema
+amn = amino.load_schema("auto_loan.amn")
 
-# Evaluate a rule
-result = amn.eval(
-    "user.age > 21 and user.location = 'CA' and can_access_premium(user.age)",
-    {"user": {"age": 25, "location": "CA", "verified": True}}
+# Check if loan should be auto-declined
+decline = amn.eval(
+    "amount > 80000 or credit_score < 600 or income < 30000", 
+    {"amount": 75000, "state_code": "CA", "credit_score": 580, "income": 45000}
 )
-print(result)  # True
+print(decline)  # True - declined due to low credit score
 ```
 
 ## Multiple Rules and Priority
 
-For production systems, compile multiple rules for batch evaluation:
+For production systems, compile multiple rules:
 
 ```python
-# First define schema with needed structs
-schema = """
-struct customer {
-    tier: Str
-}
-struct order {
-    total: Float,
-    item_count: Int  
-}
-struct product {
-    inventory_count: Int
-}
-"""
-
-# Then compile rules
-pricing_rules = amn.compile([
-    {"id": "gold_discount", "rule": "customer.tier = 'gold' and order.total > 100", "ordering": 1},
-    {"id": "bulk_discount", "rule": "order.item_count > 10", "ordering": 2},
-    {"id": "clearance", "rule": "product.inventory_count < 5", "ordering": 3}
+# Auto loan decline rules with different priorities
+decline_rules = amn.compile([
+    {"id": "high_risk", "rule": "credit_score < 500", "ordering": 1},
+    {"id": "ca_income", "rule": "state_code = 'CA' and income < 50000", "ordering": 2}, 
+    {"id": "tx_amount", "rule": "state_code = 'TX' and amount > 60000", "ordering": 3},
+    {"id": "general_risk", "rule": "credit_score < 650 and amount > 40000", "ordering": 4}
 ])
 
-# Evaluate against multiple orders
-results = pricing_rules.eval([
-    {"id": "order_1", "customer": {"tier": "gold"}, "order": {"total": 150, "item_count": 3}},
-    {"id": "order_2", "customer": {"tier": "silver"}, "order": {"total": 50, "item_count": 15}}
-])
-# Returns: [{"id": "order_1", "results": ["gold_discount"]}, {"id": "order_2", "results": ["bulk_discount"]}]
+# Evaluate multiple loan applications
+applications = [
+    {"id": "app_1", "amount": 45000, "state_code": "CA", "credit_score": 480, "income": 55000},
+    {"id": "app_2", "amount": 65000, "state_code": "TX", "credit_score": 720, "income": 80000},  
+    {"id": "app_3", "amount": 35000, "state_code": "NY", "credit_score": 640, "income": 45000}
+]
+
+results = decline_rules.eval(applications)
+# Returns: [
+#   {"id": "app_1", "results": ["high_risk"]},
+#   {"id": "app_2", "results": ["tx_amount"]}, 
+#   {"id": "app_3", "results": []}
+# ]
 ```
 
 ### First Match Priority
 
-Use `match="first"` to return only the highest priority rule:
+Use `match="first"` to return only the highest priority decline reason:
 
 ```python
-# Schema includes content struct and toxicity function
-schema = """
-struct content {
-    text: Str
-}
-toxicity_score: (text: Str) -> Float
-"""
-
-safety_rules = amn.compile([
-    {"id": "immediate_block", "rule": "toxicity_score(content.text) > 0.9", "ordering": 1},
-    {"id": "flag_review", "rule": "toxicity_score(content.text) > 0.7", "ordering": 2}
+decline_rules = amn.compile([
+    {"id": "fraud_risk", "rule": "credit_score < 400", "ordering": 1},
+    {"id": "income_risk", "rule": "income < 25000", "ordering": 2},
+    {"id": "amount_risk", "rule": "amount > 100000", "ordering": 3}
 ], match={"option": "first", "key": "ordering", "ordering": "asc"})
+
+# Returns only the first matching decline reason per application
 ```
 
 
 ## Schema Reference
 
 ### Comments
-Use `#` for comments - everything after is ignored:
+Use `#` for comments. Everything one the same line after the `#` is ignored:
 
 ```
 # Schema for user validation
@@ -193,6 +181,15 @@ amn = amino.load_schema("schema.amn", funcs={
 "order.total >= 100 and not customer.new_user" 
 "product.category != 'restricted'"
 ```
+
+## FAQ
+
+** Why would I use this instead of a programming language?**
+ 
+Programming languages are designed for general purposes tasks. Rules engines are for end users to customize a system. It's the bridge between a few configuration options and a full-fledged programming language.
+
+If you find yourself in a situation where users want to write complex rules to govern system behavior, and you expect those rules to be frequently updated by end users, then it's likely that a rules engine is a better fit than a programming language.
+
 
 ## Real-World Examples
 
