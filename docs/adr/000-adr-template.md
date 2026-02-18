@@ -9,8 +9,6 @@ What is the situation that motivates this decision? Describe the forces at play 
 
 ## Decisions
 
-What was decided? State each decision clearly and directly. Include the rationale for each.
-
 ### 1. [Decision heading]
 
 [What was decided and why.]

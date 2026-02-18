@@ -62,8 +62,6 @@ Type enforcement is configurable independently for rules and decisions:
 
 **Rationale**: Rules and decisions have different failure characteristics. A rule with a type mismatch (e.g., comparing a `Str` field to an `Int` literal) will never produce a correct result — strict is likely the right default. Decision data, particularly in IoT or high-volume pipelines, may be noisy or incomplete — loose may be the right default for those consumers.
 
-**Open question**: The semantics of "loose" for decisions (coerce? skip the field? warn-and-run?) should be defined before implementation. These behaviors are not equivalent and have different correctness implications.
-
 ## Consequences
 
 - The engine is a single, well-encapsulated object representing one decision context.
@@ -71,3 +69,7 @@ Type enforcement is configurable independently for rules and decisions:
 - Rule hot-swap is supported natively; schema hot-swap is achieved by replacing the engine.
 - Multi-context scenarios require no library support — just multiple engine instances.
 - Type enforcement mode is a first-class concept, not an afterthought.
+
+## Open Questions
+
+- What does "loose" mode mean for decisions — coerce mismatched types, skip non-conforming fields, or warn-and-run? These behaviors are not equivalent and have different correctness implications. Should be resolved before implementation.
