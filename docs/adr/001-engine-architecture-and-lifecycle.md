@@ -58,9 +58,11 @@ Amino does not manage context naming, lifecycle, or routing. These are orchestra
 Type enforcement is configurable independently for rules and decisions:
 
 - **Rules mode** (`strict` | `loose`): controls how the engine responds when a rule fails type validation against the schema at compile time. In strict mode, bad rules raise an error. In loose mode, warnings are logged and the rule may be attempted.
-- **Decisions mode** (`strict` | `loose`): controls how the engine responds when a decision (input data) fails type validation against the schema at evaluation time. In strict mode, non-conforming decisions are rejected. In loose mode, warnings are logged and evaluation is attempted.
+- **Decisions mode** (`strict` | `loose`): controls how the engine responds when a decision (input data) fails type validation against the schema at evaluation time. In strict mode, non-conforming decisions are rejected with an error. In loose mode, non-conforming fields are skipped and a warning is logged; evaluation proceeds on the conforming fields only.
 
 **Rationale**: Rules and decisions have different failure characteristics. A rule with a type mismatch (e.g., comparing a `Str` field to an `Int` literal) will never produce a correct result — strict is likely the right default. Decision data, particularly in IoT or high-volume pipelines, may be noisy or incomplete — loose may be the right default for those consumers.
+
+**Loose mode semantics for decisions**: skip-and-warn. Non-conforming fields (wrong type or missing required field) are excluded from evaluation and a warning is emitted. The decision is evaluated on whatever conforming fields remain. Type coercion (e.g., `"600"` → `600`) is explicitly not performed — types are never silently changed.
 
 ## Consequences
 
@@ -72,4 +74,4 @@ Type enforcement is configurable independently for rules and decisions:
 
 ## Open Questions
 
-- What does "loose" mode mean for decisions — coerce mismatched types, skip non-conforming fields, or warn-and-run? These behaviors are not equivalent and have different correctness implications. Should be resolved before implementation.
+None.
