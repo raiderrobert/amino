@@ -1,143 +1,91 @@
+# tests/test_rule_parser.py
 import pytest
-
-from amino.rules.ast import BinaryOp, Literal, Operator, Variable
-from amino.rules.parser import parse_rule
+from amino.operators.standard import build_operator_registry
 from amino.schema.parser import parse_schema
-from amino.utils.errors import RuleParseError
+from amino.schema.registry import SchemaRegistry
+from amino.rules.parser import parse_rule
+from amino.rules.ast import BinaryOp, Literal, UnaryOp, Variable
+from amino.errors import RuleParseError
 
+def _parse(rule: str, schema: str = "score: Int\nname: Str\nactive: Bool\ntags: List[Str]"):
+    reg = SchemaRegistry(parse_schema(schema))
+    ops = build_operator_registry("standard")
+    return parse_rule(rule, reg, ops)
 
-@pytest.mark.parametrize(
-    "schema_content,rule,should_raise,expected_error",
-    [
-        (
-            "a: Int\nb: Int",
-            "a > 1",
-            False,
-            None,
-        ),
-        (
-            "a: Int\nb: Int",
-            "2 > 1",
-            False,
-            None,
-        ),
-        (
-            "a: Int\nb: Int",
-            "a > b and b > 0",
-            False,
-            None,
-        ),
-        (
-            "name: Str\nage: Int",
-            "name = 'John' and age >= 18",
-            False,
-            None,
-        ),
-        (
-            "amount: Int",
-            "amount > unknown_var",
-            True,
-            "Unknown variable: unknown_var",
-        ),
-        (
-            "amount: Int",
-            "amount > 0 and",
-            True,
-            "Unexpected end of expression",
-        ),
-    ],
-)
-def test_rule_parsing(schema_content, rule, should_raise, expected_error):
-    """Test rule parsing with new architecture."""
-    schema_ast = parse_schema(schema_content)
+def test_integer_literal():
+    ast = _parse("500")
+    assert isinstance(ast.root, Literal) and ast.root.value == 500
 
-    if should_raise:
-        with pytest.raises(RuleParseError) as excinfo:
-            parse_rule(rule, schema_ast)
-        assert expected_error in str(excinfo.value)
-    else:
-        rule_ast = parse_rule(rule, schema_ast)
-        assert rule_ast.root is not None
-        assert hasattr(rule_ast, "variables")
-        assert hasattr(rule_ast, "functions")
+def test_float_before_integer():
+    ast = _parse("600.0")
+    assert isinstance(ast.root, Literal) and ast.root.value == 600.0
 
+def test_string_literal():
+    ast = _parse("'hello'")
+    assert isinstance(ast.root, Literal) and ast.root.value == "hello"
 
-@pytest.mark.parametrize(
-    "schema_content,rule,expected_operator,left_type,left_value,right_type,right_value,expected_variables",
-    [
-        ("amount: Int", "amount > 100", Operator.GT, Variable, "amount", Literal, 100, ["amount"]),
-        ("amount: Int", "100 > 50", Operator.GT, Literal, 100, Literal, 50, []),
-        ("name: Str", "name = 'John'", Operator.EQ, Variable, "name", Literal, "John", ["name"]),
-        ("name: Str", 'name = "Jane"', Operator.EQ, Variable, "name", Literal, "Jane", ["name"]),
-    ],
-)
-def test_simple_comparisons(
-    schema_content, rule, expected_operator, left_type, left_value, right_type, right_value, expected_variables
-):
-    """Test parsing simple comparisons."""
-    schema_ast = parse_schema(schema_content)
-    rule_ast = parse_rule(rule, schema_ast)
+def test_boolean_literal():
+    ast = _parse("true")
+    assert isinstance(ast.root, Literal) and ast.root.value is True
 
-    assert isinstance(rule_ast.root, BinaryOp)
-    assert rule_ast.root.operator == expected_operator
+def test_variable_reference():
+    ast = _parse("score")
+    assert isinstance(ast.root, Variable) and ast.root.name == "score"
 
-    assert isinstance(rule_ast.root.left, left_type)
-    if left_type == Variable:
-        assert isinstance(rule_ast.root.left, Variable)
-        assert rule_ast.root.left.name == left_value
-    else:
-        assert isinstance(rule_ast.root.left, Literal)
-        assert rule_ast.root.left.value == left_value
+def test_simple_comparison():
+    ast = _parse("score = 500")
+    assert isinstance(ast.root, BinaryOp)
+    assert ast.root.op_token == "="
 
-    assert isinstance(rule_ast.root.right, right_type)
-    if right_type == Variable:
-        assert isinstance(rule_ast.root.right, Variable)
-        assert rule_ast.root.right.name == right_value
-    else:
-        assert isinstance(rule_ast.root.right, Literal)
-        assert rule_ast.root.right.value == right_value
+def test_comparison_precedence_over_and():
+    ast = _parse("score > 400 and score < 800")
+    assert isinstance(ast.root, BinaryOp)
+    assert ast.root.op_token == "and"
 
-    for var in expected_variables:
-        assert var in rule_ast.variables
+def test_not_prefix():
+    ast = _parse("not active")
+    assert isinstance(ast.root, UnaryOp) and ast.root.op_token == "not"
 
+def test_parentheses_grouping():
+    ast = _parse("(score > 400 or score < 100) and active = true")
+    root = ast.root
+    assert root.op_token == "and"
 
-@pytest.mark.parametrize(
-    "schema_content,rule,expected_variables",
-    [
-        ("amount: Int\nstate: Str", "amount > 0 and state = 'CA'", ["amount", "state"]),
-        ("a: Int\nb: Int\nc: Int", "(a > 0 and b > 0) or c > 0", ["a", "b", "c"]),
-    ],
-)
-def test_complex_expressions(schema_content, rule, expected_variables):
-    """Test parsing complex logical expressions."""
-    schema_ast = parse_schema(schema_content)
-    rule_ast = parse_rule(rule, schema_ast)
+def test_in_list_membership():
+    ast = _parse("name in ['foo', 'bar']")
+    assert ast.root.op_token == "in"
 
-    assert isinstance(rule_ast.root, BinaryOp)
+def test_not_in():
+    ast = _parse("name not in ['a', 'b']")
+    assert ast.root.op_token == "not in"
 
-    for var in expected_variables:
-        assert var in rule_ast.variables
+def test_contains_operator():
+    ast = _parse("name contains 'ell'")
+    assert ast.root.op_token == "contains"
 
+def test_function_call():
+    schema = "score: Int\ncheck: (x: Int) -> Bool"
+    ast = _parse("check(score)", schema=schema)
+    from amino.rules.ast import FunctionCall
+    assert isinstance(ast.root, FunctionCall) and ast.root.name == "check"
 
-def test_function_calls():
-    """Test parsing function calls."""
-    schema_ast = parse_schema("amount: Int\nmax_amount: Int\nmin_func: (a: Int, b: Int) -> int")
-    rule_ast = parse_rule("min_func(amount, max_amount) > 0", schema_ast)
+def test_dot_notation():
+    schema = "struct Addr { city: Str }\naddr: Addr"
+    ast = _parse("addr.city = 'SF'", schema=schema)
+    assert isinstance(ast.root, BinaryOp)
+    assert isinstance(ast.root.left, Variable)
+    assert ast.root.left.name == "addr.city"
 
-    assert isinstance(rule_ast.root, BinaryOp)
-    assert "min_func" in rule_ast.functions
+def test_unknown_variable_raises():
+    with pytest.raises(RuleParseError, match="Unknown"):
+        _parse("unknown_field = 1")
 
+def test_list_literal_in_rule():
+    ast = _parse("tags in [['a', 'b']]")  # tags is List[Str], comparing with list literal
+    assert ast.root.op_token == "in"
 
-def test_struct_field_access():
-    """Test parsing struct field access."""
-    schema_ast = parse_schema("""
-    struct person {
-        name: Str,
-        age: Int
-    }
-    """)
-    rule_ast = parse_rule("person.age > 18", schema_ast)
-
-    assert isinstance(rule_ast.root, BinaryOp)
-    assert isinstance(rule_ast.root.left, Variable)
-    assert rule_ast.root.left.name == "person.age"
+def test_or_lower_precedence_than_and():
+    # a or b and c  should parse as  a or (b and c)
+    ast = _parse("active = true or score > 0 and score < 100")
+    assert ast.root.op_token == "or"
+    assert ast.root.right.op_token == "and"
