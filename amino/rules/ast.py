@@ -1,107 +1,73 @@
-"""Rule AST definitions."""
-
+# amino/rules/ast.py
 import dataclasses
-import enum
+from collections.abc import Callable
 from typing import Any
-
-from ..schema.types import SchemaType
-
-
-class Operator(enum.Enum):
-    """Rule operators."""
-
-    EQ = "="
-    NE = "!="
-    GT = ">"
-    LT = "<"
-    GTE = ">="
-    LTE = "<="
-
-    AND = "and"
-    OR = "or"
-    NOT = "not"
-
-    IN = "in"
-    NOT_IN = "not in"
-
-    TYPEOF = "typeof"
-    IS_VALID = "is_valid"
 
 
 @dataclasses.dataclass
 class RuleNode:
-    """Base class for rule AST nodes."""
-
-    return_type: SchemaType
+    type_name: str   # resolved type: "Bool", "Int", "ipv4", etc.
 
 
 @dataclasses.dataclass
 class Literal(RuleNode):
-    """Literal value in a rule."""
-
     value: Any
 
-    def __init__(self, value: Any, return_type: SchemaType):
+    def __init__(self, value: Any, type_name: str):
         self.value = value
-        self.return_type = return_type
+        self.type_name = type_name
 
 
 @dataclasses.dataclass
 class Variable(RuleNode):
-    """Variable reference in a rule."""
-
     name: str
 
-    def __init__(self, name: str, return_type: SchemaType):
+    def __init__(self, name: str, type_name: str):
         self.name = name
-        self.return_type = return_type
+        self.type_name = type_name
 
 
 @dataclasses.dataclass
 class BinaryOp(RuleNode):
-    """Binary operation in a rule."""
-
-    operator: Operator
+    op_token: str
     left: RuleNode
     right: RuleNode
+    fn: Callable
 
-    def __init__(self, operator: Operator, left: RuleNode, right: RuleNode, return_type: SchemaType):
-        self.operator = operator
+    def __init__(self, op_token: str, left: RuleNode, right: RuleNode,
+                 type_name: str, fn: Callable):
+        self.op_token = op_token
         self.left = left
         self.right = right
-        self.return_type = return_type
+        self.type_name = type_name
+        self.fn = fn
 
 
 @dataclasses.dataclass
 class UnaryOp(RuleNode):
-    """Unary operation in a rule."""
-
-    operator: Operator
+    op_token: str
     operand: RuleNode
+    fn: Callable
 
-    def __init__(self, operator: Operator, operand: RuleNode, return_type: SchemaType):
-        self.operator = operator
+    def __init__(self, op_token: str, operand: RuleNode, type_name: str, fn: Callable):
+        self.op_token = op_token
         self.operand = operand
-        self.return_type = return_type
+        self.type_name = type_name
+        self.fn = fn
 
 
 @dataclasses.dataclass
 class FunctionCall(RuleNode):
-    """Function call in a rule."""
-
     name: str
     args: list[RuleNode]
 
-    def __init__(self, name: str, args: list[RuleNode], return_type: SchemaType):
+    def __init__(self, name: str, args: list[RuleNode], type_name: str):
         self.name = name
         self.args = args
-        self.return_type = return_type
+        self.type_name = type_name
 
 
 @dataclasses.dataclass
 class RuleAST:
-    """Rule abstract syntax tree."""
-
     root: RuleNode
-    variables: list[str] = dataclasses.field(default_factory=list)
-    functions: list[str] = dataclasses.field(default_factory=list)
+    return_type: str

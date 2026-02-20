@@ -1,197 +1,105 @@
-"""Rule compilation implementation."""
-
+# amino/rules/compiler.py
 from collections.abc import Callable
-from functools import lru_cache, singledispatch
 from typing import Any
 
-from ..utils.errors import RuleEvaluationError
-from .ast import (
-    BinaryOp,
-    FunctionCall,
-    Literal,
-    Operator,
-    RuleAST,
-    RuleNode,
-    UnaryOp,
-    Variable,
-)
+from amino.errors import RuleEvaluationError
+
+from .ast import BinaryOp, FunctionCall, Literal, RuleAST, RuleNode, UnaryOp, Variable
 
 
 class CompiledRule:
-    """Compiled rule that can be evaluated efficiently."""
-
-    def __init__(
-        self,
-        rule_id: Any,
-        evaluator: Callable[[dict[str, Any], dict[str, Callable]], bool],
-        variables: list[str],
-        functions: list[str],
-    ):
+    def __init__(self, rule_id: Any, fn: Callable, return_type: str):
         self.rule_id = rule_id
-        self.evaluator = evaluator
-        self.variables = variables
-        self.functions = functions
+        self._fn = fn
+        self.return_type = return_type
 
-    def evaluate(self, data: dict[str, Any], function_registry: dict[str, Callable] | None = None) -> bool:
-        """Evaluate the compiled rule against data."""
+    def evaluate(self, data: dict[str, Any],
+                 functions: dict[str, Callable]) -> Any:
         try:
-            return self.evaluator(data, function_registry or {})
-        except Exception as e:
-            raise RuleEvaluationError(f"Error evaluating rule {self.rule_id}: {e}") from e
+            return self._fn(data, functions)
+        except RuleEvaluationError:
+            return False
+        except Exception:
+            return False
 
 
-class RuleCompiler:
-    """Compiles rule ASTs into executable code."""
+class TypedCompiler:
+    def __init__(self, rules_mode: str = "strict"):
+        self.rules_mode = rules_mode
 
-    def compile_rule(self, rule_id: Any, ast: RuleAST) -> CompiledRule:
-        """Compile a single rule AST."""
-        evaluator_code = self._generate_evaluator(ast.root)
+    def compile(self, rule_id: Any, ast: RuleAST) -> CompiledRule:
+        fn = self._build(ast.root)
+        return CompiledRule(rule_id, fn, ast.return_type)
 
-        def evaluator(data: dict[str, Any], functions: dict[str, Callable] | None = None) -> bool:
-            functions = functions or {}
-            return evaluator_code(data, functions)
+    def _build(self, node: RuleNode) -> Callable:
+        if isinstance(node, Literal):
+            v = node.value
+            return lambda data, fns, _v=v: _v
 
-        return CompiledRule(rule_id, evaluator, ast.variables, ast.functions)
+        if isinstance(node, Variable):
+            name = node.name
+            if "." in name:
+                parts = name.split(".")
+                def var_fn(data, fns, _parts=parts):
+                    cur = data
+                    for p in _parts:
+                        if isinstance(cur, dict) and p in cur:
+                            cur = cur[p]
+                        else:
+                            raise RuleEvaluationError(f"Field '{name}' not found")
+                    return cur
+                return var_fn
+            else:
+                def simple_var(data, fns, _n=name):
+                    if _n not in data:
+                        raise RuleEvaluationError(f"Field '{_n}' not found")
+                    return data[_n]
+                return simple_var
 
-    def compile_rules(self, rules: list[tuple[Any, RuleAST]]) -> list[CompiledRule]:
-        """Compile multiple rules."""
-        return [self.compile_rule(rule_id, ast) for rule_id, ast in rules]
+        if isinstance(node, UnaryOp):
+            operand_fn = self._build(node.operand)
+            op_fn = node.fn
+            def unary(data, fns, _op=operand_fn, _fn=op_fn):
+                return _fn(_op(data, fns))
+            return unary
 
-    def _generate_evaluator(self, node: RuleNode) -> Callable:
-        """Generate evaluator function for a node."""
-        return generate_evaluator(node)
+        if isinstance(node, BinaryOp):
+            left_fn = self._build(node.left)
+            right_fn = self._build(node.right)
+            op = node.op_token
+            op_fn = node.fn
+            if op == "and":
+                def and_fn(data, fns, _left=left_fn, _right=right_fn):
+                    try:
+                        lv = bool(_left(data, fns))
+                    except RuleEvaluationError:
+                        return False
+                    return lv and bool(_right(data, fns))
+                return and_fn
+            if op == "or":
+                def or_fn(data, fns, _left=left_fn, _right=right_fn):
+                    try:
+                        lv = bool(_left(data, fns))
+                    except RuleEvaluationError:
+                        lv = False
+                    if lv:
+                        return True
+                    try:
+                        return bool(_right(data, fns))
+                    except RuleEvaluationError:
+                        return False
+                return or_fn
+            def binary(data, fns, _left=left_fn, _right=right_fn, _fn=op_fn):
+                return _fn(_left(data, fns), _right(data, fns))
+            return binary
 
+        if isinstance(node, FunctionCall):
+            arg_fns = [self._build(a) for a in node.args]
+            name = node.name
+            def call_fn(data, fns, _name=name, _args=arg_fns):
+                if _name not in fns:
+                    raise RuleEvaluationError(f"Function '{_name}' not found")
+                return fns[_name](*[f(data, fns) for f in _args])
+            return call_fn
 
-# Functional evaluator generation using single dispatch
-@singledispatch
-def generate_evaluator(node: RuleNode) -> Callable:
-    """Generate evaluator function for a node using single dispatch."""
-    raise RuleEvaluationError(f"Unknown node type: {type(node)}")
-
-
-@generate_evaluator.register
-def _(node: Literal) -> Callable:
-    """Generate evaluator for literal values."""
-    value = node.value
-    return lambda data, functions: value
-
-
-@generate_evaluator.register
-def _(node: Variable) -> Callable:
-    """Generate evaluator for variable access."""
-    name = node.name
-
-    def var_evaluator(data, functions):
-        if name in data:
-            return data[name]
-        # Handle dotted names (struct.field)
-        if "." in name:
-            return evaluate_dotted_variable(name, data)
-        raise RuleEvaluationError(f"Variable '{name}' not found in data")
-
-    return var_evaluator
-
-
-@lru_cache(maxsize=256)
-def get_dotted_parts(name: str) -> tuple[str, ...]:
-    """Cache the parsing of dotted variable names."""
-    return tuple(name.split("."))
-
-
-def evaluate_dotted_variable(name: str, data: dict) -> Any:
-    """Evaluate dotted variable names like 'struct.field'."""
-    parts = get_dotted_parts(name)
-    value = data
-    for part in parts:
-        if isinstance(value, dict) and part in value:
-            value = value[part]
-        else:
-            raise RuleEvaluationError(f"Variable '{name}' not found in data")
-    return value
-
-
-@generate_evaluator.register
-def _(node: BinaryOp) -> Callable:
-    """Generate evaluator for binary operations."""
-    left_eval = generate_evaluator(node.left)
-    right_eval = generate_evaluator(node.right)
-    operator = node.operator
-
-    def binary_evaluator(data, functions):
-        left_val = left_eval(data, functions)
-
-        # Short-circuit evaluation for logical operators
-        if operator == Operator.AND:
-            return left_val and bool(right_eval(data, functions))
-        elif operator == Operator.OR:
-            return left_val or bool(right_eval(data, functions))
-
-        # Evaluate right side for comparison operators
-        right_val = right_eval(data, functions)
-        operation = get_binary_operation(operator)
-        return operation(left_val, right_val)
-
-    return binary_evaluator
-
-
-@lru_cache(maxsize=128)
-def get_binary_operation(operator: Operator) -> Callable[[Any, Any], bool]:
-    """Cache binary operation functions by operator type."""
-    match operator:
-        case Operator.EQ:
-            return lambda l, r: l == r
-        case Operator.NE:
-            return lambda l, r: l != r
-        case Operator.GT:
-            return lambda l, r: l > r
-        case Operator.LT:
-            return lambda l, r: l < r
-        case Operator.GTE:
-            return lambda l, r: l >= r
-        case Operator.LTE:
-            return lambda l, r: l <= r
-        case Operator.IN:
-            return lambda l, r: l in r
-        case Operator.NOT_IN:
-            return lambda l, r: l not in r
-        case _:
-            raise RuleEvaluationError(f"Unknown binary operator: {operator}")
-
-
-def evaluate_binary_operation(operator: Operator, left_val: Any, right_val: Any) -> bool:
-    """Evaluate binary operation using cached operation functions."""
-    operation = get_binary_operation(operator)
-    return operation(left_val, right_val)
-
-
-@generate_evaluator.register
-def _(node: UnaryOp) -> Callable:
-    """Generate evaluator for unary operations."""
-    operand_eval = generate_evaluator(node.operand)
-    operator = node.operator
-
-    def unary_evaluator(data, functions):
-        operand_val = operand_eval(data, functions)
-        if operator == Operator.NOT:
-            return not bool(operand_val)
-        else:
-            raise RuleEvaluationError(f"Unknown unary operator: {operator}")
-
-    return unary_evaluator
-
-
-@generate_evaluator.register
-def _(node: FunctionCall) -> Callable:
-    """Generate evaluator for function calls."""
-    arg_evaluators = [generate_evaluator(arg) for arg in node.args]
-    func_name = node.name
-
-    def function_evaluator(data, functions):
-        if func_name not in functions:
-            raise RuleEvaluationError(f"Function '{func_name}' not found")
-
-        func = functions[func_name]
-        args = [evaluator(data, functions) for evaluator in arg_evaluators]
-        return func(*args)
-
-    return function_evaluator
+        raise RuleEvaluationError(f"Unknown node type: {type(node)}")

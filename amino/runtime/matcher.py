@@ -1,77 +1,64 @@
 """Pattern matching and result handling."""
 
 import dataclasses
-import enum
-from typing import Any, Literal
-
-
-class MatchMode(enum.Enum):
-    """Rule matching modes."""
-
-    ALL = "all"  # Return all matching rules
-    FIRST = "first"  # Return first match based on ordering
-    BEST = "best"  # Return best match based on score
-
-
-@dataclasses.dataclass
-class MatchOptions:
-    """Options for rule matching."""
-
-    mode: MatchMode = MatchMode.ALL
-    ordering_key: str | None = None
-    ordering_direction: Literal["asc", "desc"] = "asc"
+from typing import Any
 
 
 @dataclasses.dataclass
 class MatchResult:
-    """Result of rule evaluation."""
-
     id: Any
-    results: list[Any] = dataclasses.field(default_factory=list)
-    metadata: dict[str, Any] | None = None
+    matched: list[str] = dataclasses.field(default_factory=list)
+    excluded: list[str] = dataclasses.field(default_factory=list)
+    score: float | None = None
+    warnings: list[str] = dataclasses.field(default_factory=list)
 
 
-class RuleMatcher:
-    """Handles rule matching logic and result formatting."""
+class Matcher:
+    def __init__(self, config: dict[str, Any] | None = None):
+        cfg = config or {}
+        self._mode = cfg.get("mode", "all")
+        self._key = cfg.get("key")
+        self._order = cfg.get("order", "asc")
+        self._aggregate = cfg.get("aggregate", "sum")
+        self._threshold = cfg.get("threshold")
 
-    def __init__(self, options: MatchOptions | None = None):
-        self.options = options or MatchOptions()
-
-    def process_matches(
-        self, data_id: Any, rule_matches: list[tuple[Any, bool]], rule_metadata: dict[Any, dict] | None = None
+    def process(
+        self,
+        decision_id: Any,
+        rule_results: list[tuple[Any, Any]],
+        metadata: dict[Any, dict],
+        warnings: list[str],
     ) -> MatchResult:
-        """Process rule evaluation results into final match result."""
-        rule_metadata = rule_metadata or {}
+        if self._mode == "all":
+            matched = [rid for rid, val in rule_results if val]
+            return MatchResult(id=decision_id, matched=matched, warnings=list(warnings))
 
-        # Filter to only matched rules
-        matched_rules = [rule_id for rule_id, matched in rule_matches if matched]
+        if self._mode == "first":
+            matched = [rid for rid, val in rule_results if val]
+            if not matched:
+                return MatchResult(id=decision_id, matched=[], warnings=list(warnings))
+            if self._key:
+                matched = sorted(
+                    matched,
+                    key=lambda rid: metadata.get(rid, {}).get(self._key, float("inf")),
+                    reverse=(self._order == "desc"),
+                )
+            return MatchResult(id=decision_id, matched=[matched[0]], warnings=list(warnings))
 
-        if self.options.mode == MatchMode.ALL:
-            return MatchResult(data_id, matched_rules)
+        if self._mode == "inverse":
+            excluded = [rid for rid, val in rule_results if not val]
+            return MatchResult(id=decision_id, excluded=excluded, warnings=list(warnings))
 
-        elif self.options.mode == MatchMode.FIRST:
-            if not matched_rules:
-                return MatchResult(data_id, [])
+        if self._mode == "score":
+            total = 0.0
+            for _rid, val in rule_results:
+                if isinstance(val, bool):
+                    total += 1.0 if val else 0.0
+                elif isinstance(val, (int, float)):
+                    total += float(val)
+            result = MatchResult(id=decision_id, score=total, warnings=list(warnings))
+            if self._threshold is not None and total >= self._threshold:
+                result.matched = [rid for rid, val in rule_results if val]
+            return result
 
-            # Sort by ordering if specified
-            if self.options.ordering_key:
-                sorted_rules = self._sort_rules(matched_rules, rule_metadata)
-                return MatchResult(data_id, [sorted_rules[0]] if sorted_rules else [])
-            else:
-                return MatchResult(data_id, [matched_rules[0]])
-
-        else:
-            # For now, treat BEST the same as FIRST
-            return self.process_matches(data_id, rule_matches, rule_metadata)
-
-    def _sort_rules(self, rule_ids: list[Any], metadata: dict[Any, dict]) -> list[Any]:
-        """Sort rules by ordering key."""
-        if not self.options.ordering_key:
-            return rule_ids
-
-        def get_ordering_value(rule_id):
-            meta = metadata.get(rule_id, {})
-            return meta.get(self.options.ordering_key, float("inf"))
-
-        reverse = self.options.ordering_direction == "desc"
-        return sorted(rule_ids, key=get_ordering_value, reverse=reverse)
+        raise ValueError(f"Unknown match mode: {self._mode!r}")

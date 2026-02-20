@@ -1,25 +1,61 @@
-"""Amino - Schema-first classification rules engine."""
+# amino/__init__.py
+import pathlib
+from collections.abc import Callable
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 
-from .core import Schema, load_schema
-from .types import TypeRegistry, register_builtin_types
-from .utils.errors import (
+try:
+    __version__ = _version("amino")
+except PackageNotFoundError:
+    __version__ = "0.1.0"
+
+from .engine import Engine
+from .errors import (
     AminoError,
+    DecisionValidationError,
+    EngineAlreadyFrozenError,
+    OperatorConflictError,
     RuleEvaluationError,
     RuleParseError,
     SchemaParseError,
-    TypeValidationError,
+    SchemaValidationError,
+    TypeMismatchError,
 )
 
-__version__ = "0.1.0"
+
+def load_schema(
+    source: str,
+    *,
+    funcs: dict[str, Callable] | None = None,
+    rules_mode: str = "strict",
+    decisions_mode: str = "loose",
+    operators: str | list[str] = "standard",
+) -> Engine:
+    """Load schema from file path or raw schema text and return an Engine."""
+    try:
+        text = pathlib.Path(source).read_text()
+    except (OSError, ValueError):
+        text = source
+    return Engine(
+        text,
+        funcs=funcs,
+        rules_mode=rules_mode,
+        decisions_mode=decisions_mode,
+        operators=operators,
+    )
+
 
 __all__ = [
     "AminoError",
+    "DecisionValidationError",
+    "Engine",
+    "EngineAlreadyFrozenError",
+    "OperatorConflictError",
     "RuleEvaluationError",
     "RuleParseError",
-    "Schema",
     "SchemaParseError",
-    "TypeRegistry",
-    "TypeValidationError",
+    "SchemaValidationError",
+    "TypeMismatchError",
+    "__version__",
     "load_schema",
-    "register_builtin_types",
 ]
