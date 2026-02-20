@@ -2,9 +2,10 @@
 
 from typing import Any
 
+from amino.rules.compiler import CompiledRule
+
 from .matcher import Matcher, MatchResult
 from .validator import DecisionValidator
-from amino.rules.compiler import CompiledRule
 
 
 class CompiledRules:
@@ -26,10 +27,7 @@ class CompiledRules:
         cleaned, warnings = self._validator.validate(decision)
         rule_results: list[tuple[Any, Any]] = []
         for rule_id, compiled, _ in self._rules:
-            try:
-                val = compiled.evaluate(cleaned, self._functions)
-            except Exception:
-                val = False
+            val = compiled.evaluate(cleaned, self._functions)
             rule_results.append((rule_id, val))
         decision_id = decision.get("id")
         return self._matcher.process(decision_id, rule_results, self._metadata, warnings)
