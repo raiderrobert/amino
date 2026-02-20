@@ -1,4 +1,5 @@
 # amino/runtime/validator.py
+import re
 from typing import Any
 
 from amino.errors import DecisionValidationError
@@ -37,8 +38,7 @@ def _check_constraints(value: Any, constraints: dict[str, Any]) -> str | None:
         if key == "exactLength" and len(value) != constraint_val:
             return f"length must be {constraint_val}"
         if key == "pattern":
-            import re
-            if not re.match(constraint_val, value):
+            if not re.fullmatch(constraint_val, value):
                 return f"value does not match pattern {constraint_val!r}"
         if key == "oneOf" and value not in constraint_val:
             return f"value {value!r} not in {constraint_val}"
@@ -55,6 +55,8 @@ def _check_constraints(value: Any, constraints: dict[str, Any]) -> str | None:
 
 class DecisionValidator:
     def __init__(self, schema: SchemaRegistry, decisions_mode: str = "loose"):
+        if decisions_mode not in ("strict", "loose"):
+            raise ValueError(f"decisions_mode must be 'strict' or 'loose', got {decisions_mode!r}")
         self._schema = schema
         self._mode = decisions_mode
 
@@ -65,10 +67,20 @@ class DecisionValidator:
         for f in self._schema._ast.fields:
             value = decision.get(f.name)
             # Missing field
-            if f.name not in decision or value is None:
+            if f.name not in decision:
                 if f.optional:
                     continue
                 msg = f"Required field '{f.name}' is missing (required)"
+                if self._mode == "strict":
+                    raise DecisionValidationError(msg, field=f.name)
+                warnings.append(msg)
+                continue
+            # Key present but value is None
+            if value is None:
+                if f.optional:
+                    continue
+                # Required field has explicit None — treat as type error
+                msg = f"Field '{f.name}' expected {f.type_name}, got NoneType"
                 if self._mode == "strict":
                     raise DecisionValidationError(msg, field=f.name)
                 warnings.append(msg)
