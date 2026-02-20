@@ -1,23 +1,36 @@
-"""Amino - Schema-first classification rules engine."""
-
-__version__ = "0.1.0"
-
+# amino/__init__.py
+import pathlib
 from collections.abc import Callable
 
 from .engine import Engine
+from .errors import (
+    AminoError,
+    DecisionValidationError,
+    EngineAlreadyFrozenError,
+    OperatorConflictError,
+    RuleEvaluationError,
+    RuleParseError,
+    SchemaParseError,
+    SchemaValidationError,
+    TypeMismatchError,
+)
 
 
 def load_schema(
-    schema_text: str,
+    source: str,
     *,
     funcs: dict[str, Callable] | None = None,
     rules_mode: str = "strict",
     decisions_mode: str = "loose",
     operators: str | list[str] = "standard",
 ) -> Engine:
-    """Create an Engine from a schema string."""
+    """Load schema from file path or raw schema text and return an Engine."""
+    try:
+        text = pathlib.Path(source).read_text()
+    except (OSError, ValueError):
+        text = source
     return Engine(
-        schema_text,
+        text,
         funcs=funcs,
         rules_mode=rules_mode,
         decisions_mode=decisions_mode,
@@ -25,4 +38,16 @@ def load_schema(
     )
 
 
-__all__ = ["Engine", "load_schema"]
+__all__ = [
+    "AminoError",
+    "DecisionValidationError",
+    "Engine",
+    "EngineAlreadyFrozenError",
+    "OperatorConflictError",
+    "RuleEvaluationError",
+    "RuleParseError",
+    "SchemaParseError",
+    "SchemaValidationError",
+    "TypeMismatchError",
+    "load_schema",
+]

@@ -1,10 +1,10 @@
 from amino.operators.standard import build_operator_registry
-from amino.schema.parser import parse_schema
-from amino.schema.registry import SchemaRegistry
-from amino.rules.parser import parse_rule
 from amino.rules.compiler import TypedCompiler
+from amino.rules.parser import parse_rule
 from amino.runtime.compiled_rules import CompiledRules
 from amino.runtime.validator import DecisionValidator
+from amino.schema.parser import parse_schema
+from amino.schema.registry import SchemaRegistry
 
 SCHEMA = "score: Int\nname: Str"
 

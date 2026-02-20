@@ -8,11 +8,33 @@ class AminoError(Exception):
         self.got = got
 
 
-class SchemaParseError(AminoError): pass
-class SchemaValidationError(AminoError): pass
-class RuleParseError(AminoError): pass
-class TypeMismatchError(AminoError): pass
-class DecisionValidationError(AminoError): pass
-class RuleEvaluationError(AminoError): pass
-class OperatorConflictError(AminoError): pass
-class EngineAlreadyFrozenError(AminoError): pass
+class SchemaParseError(AminoError):
+    pass
+
+
+class SchemaValidationError(AminoError):
+    pass
+
+
+class RuleParseError(AminoError):
+    pass
+
+
+class TypeMismatchError(AminoError):
+    pass
+
+
+class DecisionValidationError(AminoError):
+    pass
+
+
+class RuleEvaluationError(AminoError):
+    pass
+
+
+class OperatorConflictError(AminoError):
+    pass
+
+
+class EngineAlreadyFrozenError(AminoError):
+    pass

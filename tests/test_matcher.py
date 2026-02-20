@@ -1,5 +1,6 @@
 import pytest
-from amino.runtime.matcher import Matcher, MatchResult
+
+from amino.runtime.matcher import Matcher
 
 
 def _results(matched_ids: list, all_ids: list) -> list[tuple]:
