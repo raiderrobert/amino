@@ -2,10 +2,7 @@
 
 import pytest
 
-import amino
-from amino.runtime import RuleEngine
 from amino.schema.parser import parse_schema
-from amino.types import TypeRegistry, TypeValidator, register_builtin_types
 
 
 @pytest.fixture
@@ -35,91 +32,6 @@ def person_struct_schema():
         age: Int
     }
     """)
-
-
-@pytest.fixture
-def advanced_schema():
-    """Complex schema with struct, functions, and constraints."""
-    return parse_schema("""
-    struct applicant {
-        name: Str,
-        age: Int,
-        tags: List[Str]
-    }
-
-    MIN_AGE: Int = 18
-    validate_eligibility: (applicant, int) -> bool
-    """)
-
-
-@pytest.fixture
-def simple_rule_engine(simple_int_schema):
-    """RuleEngine with simple integer schema."""
-    return RuleEngine(simple_int_schema)
-
-
-@pytest.fixture
-def ecommerce_rule_engine(ecommerce_schema):
-    """RuleEngine with e-commerce schema."""
-    return RuleEngine(ecommerce_schema)
-
-
-@pytest.fixture
-def person_rule_engine(person_schema):
-    """RuleEngine with person schema."""
-    return RuleEngine(person_schema)
-
-
-@pytest.fixture
-def type_registry():
-    """Empty TypeRegistry."""
-    return TypeRegistry()
-
-
-@pytest.fixture
-def populated_type_registry():
-    """TypeRegistry with builtin types registered."""
-    registry = TypeRegistry()
-    register_builtin_types(registry)
-    return registry
-
-
-@pytest.fixture
-def custom_type_registry():
-    """TypeRegistry with custom positive_int type."""
-    registry = TypeRegistry()
-    registry.register_type("positive_int", "Int", validator=lambda x: isinstance(x, int) and x > 0)
-    return registry
-
-
-@pytest.fixture
-def amino_simple():
-    """Amino instance with simple integer schema."""
-    return amino.load_schema("amount: Int")
-
-
-@pytest.fixture
-def amino_ecommerce():
-    """Amino instance with e-commerce schema."""
-    return amino.load_schema("amount: Int\nstate_code: Str")
-
-
-@pytest.fixture
-def amino_person():
-    """Amino instance with person schema."""
-    return amino.load_schema("name: Str\nage: Int")
-
-
-@pytest.fixture
-def type_validator(ecommerce_schema):
-    """TypeValidator with e-commerce schema."""
-    return TypeValidator(ecommerce_schema)
-
-
-@pytest.fixture
-def person_type_validator(person_schema):
-    """TypeValidator with person schema."""
-    return TypeValidator(person_schema)
 
 
 @pytest.fixture

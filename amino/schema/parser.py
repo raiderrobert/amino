@@ -1,418 +1,237 @@
-"""Schema parser implementation."""
-
-import dataclasses
-import enum
+# amino/schema/parser.py
 import re
 from typing import Any
+from .ast import FieldDefinition, FunctionDefinition, FunctionParameter, SchemaAST, SchemaType, StructDefinition
+from amino.errors import SchemaParseError
 
-from ..utils.errors import SchemaParseError
-from ..utils.helpers import is_reserved_name
-from .ast import FieldDefinition, FunctionDefinition, FunctionParameter, SchemaAST, StructDefinition
-from .types import SchemaType, parse_type
-
-# Token patterns
-WHITESPACE = re.compile(r"[\s]+")
-WORD = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
-COLON = re.compile(r":")
-COMMA = re.compile(r",")
-EQUALS = re.compile(r"=")
-LBRACE = re.compile(r"\{")
-RBRACE = re.compile(r"\}")
-LPAREN = re.compile(r"\(")
-RPAREN = re.compile(r"\)")
-ARROW = re.compile(r"->")
-PIPE = re.compile(r"\|")
-LBRACKET = re.compile(r"\[")
-RBRACKET = re.compile(r"\]")
-NUMBER = re.compile(r"\d+(?:\.\d+)?")
-QUESTION = re.compile(r"\?")
-COMMENT = re.compile(r"#[^\n]*")
+_PRIMITIVES: dict[str, SchemaType] = {
+    "Int": SchemaType.INT, "Float": SchemaType.FLOAT,
+    "Str": SchemaType.STR, "Bool": SchemaType.BOOL,
+}
+_RESERVED = {"struct", "List"}
 
 
-class TokenType(enum.Enum):
-    """Token types for schema parsing."""
+class _Parser:
+    def __init__(self, text: str):
+        self._text = text
+        self._pos = 0
+        self._line = 1
 
-    WHITESPACE = "whitespace"
-    WORD = "word"
-    COLON = "colon"
-    COMMA = "comma"
-    EQUALS = "equals"
-    LBRACE = "lbrace"
-    RBRACE = "rbrace"
-    LPAREN = "lparen"
-    RPAREN = "rparen"
-    ARROW = "arrow"
-    PIPE = "pipe"
-    LBRACKET = "lbracket"
-    RBRACKET = "rbracket"
-    NUMBER = "number"
-    QUESTION = "question"
-    COMMENT = "comment"
+    def _peek(self) -> str | None:
+        return self._text[self._pos] if self._pos < len(self._text) else None
 
+    def _advance(self) -> str:
+        ch = self._text[self._pos]
+        if ch == "\n":
+            self._line += 1
+        self._pos += 1
+        return ch
 
-TOKEN_PATTERNS = [
-    (COMMENT, TokenType.COMMENT),
-    (ARROW, TokenType.ARROW),
-    (WHITESPACE, TokenType.WHITESPACE),
-    (WORD, TokenType.WORD),
-    (COLON, TokenType.COLON),
-    (COMMA, TokenType.COMMA),
-    (EQUALS, TokenType.EQUALS),
-    (LBRACE, TokenType.LBRACE),
-    (RBRACE, TokenType.RBRACE),
-    (LPAREN, TokenType.LPAREN),
-    (RPAREN, TokenType.RPAREN),
-    (PIPE, TokenType.PIPE),
-    (LBRACKET, TokenType.LBRACKET),
-    (RBRACKET, TokenType.RBRACKET),
-    (NUMBER, TokenType.NUMBER),
-    (QUESTION, TokenType.QUESTION),
-]
-
-
-@dataclasses.dataclass
-class Token:
-    """Schema token."""
-
-    value: str
-    token_type: TokenType
-    line: int = 0
-    column: int = 0
-
-
-class SchemaParser:
-    """Parser for schema definition language."""
-
-    def __init__(self, content: str, strict: bool = False, known_custom_types: set | None = None):
-        self.content = content
-        self.strict = strict
-        self.known_custom_types = known_custom_types or set()
-        self.tokens = self._tokenize()
-        self.pos = 0
-
-    def _tokenize(self) -> list[Token]:
-        """Tokenize schema content."""
-        tokens = []
-        lines = self.content.split("\n")
-
-        for line_num, line in enumerate(lines):
-            pos = 0
-            while pos < len(line):
-                matched = False
-                for pattern, token_type in TOKEN_PATTERNS:
-                    match = pattern.match(line, pos)
-                    if match:
-                        value = match.group(0)
-                        if token_type not in (TokenType.WHITESPACE, TokenType.COMMENT):
-                            tokens.append(Token(value, token_type, line_num + 1, pos))
-                        pos = match.end()
-                        matched = True
-                        break
-
-                if not matched:
-                    raise SchemaParseError(
-                        f"Unexpected character '{line[pos]}' at line {line_num + 1}, column {pos + 1}"
-                    )
-
-        return tokens
-
-    def _peek(self) -> Token | None:
-        """Peek at current token without consuming it."""
-        if self.pos < len(self.tokens):
-            return self.tokens[self.pos]
-        return None
-
-    def _advance(self) -> Token | None:
-        """Consume and return current token."""
-        if self.pos < len(self.tokens):
-            token = self.tokens[self.pos]
-            self.pos += 1
-            return token
-        return None
-
-    def _expect(self, token_type: TokenType) -> Token:
-        """Consume token of expected type or raise error."""
-        token = self._advance()
-        if not token or token.token_type != token_type:
-            expected = token_type.value
-            actual = token.token_type.value if token else "EOF"
-            raise SchemaParseError(f"Expected {expected}, got {actual}")
-        return token
-
-    def parse(self) -> SchemaAST:
-        """Parse schema content into AST."""
-        ast = SchemaAST()
-
-        while True:
-            token = self._peek()
-            if not token:
-                break
-
-            if token.value == "struct":
-                ast.structs.append(self._parse_struct())
-            elif self._is_function_declaration():
-                ast.functions.append(self._parse_function())
-            elif self._is_constant_declaration():
-                name, value = self._parse_constant()
-                ast.constants[name] = value
+    def _skip_ws(self, newlines: bool = False) -> None:
+        while self._pos < len(self._text):
+            ch = self._text[self._pos]
+            if ch == "#":
+                while self._pos < len(self._text) and self._text[self._pos] != "\n":
+                    self._pos += 1
+            elif ch in " \t" or (newlines and ch in "\r\n"):
+                if ch == "\n":
+                    self._line += 1
+                self._pos += 1
             else:
-                ast.fields.append(self._parse_field())
-
-        return ast
-
-    def _normalize_type_name(self, type_name: str) -> str:
-        """Normalize type name to capitalized form."""
-        type_map = {
-            "str": "Str",
-            "int": "Int",
-            "float": "Float",
-            "bool": "Bool",
-            "decimal": "Decimal",
-            "any": "Any",
-            "list": "List",
-        }
-        return type_map.get(type_name, type_name)
-
-    def _parse_field(self) -> FieldDefinition:
-        """Parse a field definition."""
-        name_token = self._expect(TokenType.WORD)
-        if is_reserved_name(name_token.value):
-            raise SchemaParseError(f"Cannot use reserved name: {name_token.value}")
-
-        self._expect(TokenType.COLON)
-
-        # Parse the type - can be simple (int) or complex (list[str])
-        type_info = self._parse_type_expression()
-        field_type = type_info["type"]
-        type_name = type_info["name"]
-        element_types = type_info.get("element_types", [])
-
-        # Handle optional type (ending with ?)
-        optional = False
-        peek_token = self._peek()
-        if peek_token and peek_token.token_type == TokenType.QUESTION:
-            optional = True
-            self._advance()
-
-        # Parse constraints if present
-        constraints = {}
-        peek_token = self._peek()
-        if peek_token and peek_token.token_type == TokenType.LBRACE:
-            constraints = self._parse_constraints()
-
-        return FieldDefinition(name_token.value, field_type, type_name, element_types, constraints, optional)
-
-    def _parse_struct(self) -> StructDefinition:
-        """Parse a struct definition."""
-        self._expect(TokenType.WORD)  # 'struct'
-        name_token = self._expect(TokenType.WORD)
-        self._expect(TokenType.LBRACE)
-
-        fields = []
-        while True:
-            peek_token = self._peek()
-            if not peek_token or peek_token.token_type == TokenType.RBRACE:
-                break
-            fields.append(self._parse_field())
-            peek_token = self._peek()
-            if peek_token and peek_token.token_type == TokenType.COMMA:
-                self._advance()
-
-        self._expect(TokenType.RBRACE)
-        return StructDefinition(name_token.value, fields)
-
-    def _parse_function(self) -> FunctionDefinition:
-        """Parse a function declaration with named parameters."""
-        name_token = self._expect(TokenType.WORD)
-        self._expect(TokenType.COLON)
-
-        # Parse input parameters with names
-        self._expect(TokenType.LPAREN)
-        parameters = []
-
-        while True:
-            peek_token = self._peek()
-            if not peek_token or peek_token.token_type == TokenType.RPAREN:
                 break
 
-            # Get parameter name
-            param_name_token = self._expect(TokenType.WORD)
-            self._expect(TokenType.COLON)
+    def _skip_h(self) -> None:  # horizontal only
+        while self._pos < len(self._text) and self._text[self._pos] in " \t":
+            self._pos += 1
 
-            # Get parameter type
-            param_type_token = self._expect(TokenType.WORD)
-            param_type = parse_type(param_type_token.value, self.strict, self.known_custom_types)
+    def _read_ident(self) -> str:
+        m = re.match(r"[a-zA-Z_][a-zA-Z0-9_]*", self._text[self._pos:])
+        if not m:
+            raise SchemaParseError(f"Expected identifier at line {self._line}")
+        self._pos += len(m.group())
+        return m.group()
 
-            parameters.append(FunctionParameter(param_name_token.value, param_type))
+    def _expect(self, ch: str) -> None:
+        self._skip_h()
+        if self._peek() != ch:
+            raise SchemaParseError(f"Expected '{ch}' at line {self._line}, got {self._peek()!r}")
+        self._advance()
 
-            # Handle comma if there are more parameters
-            peek_token = self._peek()
-            if peek_token and peek_token.token_type == TokenType.COMMA:
+    # --- constraint values ---
+
+    def _parse_str_literal(self) -> str:
+        self._advance()  # opening '
+        buf: list[str] = []
+        while self._peek() not in (None, "'"):
+            buf.append(self._advance())
+        if self._peek() != "'":
+            raise SchemaParseError(f"Unterminated string at line {self._line}")
+        self._advance()
+        return "".join(buf)
+
+    def _parse_list_lit(self) -> list:
+        self._advance()  # [
+        items: list = []
+        self._skip_h()
+        while self._peek() != "]":
+            items.append(self._parse_constraint_val())
+            self._skip_h()
+            if self._peek() == ",":
                 self._advance()
+                self._skip_h()
+        self._advance()  # ]
+        return items
 
-        self._expect(TokenType.RPAREN)
-        self._expect(TokenType.ARROW)
-
-        # Parse output type
-        output_token = self._expect(TokenType.WORD)
-        output_type = parse_type(output_token.value, self.strict, self.known_custom_types)
-
-        return FunctionDefinition(name_token.value, parameters, output_type)
-
-    def _parse_constant(self) -> tuple[str, Any]:
-        """Parse a constant declaration."""
-        name_token = self._expect(TokenType.WORD)
-        self._expect(TokenType.COLON)
-        type_token = self._expect(TokenType.WORD)
-        self._expect(TokenType.EQUALS)
-        value_token = self._expect(TokenType.NUMBER)
-
-        # Convert value based on type (support both capitalized and lowercase for backward compatibility)
-        if type_token.value in ("int", "Int"):
-            value = int(value_token.value)
-        elif type_token.value in ("float", "Float"):
-            value = float(value_token.value)
-        else:
-            value = value_token.value
-
-        return name_token.value, value
+    def _parse_constraint_val(self) -> Any:
+        self._skip_h()
+        ch = self._peek()
+        if ch == "'":
+            return self._parse_str_literal()
+        if ch == "[":
+            return self._parse_list_lit()
+        m = re.match(r"-?\d+\.\d+", self._text[self._pos:])
+        if m:
+            self._pos += len(m.group())
+            return float(m.group())
+        m = re.match(r"-?\d+", self._text[self._pos:])
+        if m:
+            self._pos += len(m.group())
+            return int(m.group())
+        m = re.match(r"true|false", self._text[self._pos:])
+        if m:
+            self._pos += len(m.group())
+            return m.group() == "true"
+        raise SchemaParseError(f"Expected constraint value at line {self._line}")
 
     def _parse_constraints(self) -> dict[str, Any]:
-        """Parse field constraints."""
-        self._expect(TokenType.LBRACE)
-        constraints = {}
-
-        while True:
-            peek_token = self._peek()
-            if not peek_token or peek_token.token_type == TokenType.RBRACE:
-                break
-
-            key_token = self._expect(TokenType.WORD)
-            self._expect(TokenType.COLON)
-            value_token = self._advance()
-
-            if not value_token:
-                raise SchemaParseError("Expected value in constraint")
-
-            # Convert value based on key and type
-            if key_token.value in ("min", "max", "length"):
-                # Try to convert to int first, then float if it contains a decimal point
-                if "." in value_token.value:
-                    constraints[key_token.value] = float(value_token.value)
-                else:
-                    constraints[key_token.value] = int(value_token.value)
-            else:
-                constraints[key_token.value] = value_token.value.strip("\"'")
-
-            peek_token = self._peek()
-            if peek_token and peek_token.token_type == TokenType.COMMA:
+        self._advance()  # {
+        result: dict[str, Any] = {}
+        self._skip_h()
+        while self._peek() != "}":
+            key = self._read_ident()
+            self._expect(":")
+            result[key] = self._parse_constraint_val()
+            self._skip_h()
+            if self._peek() == ",":
                 self._advance()
+                self._skip_h()
+        self._advance()  # }
+        return result
 
-        self._expect(TokenType.RBRACE)
-        return constraints
+    # --- type expression ---
 
-    def _parse_type_expression(self) -> dict[str, Any]:
-        """Parse a type expression (simple or complex like list[type])."""
-        type_token = self._expect(TokenType.WORD)
-        type_name = type_token.value
+    def _parse_type_expr(self) -> tuple[SchemaType, str, list[str]]:
+        self._skip_h()
+        name = self._read_ident()
+        if name == "List":
+            self._expect("[")
+            elems: list[str] = [self._read_ident()]
+            while self._peek() == "|":
+                self._advance()
+                elems.append(self._read_ident())
+            self._expect("]")
+            return SchemaType.LIST, f"List[{'|'.join(elems)}]", elems
+        if name in _PRIMITIVES:
+            return _PRIMITIVES[name], name, []
+        return SchemaType.CUSTOM, name, []
 
-        # Check if this is a list type with element specification
-        peek_token = self._peek()
-        if type_name.lower() == "list" and peek_token and peek_token.token_type == TokenType.LBRACKET:
-            self._advance()  # consume '['
+    # --- field ---
 
-            # Parse element types (can be type1|type2|type3)
-            element_types = []
-            while True:
-                peek_token = self._peek()
-                if not peek_token or peek_token.token_type == TokenType.RBRACKET:
-                    break
+    def _parse_field(self) -> FieldDefinition:
+        self._skip_h()
+        name = self._read_ident()
+        if name in _RESERVED:
+            raise SchemaParseError(f"Reserved word '{name}' used as field name at line {self._line}")
+        self._expect(":")
+        stype, tname, elems = self._parse_type_expr()
+        optional = False
+        self._skip_h()
+        if self._peek() == "?":
+            optional = True
+            self._advance()
+        constraints: dict[str, Any] = {}
+        self._skip_h()
+        if self._peek() == "{":
+            constraints = self._parse_constraints()
+        return FieldDefinition(name, stype, tname, elems, constraints, optional)
 
-                elem_token = self._expect(TokenType.WORD)
-                # Normalize element type names to capitalized form
-                normalized_type = self._normalize_type_name(elem_token.value)
-                element_types.append(normalized_type)
+    # --- struct ---
 
-                # Check for union type separator '|'
-                peek_token = self._peek()
-                if peek_token and peek_token.token_type == TokenType.PIPE:
-                    self._advance()  # consume '|'
-                elif peek_token and peek_token.token_type != TokenType.RBRACKET:
-                    raise SchemaParseError("Expected '|' or ']' in list type definition")
-
-            self._expect(TokenType.RBRACKET)  # consume ']'
-
-            return {
-                "type": SchemaType.list,
-                "name": f"{type_name}[{'|'.join(element_types)}]",
-                "element_types": element_types,
-            }
-        else:
-            # Simple type
-            field_type = parse_type(type_name, self.strict, self.known_custom_types)
-            return {"type": field_type, "name": type_name, "element_types": []}
-
-    def _is_function_declaration(self) -> bool:
-        """Check if current tokens represent a function declaration."""
-        if self.pos + 3 >= len(self.tokens):
-            return False
-
-        # Check basic pattern: name : ...
-        if not (
-            self.tokens[self.pos].token_type == TokenType.WORD
-            and self.tokens[self.pos + 1].token_type == TokenType.COLON
-        ):
-            return False
-
-        # Look ahead for pattern: name : (param: type, param: type) -> type
-        # Start looking after the colon
-        i = self.pos + 2
-        paren_count = 0
-        found_arrow = False
-
-        # Only look ahead a reasonable distance (max 20 tokens to avoid false positives)
-        max_lookahead = min(i + 20, len(self.tokens))
-
-        while i < max_lookahead:
-            token = self.tokens[i]
-            if token.token_type == TokenType.LPAREN:
-                paren_count += 1
-            elif token.token_type == TokenType.RPAREN:
-                paren_count -= 1
-                # Only stop if we've found an arrow after closing all parentheses
-                if paren_count == 0:
-                    # Check if next token is arrow
-                    if i + 1 < len(self.tokens) and self.tokens[i + 1].token_type == TokenType.ARROW:
-                        found_arrow = True
-                        break
-            elif token.token_type == TokenType.WORD and paren_count == 0:
-                # If we hit another word at paren_count 0, this is likely the next declaration
+    def _parse_struct(self) -> StructDefinition:
+        self._read_ident()  # 'struct'
+        self._skip_h()
+        name = self._read_ident()
+        self._skip_ws(newlines=True)
+        self._expect("{")
+        fields: list[FieldDefinition] = []
+        while True:
+            self._skip_ws(newlines=True)
+            if self._peek() == "}":
                 break
-            i += 1
+            fields.append(self._parse_field())
+            self._skip_h()
+            if self._peek() == ",":
+                self._advance()
+        self._advance()  # }
+        return StructDefinition(name, fields)
 
-        return found_arrow
+    # --- function ---
 
-    def _is_constant_declaration(self) -> bool:
-        """Check if current tokens represent a constant declaration."""
-        if self.pos + 4 >= len(self.tokens):
+    def _is_function(self) -> bool:
+        saved = self._pos
+        try:
+            self._read_ident()
+            self._skip_h()
+            if self._peek() != ":":
+                return False
+            self._advance()
+            self._skip_h()
+            return self._peek() == "("
+        except SchemaParseError:
             return False
+        finally:
+            self._pos = saved
 
-        # Look ahead for pattern: NAME : type = value
-        return (
-            self.tokens[self.pos].token_type == TokenType.WORD
-            and self.tokens[self.pos].value.isupper()
-            and self.tokens[self.pos + 1].token_type == TokenType.COLON
-            and self.tokens[self.pos + 3].token_type == TokenType.EQUALS
-        )
+    def _parse_function(self) -> FunctionDefinition:
+        name = self._read_ident()
+        self._expect(":")
+        self._expect("(")
+        params: list[FunctionParameter] = []
+        self._skip_h()
+        while self._peek() != ")":
+            pname = self._read_ident()
+            self._expect(":")
+            _, ptype_name, _ = self._parse_type_expr()
+            params.append(FunctionParameter(pname, ptype_name))
+            self._skip_h()
+            if self._peek() == ",":
+                self._advance()
+                self._skip_h()
+        self._advance()  # )
+        self._skip_h()
+        if self._text[self._pos:self._pos + 2] != "->":
+            raise SchemaParseError(f"Expected '->' at line {self._line}")
+        self._pos += 2
+        self._skip_h()
+        ret_name = self._read_ident()
+        return FunctionDefinition(name, params, ret_name)
+
+    # --- top-level ---
+
+    def parse(self) -> SchemaAST:
+        ast = SchemaAST()
+        while True:
+            self._skip_ws(newlines=True)
+            if self._pos >= len(self._text):
+                break
+            if self._text[self._pos:].startswith("struct"):
+                ast.structs.append(self._parse_struct())
+            elif self._is_function():
+                ast.functions.append(self._parse_function())
+            else:
+                ast.fields.append(self._parse_field())
+        return ast
 
 
-def parse_schema(content: str, strict: bool = False, known_custom_types: set | None = None) -> SchemaAST:
-    """Parse schema content into AST.
-
-    Args:
-        content: Schema content to parse
-        strict: If True, raise error for unknown types instead of treating as custom
-        known_custom_types: Set of known custom type names for validation
-    """
-    parser = SchemaParser(content, strict=strict, known_custom_types=known_custom_types)
-    return parser.parse()
+def parse_schema(text: str) -> SchemaAST:
+    return _Parser(text).parse()
