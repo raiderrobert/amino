@@ -1,12 +1,8 @@
-from .builtin import BuiltinTypes, register_builtin_types
-from .registry import TypeDefinition, TypeRegistry
-from .validation import TypeValidator, ValidationResult
+from .builtin import register_builtin_types
+from .registry import TypeDef, TypeRegistry
 
 __all__ = [
-    "BuiltinTypes",
-    "TypeDefinition",
+    "TypeDef",
     "TypeRegistry",
-    "TypeValidator",
-    "ValidationResult",
     "register_builtin_types",
 ]

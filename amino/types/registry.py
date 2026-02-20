@@ -2,174 +2,43 @@
 
 import dataclasses
 from collections.abc import Callable
-from typing import Any
 
-from ..schema.types import SchemaType
-from ..utils.errors import TypeValidationError
+from amino.errors import SchemaValidationError
 
 
 @dataclasses.dataclass
-class TypeDefinition:
-    """Definition of a custom type."""
-
+class TypeDef:
     name: str
-    base_type: str | SchemaType
-    validator: Callable[[Any], bool] | None = None
-    constraints: dict[str, Any] = dataclasses.field(default_factory=dict)
-    format_string: str | None = None
-    description: str | None = None
+    base: str   # 'Str' | 'Int' | 'Float' | 'Bool'
+    validator: Callable[[object], bool]
 
 
 class TypeRegistry:
-    """Registry for custom and built-in types."""
-
     def __init__(self):
-        self._types: dict[str, TypeDefinition] = {}
-        self._validators: dict[str, Callable] = {}
+        self._types: dict[str, TypeDef] = {}
 
-    def register_type(
-        self,
-        name: str,
-        base_type: str | SchemaType,
-        validator: Callable | None = None,
-        format_string: str | None = None,
-        description: str | None = None,
-        **constraints,
-    ) -> None:
-        """Register a new custom type."""
+    def register_type(self, name: str, base: str, validator: Callable[[object], bool]) -> None:
         if name in self._types:
-            raise TypeValidationError(f"Type '{name}' already registered")
-
-        type_def = TypeDefinition(
-            name=name,
-            base_type=base_type,
-            validator=validator,
-            constraints=constraints,
-            format_string=format_string,
-            description=description,
-        )
-
-        self._types[name] = type_def
-
-        if validator:
-            self._validators[name] = validator
-
-    def get_type(self, name: str) -> TypeDefinition | None:
-        """Get type definition by name."""
-        return self._types.get(name)
+            raise SchemaValidationError(f"Type '{name}' already registered")
+        if base not in ("Str", "Int", "Float", "Bool"):
+            raise SchemaValidationError(f"Base type must be Str/Int/Float/Bool, got '{base}'")
+        self._types[name] = TypeDef(name=name, base=base, validator=validator)
 
     def has_type(self, name: str) -> bool:
-        """Check if type is registered."""
         return name in self._types
 
-    def get_registered_types(self) -> list[str]:
-        """Get list of all registered type names."""
-        return list(self._types.keys())
+    def get_base(self, name: str) -> str | None:
+        td = self._types.get(name)
+        return td.base if td else None
 
-    def get_validator(self, type_name: str) -> Callable | None:
-        """Get validator function for a type."""
-        return self._validators.get(type_name)
-
-    def validate_value(self, type_name: str, value: Any) -> bool:
-        """Validate a value against a type."""
-        type_def = self.get_type(type_name)
-        if not type_def:
-            # Check if it's a built-in type
-            return self._validate_builtin_type(type_name, value)
-
-        # Validate base type first
-        base_valid = True
-        if isinstance(type_def.base_type, str):
-            base_valid = self.validate_value(type_def.base_type, value)
-        elif isinstance(type_def.base_type, SchemaType):
-            base_valid = self._validate_schema_type(type_def.base_type, value)
-
-        if not base_valid:
+    def validate(self, name: str, value: object) -> bool:
+        td = self._types.get(name)
+        if td is None:
+            return False
+        try:
+            return bool(td.validator(value))
+        except Exception:
             return False
 
-        # Apply custom validator if present
-        if type_def.validator:
-            try:
-                return type_def.validator(value)
-            except Exception:
-                return False
-
-        # Apply constraints
-        return self._validate_constraints(type_def.constraints, value)
-
-    def list_types(self) -> list[str]:
-        """List all registered type names."""
-        return list(self._types.keys())
-
-    def remove_type(self, name: str) -> bool:
-        """Remove a type from registry."""
-        if name in self._types:
-            del self._types[name]
-            if name in self._validators:
-                del self._validators[name]
-            return True
-        return False
-
-    def _validate_builtin_type(self, type_name: str, value: Any) -> bool:
-        """Validate against built-in types."""
-        type_map = {
-            # Capitalized types (new standard)
-            "Str": str,
-            "Int": int,
-            "Float": float,
-            "Bool": bool,
-            "Any": lambda x: True,
-            # Lowercase types (backward compatibility)
-            "str": str,
-            "int": int,
-            "float": float,
-            "bool": bool,
-            "any": lambda x: True,
-        }
-
-        if type_name in type_map:
-            expected_type = type_map[type_name]
-            if type_name in ("any", "Any"):
-                return expected_type(value)  # Lambda function
-            elif type_name in ("float", "Float"):
-                return isinstance(value, (int, float))
-            else:
-                return isinstance(value, expected_type)
-
-        return False
-
-    def _validate_schema_type(self, schema_type: SchemaType, value: Any) -> bool:
-        """Validate against SchemaType enum."""
-        if schema_type == SchemaType.str:
-            return isinstance(value, str)
-        elif schema_type == SchemaType.int:
-            return isinstance(value, int)
-        elif schema_type == SchemaType.float:
-            return isinstance(value, (int, float))
-        elif schema_type == SchemaType.bool:
-            return isinstance(value, bool)
-        elif schema_type == SchemaType.any:
-            return True
-        elif schema_type == SchemaType.list:
-            return isinstance(value, list)
-        else:
-            return False
-
-    def _validate_constraints(self, constraints: dict[str, Any], value: Any) -> bool:
-        """Validate value against constraints."""
-        for constraint, constraint_value in constraints.items():
-            if constraint == "min":
-                if hasattr(value, "__lt__") and value < constraint_value:
-                    return False
-            elif constraint == "max":
-                if hasattr(value, "__gt__") and value > constraint_value:
-                    return False
-            elif constraint == "length":
-                if hasattr(value, "__len__") and len(value) != constraint_value:
-                    return False
-            elif constraint == "format":
-                # Format validation would go here
-                pass
-            # Add more constraint types as needed
-
-        return True
+    def registered_names(self) -> set[str]:
+        return set(self._types)
