@@ -230,7 +230,7 @@ class _PrattParser:
                 self._advance()
         self._advance()  # )
         # Resolve return type from schema functions
-        fn_def = next((f for f in self._schema._ast.functions if f.name == name), None)
+        fn_def = self._schema.get_function(name)
         return_type = fn_def.return_type_name if fn_def else "Any"
         return FunctionCall(name, args, return_type)
 

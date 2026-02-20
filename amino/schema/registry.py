@@ -30,6 +30,10 @@ class SchemaRegistry:
     def get_field(self, path: str) -> FieldDefinition | None:
         return self._fields.get(path)
 
+    def get_function(self, name: str):
+        """Return the FunctionDefinition for name, or None."""
+        return next((f for f in self._ast.functions if f.name == name), None)
+
     def known_type_names(self) -> set[str]:
         return {"Int", "Float", "Str", "Bool"} | {s.name for s in self._ast.structs} | self._custom
 
