@@ -1,11 +1,12 @@
 import dataclasses
 from collections.abc import Callable
+
 from amino.errors import OperatorConflictError
 
 
 @dataclasses.dataclass
 class OperatorDef:
-    fn: Callable
+    fn: Callable | None
     binding_power: int
     symbol: str | None = None
     keyword: str | None = None
@@ -51,15 +52,19 @@ class OperatorRegistry:
         # Wildcard fallback
         for op in candidates:
             if len(op.input_types) == len(input_types):
-                if all(e == "*" or e == a for e, a in zip(op.input_types, input_types)):
+                if all(e == "*" or e == a for e, a in zip(op.input_types, input_types, strict=False)):
                     return op
         return candidates[0] if len(candidates) == 1 else None
 
     def lookup_symbol(self, symbol: str) -> OperatorDef | None:
+        if symbol not in self._symbols:
+            return None
         c = self._by_token.get(symbol, [])
         return c[0] if c else None
 
     def lookup_keyword(self, keyword: str) -> OperatorDef | None:
+        if keyword not in self._keywords:
+            return None
         c = self._by_token.get(keyword, [])
         return c[0] if c else None
 

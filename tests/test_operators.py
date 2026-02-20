@@ -48,4 +48,5 @@ def test_binding_powers():
     reg = build_operator_registry("standard")
     assert reg.get_binding_power("or") == 10
     assert reg.get_binding_power("and") == 20
+    assert reg.get_binding_power("not") == 30
     assert reg.get_binding_power("=") == 40
