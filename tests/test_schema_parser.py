@@ -66,3 +66,9 @@ def test_comments_skipped():
 def test_parse_error():
     with pytest.raises(SchemaParseError):
         parse_schema("age: @Int")
+
+def test_struct_keyword_not_matched_as_identifier_prefix():
+    # A field named starting with 'struct' prefix should not be treated as struct def
+    # 'structure' is a valid custom-type field name
+    f = parse_schema("structure: Str").fields[0]
+    assert f.name == "structure"

@@ -1,8 +1,10 @@
 # amino/schema/parser.py
 import re
 from typing import Any
-from .ast import FieldDefinition, FunctionDefinition, FunctionParameter, SchemaAST, SchemaType, StructDefinition
+
 from amino.errors import SchemaParseError
+
+from .ast import FieldDefinition, FunctionDefinition, FunctionParameter, SchemaAST, SchemaType, StructDefinition
 
 _PRIMITIVES: dict[str, SchemaType] = {
     "Int": SchemaType.INT, "Float": SchemaType.FLOAT,
@@ -73,12 +75,14 @@ class _Parser:
         self._advance()  # [
         items: list = []
         self._skip_h()
-        while self._peek() != "]":
+        while self._peek() not in (None, "]"):
             items.append(self._parse_constraint_val())
             self._skip_h()
             if self._peek() == ",":
                 self._advance()
                 self._skip_h()
+        if self._peek() != "]":
+            raise SchemaParseError(f"Unterminated list at line {self._line}")
         self._advance()  # ]
         return items
 
@@ -178,7 +182,8 @@ class _Parser:
     # --- function ---
 
     def _is_function(self) -> bool:
-        saved = self._pos
+        saved_pos = self._pos
+        saved_line = self._line
         try:
             self._read_ident()
             self._skip_h()
@@ -190,7 +195,8 @@ class _Parser:
         except SchemaParseError:
             return False
         finally:
-            self._pos = saved
+            self._pos = saved_pos
+            self._line = saved_line
 
     def _parse_function(self) -> FunctionDefinition:
         name = self._read_ident()
@@ -224,7 +230,7 @@ class _Parser:
             self._skip_ws(newlines=True)
             if self._pos >= len(self._text):
                 break
-            if self._text[self._pos:].startswith("struct"):
+            if re.match(r"struct(?![a-zA-Z0-9_])", self._text[self._pos:]):
                 ast.structs.append(self._parse_struct())
             elif self._is_function():
                 ast.functions.append(self._parse_function())
