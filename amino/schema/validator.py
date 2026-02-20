@@ -1,6 +1,7 @@
 # amino/schema/validator.py
-from .ast import SchemaAST, SchemaType
 from amino.errors import SchemaValidationError
+
+from .ast import SchemaAST, SchemaType
 
 
 class SchemaValidator:
@@ -44,7 +45,7 @@ class SchemaValidator:
                 return
             visiting = visiting | {name}
             for f in struct_map[name].fields:
-                if f.type_name in struct_names:
+                if f.schema_type == SchemaType.CUSTOM and f.type_name in struct_names:
                     dfs(f.type_name, visiting)
 
         for name in struct_names:
