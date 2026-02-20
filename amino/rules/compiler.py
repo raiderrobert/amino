@@ -70,11 +70,24 @@ class TypedCompiler:
             op_fn = node.fn
             if op == "and":
                 def and_fn(data, fns, _left=left_fn, _right=right_fn):
-                    return bool(_left(data, fns)) and bool(_right(data, fns))
+                    try:
+                        lv = bool(_left(data, fns))
+                    except RuleEvaluationError:
+                        return False
+                    return lv and bool(_right(data, fns))
                 return and_fn
             if op == "or":
                 def or_fn(data, fns, _left=left_fn, _right=right_fn):
-                    return bool(_left(data, fns)) or bool(_right(data, fns))
+                    try:
+                        lv = bool(_left(data, fns))
+                    except RuleEvaluationError:
+                        lv = False
+                    if lv:
+                        return True
+                    try:
+                        return bool(_right(data, fns))
+                    except RuleEvaluationError:
+                        return False
                 return or_fn
             def binary(data, fns, _left=left_fn, _right=right_fn, _fn=op_fn):
                 return _fn(_left(data, fns), _right(data, fns))

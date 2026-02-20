@@ -62,3 +62,13 @@ def test_missing_field_returns_false():
     compiled = _compile("score > 100")
     # missing field → evaluates to False, no exception (loose runtime)
     assert compiled.evaluate({}, {}) is False
+
+def test_or_missing_field_evaluates_right_branch():
+    compiled = _compile("score > 100 or active = true")
+    # score is missing but active = true, so result should be True
+    assert compiled.evaluate({"active": True}, {}) is True
+
+def test_and_missing_field_returns_false():
+    compiled = _compile("score > 100 and active = true")
+    # score is missing, so and should short-circuit to False
+    assert compiled.evaluate({"active": True}, {}) is False
