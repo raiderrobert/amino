@@ -3,8 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
-from ..rules.compiler import CompiledRule
 from ..errors import RuleEvaluationError
+from ..rules.compiler import CompiledRule
 
 
 class RuleEvaluator:
