@@ -1,4 +1,4 @@
-from .ast import FieldDefinition, SchemaAST, SchemaType
+from .ast import FieldDefinition, SchemaAST
 from .validator import SchemaValidator
 
 
@@ -16,9 +16,6 @@ class SchemaRegistry:
             self._fields[f.name] = f
             if f.type_name in self._struct_map:
                 self._index_struct(f.name, f.type_name)
-        for s in self._ast.structs:
-            for f in s.fields:
-                self._fields[f"{s.name}.{f.name}"] = f
 
     def _index_struct(self, prefix: str, struct_name: str) -> None:
         s = self._struct_map.get(struct_name)
@@ -39,7 +36,15 @@ class SchemaRegistry:
     def export_schema(self) -> str:
         lines: list[str] = []
         for s in self._ast.structs:
-            flds = ", ".join(f"{f.name}: {f.type_name}{'?' if f.optional else ''}" for f in s.fields)
+            def _field_str(f):
+                q = "?" if f.optional else ""
+                c = ""
+                if f.constraints:
+                    pairs = ", ".join(f"{k}: {v!r}" for k, v in f.constraints.items())
+                    c = f" {{{pairs}}}"
+                return f"{f.name}: {f.type_name}{q}{c}"
+
+            flds = ", ".join(_field_str(f) for f in s.fields)
             lines.append(f"struct {s.name} {{{flds}}}")
         for f in self._ast.fields:
             q = "?" if f.optional else ""

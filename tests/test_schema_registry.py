@@ -1,6 +1,7 @@
+from amino.schema.ast import SchemaType
 from amino.schema.parser import parse_schema
 from amino.schema.registry import SchemaRegistry
-from amino.schema.ast import SchemaType
+
 
 def _reg(src: str, custom: set[str] | None = None) -> SchemaRegistry:
     return SchemaRegistry(parse_schema(src), known_custom_types=custom or set())
@@ -27,3 +28,7 @@ def test_export_roundtrip():
 
 def test_known_type_names_includes_custom():
     assert "ipv4" in _reg("ip: ipv4", custom={"ipv4"}).known_type_names()
+
+def test_export_struct_with_constraint():
+    exported = _reg("struct Foo { age: Int {min: 0} }\nx: Foo").export_schema()
+    assert "min" in exported
