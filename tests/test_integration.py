@@ -115,8 +115,7 @@ def test_custom_type_end_to_end():
     )
     compiled = engine.compile([{"id": "r1", "rule": "ip within network"}])
     result = compiled.eval_single({"ip": "10.0.0.5", "network": "10.0.0.0/8"})
-    # Just verifying the pipeline doesn't crash; actual CIDR logic is in the fn
-    assert result is not None
+    assert "r1" in result.matched  # 10.0.0.5 is within 10.0.0.0/8
 
 def _cidr_contains(ip: str, cidr: str) -> bool:
     import ipaddress

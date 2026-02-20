@@ -1,6 +1,13 @@
 # amino/__init__.py
 import pathlib
 from collections.abc import Callable
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
+
+try:
+    __version__ = _version("amino")
+except PackageNotFoundError:
+    __version__ = "0.1.0"
 
 from .engine import Engine
 from .errors import (
@@ -49,5 +56,6 @@ __all__ = [
     "SchemaParseError",
     "SchemaValidationError",
     "TypeMismatchError",
+    "__version__",
     "load_schema",
 ]
