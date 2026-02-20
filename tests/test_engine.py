@@ -77,7 +77,7 @@ def test_match_modes():
         match={"mode": "first", "key": "ordering", "order": "asc"},
     )
     result = compiled.eval_single({"score": 100, "active": True})
-    assert result.matched == ["r1"] or result.matched == ["r2"]  # first by ordering
+    assert result.matched == ["r2"]  # r2 has ordering=1, wins ascending
 
 def test_rules_mode_and_decisions_mode():
     engine = amino.load_schema(SCHEMA, rules_mode="strict", decisions_mode="loose")

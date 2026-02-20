@@ -53,11 +53,7 @@ class Engine:
     def register_type(self, name: str, base: str, validator: Callable) -> None:
         self._check_frozen()
         # Allow overwriting existing types (e.g. user overrides a builtin).
-        # Bypass the duplicate check in TypeRegistry by directly setting the entry.
-        from amino.types.registry import TypeDef
-        self._type_registry._types[name] = TypeDef(
-            name=name, base=base, validator=validator
-        )
+        self._type_registry.register_type(name, base, validator, overwrite=True)
 
     def register_operator(
         self,

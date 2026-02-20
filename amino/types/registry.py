@@ -17,8 +17,15 @@ class TypeRegistry:
     def __init__(self):
         self._types: dict[str, TypeDef] = {}
 
-    def register_type(self, name: str, base: str, validator: Callable[[object], bool]) -> None:
-        if name in self._types:
+    def register_type(
+        self,
+        name: str,
+        base: str,
+        validator: Callable[[object], bool],
+        *,
+        overwrite: bool = False,
+    ) -> None:
+        if name in self._types and not overwrite:
             raise SchemaValidationError(f"Type '{name}' already registered")
         if base not in ("Str", "Int", "Float", "Bool"):
             raise SchemaValidationError(f"Base type must be Str/Int/Float/Bool, got '{base}'")
