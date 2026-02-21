@@ -99,6 +99,8 @@ Multiple constraints within a block are combined with AND logic — all must be 
 
 Constraints are enforced by the `DecisionValidator` at evaluation time, not by the rule compiler. A constraint violation on incoming data is a validation failure, not a type error.
 
+**Deferred / future — cross-field validation:** Constraints that reference another field's value (e.g., requiring `end_date` to be after `start_date`) are out of scope for the current constraint system. Each constraint block is evaluated against its own field in isolation. Cross-field validation is identified as a future extension point.
+
 ## Structs
 
 Structs are first-class types. A struct defined in the schema can be used as a field type anywhere a primitive type is valid.
@@ -151,7 +153,13 @@ validate_address: (addr: Address) -> Bool
 score_customer: (id: Str, tier: Str) -> Float
 ```
 
-Parameters use the same type syntax as fields, including the `?` optional suffix. Function implementations are registered at engine construction time via `engine.add_function()`.
+Parameters use the same type syntax as fields, including the `?` optional suffix, and return types can also be marked optional with `?`. Function implementations are registered at engine construction time via `engine.add_function()`.
+
+```
+find_user:        (id: Str, include_deleted: Bool?) -> User    # optional parameter
+get_user_by_email: (email: Str) -> User?                       # optional return type
+find_user:        (id: Str, include_deleted: Bool?) -> User?   # both
+```
 
 ## Custom types
 
