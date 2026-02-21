@@ -192,90 +192,13 @@ result.warnings  # list[str] — validation warnings (loose mode only)
 
 ## Schema Language Grammar (PEG)
 
-```peg
-schema        <- s* entry* eof
-entry         <- comment / struct_def / func_def / field_def / blank
-
-field_def     <- identifier s* ':' s* type_expr optional? constraints? (s* comment)? newline
-struct_def    <- 'struct' S identifier s* '{' s* struct_fields s* '}' s* newline
-struct_fields <- (field_def (field_sep field_def)*)?
-field_sep     <- s* ',' s* / s* newline s*
-func_def      <- identifier s* ':' s* '(' s* params s* ')' s* '->' s* type_expr (s* comment)? newline
-
-params        <- (param (s* ',' s* param)*)?
-param         <- identifier s* ':' s* type_expr optional?
-
-type_expr     <- list_type / primitive / identifier
-list_type     <- 'List' '[' type_union ']'
-type_union    <- type_expr ('|' type_expr)*
-primitive     <- 'Int' / 'Float' / 'Str' / 'Bool'
-optional      <- '?'
-
-constraints   <- '{' s* constraint (s* ',' s* constraint)* s* '}'
-constraint    <- identifier s* ':' s* constraint_value
-constraint_value <- list_lit / string / float / integer / boolean
-
-comment       <- '#' (!newline .)* newline?
-blank         <- s* newline
-identifier    <- [a-zA-Z_] [a-zA-Z0-9_]*
-newline       <- '\n' / '\r\n' / '\r'
-S             <- [ \t]+          # mandatory horizontal whitespace
-s             <- [ \t]*          # optional horizontal whitespace
-eof           <- !.
-```
-
-**Notes:**
-- `identifier` in `type_expr` is syntactically accepted for any unknown name. The schema validator resolves whether it refers to a defined struct or a registered custom type.
-- `type_union` (e.g., `List[Int|Str]`) is only valid inside `List[...]`. Top-level union types for fields are deferred.
-- `func_def` is tried before `field_def` in `entry`. After matching `identifier ':'`, if `(` follows it is a function; if a type expression follows it is a field. PEG ordered choice with backtracking handles this correctly.
-- `field_sep` allows both comma-separated and newline-separated struct fields. Mixing within one struct is permitted.
+See [`docs/grammar/schema.peg`](../grammar/schema.peg) for the full PEG grammar.
 
 ---
 
 ## Rule Expression Grammar (Pratt Parser)
 
-The rule expression language uses a Pratt (top-down operator precedence) parser. The grammar below describes only the **irreducible minimum** — the atoms and structural elements that are always present regardless of operator configuration. All operator-level parsing is driven by the Pratt parser's dynamic operator table.
-
-```peg
-# Irreducible minimum — always present regardless of operator preset.
-# The Pratt parser's nud/led dispatch handles operators dynamically.
-
-rule     <- s* expr s* eof
-expr     <- atom (op atom)*     # schematic; Pratt loop drives actual parsing
-
-atom     <- grouped / func_call / variable / literal
-grouped  <- '(' s* expr s* ')'
-func_call  <- identifier '(' s* args s* ')'
-args     <- (expr (s* ',' s* expr)*)?
-variable <- identifier ('.' identifier)*
-literal  <- string / float / integer / boolean / list_lit
-list_lit <- '[' s* (literal (s* ',' s* literal)*)? s* ']'
-
-string   <- "'" (!"'" .)* "'"
-float    <- '-'? [0-9]+ '.' [0-9]+
-integer  <- '-'? [0-9]+
-boolean  <- ('true' / 'false') !id_cont
-identifier <- [a-zA-Z_] id_cont*
-id_cont  <- [a-zA-Z0-9_]
-S        <- [ \t]+
-s        <- [ \t]*
-eof      <- !.
-```
-
-**Keyword operator disambiguation:** `identifier '('` is always a function call. `identifier` in infix position (between two expressions, not followed by `(`) is a keyword operator dispatch to the Pratt led table.
-
-**`and`, `or`, `not` are always present** regardless of operator preset (they are part of the irreducible minimum, not registered operators). Built-in binding powers:
-
-```
-or           →  10
-and          →  20
-not          →  30  (prefix)
-in, not in   →  40
-=, !=        →  40
->, <, >=, <= →  40
-```
-
-`float` is tried before `integer` so `600.0` is correctly parsed as Float, not Integer followed by `.0`.
+See [`docs/grammar/rules.peg`](../grammar/rules.peg) for the rule expression grammar.
 
 ---
 
