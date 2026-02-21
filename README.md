@@ -1,16 +1,19 @@
 # amino
 
-A schema-first classification rules engine. Amino puts a typed schema at the center of the rules pipeline — not unlike how GraphQL does for APIs — so rules are compiled against a stable type system rather than evaluated against raw, untyped data.
+A schema-first classification rules engine. 
 
-This is the complement to machine learning, not a replacement for it: amino is for deterministic, auditable, human-authored rules that need to be frequently updated by end users without a full software deployment.
+Amino is for deterministic, auditable, human-authored rules that need to be frequently updated by end users.
+
+Amino puts a typed schema at the center of the rules pipeline, not unlike how GraphQL does for APIs, so rules are compiled against a stable type system rather than evaluated against raw, untyped data.
+
 
 ## Features
 
-- **Schema definition** — `.amn` files define fields, types, structs, constraints, and function signatures
-- **Typed DSL** — a small, extensible expression language with compile-time type checking
-- **Four match modes** — all, first, inverse, score
-- **Extensible** — register custom types and operators before first use
-- **Hot-swappable rules** — `update_rules()` atomically replaces compiled rules without restarting
+- **Schema definition**: `.amn` files define fields, types, structs, constraints, and function signatures
+- **Typed DSL**: a small, extensible expression language with compile-time type checking
+- **Four match modes**: all, first, inverse, score
+- **Extensible**: register custom types and operators before first use
+- **Hot-swappable rules**: `update_rules()` atomically replaces compiled rules without restarting
 
 ## Installation
 
