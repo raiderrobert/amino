@@ -1,0 +1,45 @@
+# docs/grammar/schema.peg
+#
+# PEG grammar for the Amino schema language (.amn files).
+# This grammar is implemented by amino/schema/parser.py using a static PEG parser.
+
+schema        <- s* entry* eof
+entry         <- comment / struct_def / func_def / field_def / blank
+
+field_def     <- identifier s* ':' s* type_expr optional? constraints? (s* comment)? newline
+struct_def    <- 'struct' S identifier s* '{' s* struct_fields s* '}' s* newline
+struct_fields <- (field_def (field_sep field_def)*)?
+field_sep     <- s* ',' s* / s* newline s*
+func_def      <- identifier s* ':' s* '(' s* params s* ')' s* '->' s* type_expr (s* comment)? newline
+
+params        <- (param (s* ',' s* param)*)?
+param         <- identifier s* ':' s* type_expr optional?
+
+type_expr     <- list_type / primitive / identifier
+list_type     <- 'List' '[' type_union ']'
+type_union    <- type_expr ('|' type_expr)*
+primitive     <- 'Int' / 'Float' / 'Str' / 'Bool'
+optional      <- '?'
+
+constraints   <- '{' s* constraint (s* ',' s* constraint)* s* '}'
+constraint    <- identifier s* ':' s* constraint_value
+constraint_value <- list_lit / string / float / integer / boolean
+
+comment       <- '#' (!newline .)* newline?
+blank         <- s* newline
+identifier    <- [a-zA-Z_] [a-zA-Z0-9_]*
+newline       <- '\n' / '\r\n' / '\r'
+S             <- [ \t]+          # mandatory horizontal whitespace
+s             <- [ \t]*          # optional horizontal whitespace
+eof           <- !.
+
+# Notes:
+# - `identifier` in `type_expr` is syntactically accepted for any unknown name. The schema
+#   validator resolves whether it refers to a defined struct or a registered custom type.
+# - `type_union` (e.g., `List[Int|Str]`) is only valid inside `List[...]`. Top-level union
+#   types for fields are deferred.
+# - `func_def` is tried before `field_def` in `entry`. After matching `identifier ':'`, if
+#   `(` follows it is a function; if a type expression follows it is a field. PEG ordered
+#   choice with backtracking handles this correctly.
+# - `field_sep` allows both comma-separated and newline-separated struct fields. Mixing
+#   within one struct is permitted.
