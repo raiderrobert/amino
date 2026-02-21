@@ -1,19 +1,16 @@
 # amino
 
-A toolkit and DSL for classification rules engines—sometimes called expert systems. Much focus has been given toward AI and machine learning tooling to help take humans out of the loop. However, there are exist a wide variety of current and future applications for custom rules engines.
+A schema-first classification rules engine. Amino puts a typed schema at the center of the rules pipeline — not unlike how GraphQL does for APIs — so rules are compiled against a stable type system rather than evaluated against raw, untyped data.
 
-Amino inverts the problem space by placing a schema at the center, not unlike how GraphQL has done so for APIs.
-
-## Motivation
-
-Amino is designed to be a safe, flexible, and extensible rules engine that can be easily integrated into existing systems. It provides a simple and intuitive way to define and evaluate rules against data sets, making it a great choice for applications that require end users to create custom logic and decision-making.
+This is the complement to machine learning, not a replacement for it: amino is for deterministic, auditable, human-authored rules that need to be frequently updated by end users without a full software deployment.
 
 ## Features
 
-Amino has three key components:
-- **Schema definition**: Like GraphQL or Protobuf for the data space it operates on
-- **DSL**: A pre-built, small and extensible domain-specific language for conditional logic
-- **Runtime**: Fast evaluation of rules against data sets
+- **Schema definition** — `.amn` files define fields, types, structs, constraints, and function signatures
+- **Typed DSL** — a small, extensible expression language with compile-time type checking
+- **Four match modes** — all, first, inverse, score
+- **Extensible** — register custom types and operators before first use
+- **Hot-swappable rules** — `update_rules()` atomically replaces compiled rules without restarting
 
 ## Installation
 
@@ -26,7 +23,8 @@ pip install amino
 ```bash
 git clone https://github.com/raiderrobert/amino.git
 cd amino
-pip install -e .[dev]
+uv sync
+uv run pytest
 ```
 
 **Requirements**: Python 3.10+
@@ -34,6 +32,7 @@ pip install -e .[dev]
 ## Quick Start
 
 Create a schema file `auto_loan.amn`:
+
 ```
 amount: Int
 state_code: Str
@@ -41,167 +40,160 @@ credit_score: Int
 income: Int
 ```
 
-Use it in Python:
+Evaluate a rule against a decision:
+
 ```python
 import amino
 
-# Load schema
-amn = amino.load_schema("auto_loan.amn")
+engine = amino.load_schema("auto_loan.amn")
 
-# Check if loan should be auto-declined
-decline = amn.eval(
-    "amount > 80000 or credit_score < 600 or income < 30000", 
-    {"amount": 75000, "state_code": "CA", "credit_score": 580, "income": 45000}
+result = engine.eval(
+    rules=[{"id": "decline", "rule": "credit_score < 600 or income < 30000"}],
+    decision={"amount": 75000, "state_code": "CA", "credit_score": 580, "income": 45000},
 )
-print(decline)  # True - declined due to low credit score
+print(result.matched)  # ['decline']
 ```
 
-## Multiple Rules and Priority
+## Compiling Rules for Repeated Evaluation
 
-For production systems, compile multiple rules:
+For production systems, compile a rule set once and evaluate it against many decisions:
 
 ```python
-# Auto loan decline rules with different priorities
-decline_rules = amn.compile([
-    {"id": "high_risk", "rule": "credit_score < 500", "ordering": 1},
-    {"id": "ca_income", "rule": "state_code = 'CA' and income < 50000", "ordering": 2}, 
-    {"id": "tx_amount", "rule": "state_code = 'TX' and amount > 60000", "ordering": 3},
-    {"id": "general_risk", "rule": "credit_score < 650 and amount > 40000", "ordering": 4}
-])
+compiled = engine.compile(
+    rules=[
+        {"id": "high_risk",   "rule": "credit_score < 500",                          "ordering": 1},
+        {"id": "ca_income",   "rule": "state_code = 'CA' and income < 50000",         "ordering": 2},
+        {"id": "amount_risk", "rule": "credit_score < 650 and amount > 40000",        "ordering": 3},
+    ],
+    match={"mode": "first", "key": "ordering", "order": "asc"},
+)
 
-# Evaluate multiple loan applications
-applications = [
+results = compiled.eval([
     {"id": "app_1", "amount": 45000, "state_code": "CA", "credit_score": 480, "income": 55000},
-    {"id": "app_2", "amount": 65000, "state_code": "TX", "credit_score": 720, "income": 80000},  
-    {"id": "app_3", "amount": 35000, "state_code": "NY", "credit_score": 640, "income": 45000}
-]
-
-results = decline_rules.eval(applications)
-# Returns: [
-#   {"id": "app_1", "results": ["high_risk"]},
-#   {"id": "app_2", "results": ["tx_amount"]}, 
-#   {"id": "app_3", "results": []}
-# ]
+    {"id": "app_2", "amount": 65000, "state_code": "TX", "credit_score": 720, "income": 80000},
+])
+# app_1 → matched: ['high_risk']  (first match, ordering 1)
+# app_2 → matched: []
 ```
 
-### First Match Priority
+## Match Modes
 
-Use `match="first"` to return only the highest priority decline reason:
+The `match` dict controls how rule results are aggregated into a `MatchResult`:
+
+- **`all`** (default) — return every rule that matches: `{'mode': 'all'}`
+- **`first`** — return only the first match by ordering: `{'mode': 'first', 'key': 'ordering', 'order': 'asc'}`
+- **`inverse`** — return every rule that does NOT match: `{'mode': 'inverse'}`
+- **`score`** — aggregate numeric or boolean rule results: `{'mode': 'score', 'aggregate': 'sum', 'threshold': 0.7}`
+
+See [docs/rule-expression.md](docs/rule-expression.md) for the full match mode reference.
+
+## Extensibility
+
+Custom types and operators are registered before the first `compile()` or `eval()` call. After first use, the engine is frozen and further registration raises `EngineAlreadyFrozenError`.
 
 ```python
-decline_rules = amn.compile([
-    {"id": "fraud_risk", "rule": "credit_score < 400", "ordering": 1},
-    {"id": "income_risk", "rule": "income < 25000", "ordering": 2},
-    {"id": "amount_risk", "rule": "amount > 100000", "ordering": 3}
-], match={"option": "first", "key": "ordering", "ordering": "asc"})
+engine = amino.load_schema("schema.amn")
 
-# Returns only the first matching decline reason per application
+# Register a custom type — usable as a field type in the schema
+engine.register_type('ipv4', base='Str', validator=is_valid_ipv4)
+
+# Register a custom keyword operator with compile-time type checking
+engine.register_operator(
+    keyword='precedes',
+    fn=event_precedes,
+    binding_power=40,
+    input_types=('Str', 'Str'),
+    return_type='Bool',
+)
+
+# Now compile or eval — registries are frozen from this point on
+compiled = engine.compile(rules=[...])
 ```
 
+See [docs/rule-expression.md](docs/rule-expression.md) for symbolic operators, presets, and binding powers.
 
 ## Schema Reference
 
-### Comments
-Use `#` for comments. Everything one the same line after the `#` is ignored:
+Schema files use the `.amn` extension. Fields are declared as `name: Type`. Comments use `#`.
 
 ```
-# Schema for user validation
-user_age: Int  # Must be positive
-location: Str
+# Auto loan application schema
+amount: Int
+state_code: Str
+credit_score: Int {min: 300, max: 850}
+income: Int
+tags: List[Str]
+email: Str?   # optional field
 ```
 
-### Data Structures
+**Primitive types**: `Int`, `Float`, `Str`, `Bool`
 
-**Basic types**: `Int`, `Float`, `Str`, `Bool`
+**Structs** organize nested data (PascalCase by convention):
 
-**Structs** organize related data:
 ```
-struct customer {
+struct Address {
+    street: Str,
+    city: Str,
+    country: Str
+}
+
+struct Customer {
     id: Str,
-    tier: Str,    # "gold", "silver", "bronze"  
-    verified: Bool
-}
-
-struct order {
-    total: Float,
-    item_count: Int
+    name: Str,
+    billing_address: Address,
+    shipping_address: Address?
 }
 ```
 
-Usage:
-```python
-data = {
-    "customer": {"id": "123", "tier": "gold", "verified": True},
-    "order": {"total": 150.0, "item_count": 3}
-}
-rule = "customer.tier = 'gold' and order.total > 100"
-```
+Struct fields are accessed in rules with dot notation: `customer.billing_address.city = 'Austin'`
 
-**Lists** support homogeneous or mixed types:
-```
-recent_purchases: List[Float]
-mixed_data: List[Int|Str|Bool]
-```
-
-### Functions
-
-Declare external functions to integrate business logic, ML models, or APIs:
+**Constraints** are declared inline and enforced at evaluation time:
 
 ```
-# ML integration
+age: Int {min: 18, max: 120}
+username: Str {minLength: 3, maxLength: 20}
+status: Str {oneOf: ["active", "inactive", "pending"]}
+```
+
+**Function declarations** integrate external logic, ML models, or APIs:
+
+```
 toxicity_score: (text: Str) -> Float
-sentiment_analysis: (content: Str, language: Str) -> Str
-
-# Business logic  
 calculate_discount: (tier: Str, amount: Float) -> Float
-is_holiday_season: (date: Str) -> Bool
 ```
 
-Implement in Python:
-```python
-def calculate_shipping(zip_code: str, weight: float) -> float:
-    # Your shipping logic here
-    return base_rate * weight * zone_multiplier(zip_code)
+Implement and register them in Python:
 
-amn = amino.load_schema("schema.amn", funcs={
-    'calculate_shipping': calculate_shipping,
-    'toxicity_score': ml_model.predict
+```python
+engine = amino.load_schema("schema.amn", funcs={
+    'toxicity_score': ml_model.predict,
+    'calculate_discount': calculate_discount,
 })
 ```
 
-## Operators
-
-**Comparison**: `=`, `!=`, `>`, `<`, `>=`, `<=`  
-**Logical**: `and`, `or`, `not`  
-**Membership**: `in`, `not in`
-
-```python
-# Examples
-"customer.tier in ['gold', 'platinum']"
-"order.total >= 100 and not customer.new_user" 
-"product.category != 'restricted'"
-```
+See [docs/schema-language.md](docs/schema-language.md) for the full schema reference including optional fields, union-typed lists, constraints, and custom types.
 
 ## FAQ
 
-** Why would I use this instead of a programming language?**
- 
-Programming languages are designed for general purposes tasks. Rules engines are for end users to customize a system. It's the bridge between a few configuration options and a full-fledged programming language.
+**Why would I use this instead of a programming language?**
 
-If you find yourself in a situation where users want to write complex rules to govern system behavior, and you expect those rules to be frequently updated by end users, then it's likely that a rules engine is a better fit than a programming language.
+Programming languages are designed for general-purpose tasks. Rules engines are for end users to customize a system — the bridge between a few configuration options and a full-fledged programming language.
 
+If you find yourself in a situation where users need to write complex rules to govern system behavior, and you expect those rules to be frequently updated by non-engineers, a rules engine is a better fit than a programming language.
 
 ## Real-World Examples
 
-Amino supports rule engines across use cases:
-
-- **[E-commerce Pricing](examples/ecommerce/)** - Dynamic discounts and promotions
-- **[Content Moderation](examples/content_moderation/)** - Safety systems  
-- **[IoT Automation](examples/iot_automation/)** - Smart home device coordination
+- **[E-commerce Pricing](examples/ecommerce/)** — Dynamic discounts and promotions
+- **[Content Moderation](examples/content_moderation/)** — Safety systems
+- **[IoT Automation](examples/iot_automation/)** — Smart home device coordination
 
 Each example includes complete schemas, Python implementations, and tests.
 
 ## Documentation
 
-- [Examples](examples/README.md) - Complete working examples and use cases
-- [Development Guide](DEVELOPMENT.md) - Setup, testing, and contribution guidelines
+- [Architecture](docs/architecture.md) — pipeline, engine lifecycle, design intent
+- [Schema Language](docs/schema-language.md) — field types, structs, constraints
+- [Rule Expression Language](docs/rule-expression.md) — operators, match modes, extensibility
+- [API Reference](docs/api.md) — full public API
+- [Examples](examples/README.md) — complete working examples
+- [Development Guide](DEVELOPMENT.md) — setup, testing, contribution guidelines
