@@ -134,3 +134,4 @@ dmypy.json
 .idea/
 
 .worktrees
+.claude/settings.local.json
