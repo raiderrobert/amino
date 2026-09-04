@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import Any
 
 from amino.errors import EngineAlreadyFrozenError
+from amino.expression import Expression
 from amino.operators.registry import OperatorDef, OperatorRegistry
 from amino.operators.standard import build_operator_registry
 from amino.rules.compiler import TypedCompiler
@@ -79,6 +80,16 @@ class Engine:
 
     def _freeze(self) -> None:
         self._frozen = True
+
+    def parse(self, text: str) -> Expression:
+        """Parse and type-check one expression against the schema.
+
+        Freezes the engine, since operator resolution happens here. The
+        returned ``Expression`` can be handed to any backend.
+        """
+        self._freeze()
+        ast = parse_rule(text, self._schema_registry, self._op_registry)
+        return Expression(ast=ast, schema=self._schema_registry, types=self._type_registry)
 
     def compile(
         self, rules: list[dict[str, Any]], match: dict | None = None
