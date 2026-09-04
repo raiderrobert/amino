@@ -38,3 +38,7 @@ class OperatorConflictError(AminoError):
 
 class EngineAlreadyFrozenError(AminoError):
     pass
+
+
+class UnsupportedExpressionError(AminoError):
+    """A backend cannot render part of an expression."""
