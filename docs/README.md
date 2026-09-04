@@ -10,6 +10,7 @@ Amino is a schema-first classification rules engine. The schema defines the type
 | [schema-language.md](schema-language.md) | Reference for the `.amn` schema language: primitives, complex types, optional fields, constraints, structs, function declarations, and custom types |
 | [rule-expression.md](rule-expression.md) | Reference for the rule expression language: atoms, operator system, presets, match modes, and custom operator registration |
 | [api.md](api.md) | Public API reference: `load_schema()`, registration methods, evaluation methods, and result types |
+| [backends.md](backends.md) | Compile targets: `engine.parse()`, the Postgres and ClickHouse SQL backends, column mapping, and the parity test suite |
 | [grammar/](grammar/) | Formal PEG grammars for the schema language (`schema.peg`) and rule expression language (`rules.peg`) |
 | [adr/](adr/) | Architecture Decision Records — the why behind each major design decision |
 

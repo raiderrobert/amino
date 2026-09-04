@@ -115,6 +115,27 @@ compiled = engine.compile(rules=[...])
 
 See [docs/rule-expression.md](docs/rule-expression.md) for symbolic operators, presets, and binding powers.
 
+## Compile Targets
+
+The same parsed expression can be compiled for different systems. The in-process evaluator above is one target. Postgres and ClickHouse backends turn an expression into a parameterised `WHERE` predicate:
+
+```python
+from amino.backends.postgres import PostgresBackend
+from amino.backends.clickhouse import ClickHouseBackend
+
+expr = engine.parse("credit_score < 600 and state_code in ['CA', 'NY']")
+
+pg = PostgresBackend().compile(expr)
+pg.sql     # '(("credit_score" < %s) AND ("state_code" = ANY(%s)))'
+pg.params  # [600, ['CA', 'NY']]
+
+ch = ClickHouseBackend().compile(expr)
+ch.sql     # '((`credit_score` < {p0:Int64}) AND (`state_code` IN {p1:Array(String)}))'
+ch.params  # {'p0': 600, 'p1': ['CA', 'NY']}
+```
+
+Literals are always bound as parameters, never inlined. See [docs/backends.md](docs/backends.md) for column mapping, operator rendering, and the parity tests that check both databases against the Python evaluator.
+
 ## Schema Reference
 
 Schema files use the `.amn` extension. Fields are declared as `name: Type`. Comments use `#`.
