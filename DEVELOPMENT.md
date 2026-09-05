@@ -7,11 +7,13 @@ spec/           what every host must implement: grammar/ (PEG) and conformance/ 
 docs/           language-agnostic docs and ADRs; docs/README.md orders them
 python/         reference implementation; its own README, API.md, tests, and toolchain
 typescript/     browser-side parse and validate; README only until started
-go/             full runtime for services; README only until started
+go/             full runtime for services: parse, validate, evaluate, Postgres and ClickHouse targets
 scripts/        shared tooling: dev-db.sh starts the databases every host's parity suite uses
 ```
 
 ## Working on a host
+
+Toolchains: Python 3.10 or newer with `uv`; Go 1.22 or newer; Docker for the SQL parity suite.
 
 Each host directory is self-contained and uses its own toolchain. For Python:
 
@@ -21,6 +23,14 @@ uv sync --all-extras
 uv run pytest tests                      # unit tests and the conformance corpus
 uv run ruff check && uv run ruff format --check
 uv run ty check amino
+```
+
+For Go:
+
+```bash
+cd go
+go test ./...                            # unit tests and the conformance corpus
+go vet ./... && gofmt -l .
 ```
 
 The root `Makefile` delegates to the hosts that exist:

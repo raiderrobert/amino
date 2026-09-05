@@ -45,7 +45,9 @@ def _load(kind: str) -> list[tuple[str, dict, dict]]:
 
 def _param(file: str, doc: dict, case: dict, label: str):
     marks = []
-    if "xfail" in case:
+    # Only expected failures for this host apply; other hosts' reasons are
+    # prefixed with their own name and this implementation must pass those.
+    if case.get("xfail", "").startswith("python:"):
         marks.append(pytest.mark.xfail(reason=case["xfail"], strict=True))
     return pytest.param(doc, case, id=f"{file}::{label}", marks=marks)
 

@@ -65,6 +65,8 @@ Always:
 
 ## Implementation status
 
+### Python (reference implementation)
+
 Probed on 2026-09-05 against the `feat/sql-backends` branch. This table is the honest state and is updated as gaps close.
 
 | Guarantee | Status | Detail |
@@ -81,6 +83,10 @@ A related gap that is not a security boundary but affects guarantee 6: the parse
 The conformance corpus also found that the parser raises a bare `IndexError` rather than `RuleParseError` when input ends early (an empty expression, `score >`, an unclosed list or call). Not a boundary violation, but a malformed request becomes an unhandled exception instead of a rejection. Recorded as expected failures in `spec/conformance/parse/standard.json`.
 
 Guarantees 1 and 3 close together with one parser change. Guarantee 5 is a depth counter and a length check. Both are scheduled ahead of any new feature.
+
+### Go
+
+The Go host was written against the corpus after the gaps above were known, and enforces all six guarantees: undeclared functions and mismatched built-in comparisons are parse errors, expression length and nesting depth are capped by default (10,000 bytes and 100 levels, configurable), truncated input is a `syntax` error rather than a crash, and custom type validators run during record validation. Its SQL backends produce the same SQL as Python's, verified by tests that assert the exact strings. It has not yet been run through a parity suite against live databases; that is the next step for it.
 
 ## Reporting
 

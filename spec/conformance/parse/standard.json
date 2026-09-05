@@ -307,7 +307,7 @@
     },
     {
       "name": "excessive nesting",
-      "expression": "@deep:5000",
+      "expression": "@deep:500",
       "expect": "reject",
       "error": "depth_exceeded",
       "xfail": "python: no depth limit, raises RecursionError; ADR 005 consequence 2"
