@@ -135,3 +135,6 @@ dmypy.json
 
 .worktrees
 .claude/settings.local.json
+
+# superpowers working docs (specs, plans)
+docs/superpowers/
