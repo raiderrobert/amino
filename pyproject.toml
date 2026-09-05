@@ -1,7 +1,7 @@
 [project]
 name = "amino"
 version = "0.1.0"
-description = "A small, typed expression language that is safe to accept from untrusted users and compiles to multiple targets"
+description = "A small expression language for building rules engines, query languages, and other features where users write conditions over your data"
 authors = [{name = "Robert Roskam", email = "raiderrobert@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}

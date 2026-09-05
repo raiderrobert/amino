@@ -1,6 +1,6 @@
 # Amino Documentation
 
-Amino is a small, fixed expression language that is safe to accept from untrusted users. Its vocabulary comes from a developer-defined schema. It compiles to multiple targets, and it will have more than one host implementation.
+Amino is a small expression language for building features where users write conditions over your data: rules engines, query languages, targeting, policies. It is one fixed grammar with vocabulary from a developer-defined schema, it is safe to accept from untrusted users, it compiles to multiple targets, and it will have more than one host implementation.
 
 The documents below are ordered so that reading them top to bottom is a sensible path.
 

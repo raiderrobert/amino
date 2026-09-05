@@ -14,9 +14,9 @@ This ADR records the alignment reached on 2026-09-05 about what amino is, what i
 
 ## Decision
 
-> Amino is a small, fixed expression language that is safe to accept from untrusted users. Its vocabulary comes from a developer-defined schema. It compiles to multiple targets, and it has more than one host implementation.
+> Amino is a small expression language for building features in which users write conditions over a developer's data: rules engines, query languages, targeting, policy, alerting. To serve those features it is one fixed grammar, its vocabulary comes from a developer-defined schema, it is safe to accept from untrusted users, it compiles to multiple targets, and it has more than one host implementation.
 
-Each clause is a commitment.
+The purpose is the first sentence. The rest are requirements the purpose imposes, and each is a commitment.
 
 ### One fixed grammar
 

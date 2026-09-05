@@ -1,20 +1,25 @@
 # amino
 
-A small expression language you can safely let strangers write against your data.
+A small expression language for building the features where your users write conditions over your data: rules engines, query languages, feature targeting, policies, alerts.
 
 ```
 credit_score < 600 and state_code in ['CA', 'NY']
 ```
 
-You define a schema. Your users write expressions like that one against it. Amino checks each expression against the schema, then compiles it for wherever it needs to run: in-process Python, a Postgres `WHERE` clause, a ClickHouse `WHERE` clause, or a target you write. The same text, the same meaning, everywhere.
+You define a schema. Your users write expressions like that one against it. Amino checks each expression against the schema, then compiles it for wherever it needs to run: in-process Python, a Postgres `WHERE` clause, a ClickHouse `WHERE` clause, or a target you write. Build the feature; don't build the language.
 
 ## Why
 
-Plenty of systems need a condition written by someone who is not an engineer. Which users see a feature. Which rows a policy allows. Which tickets a saved search returns. Which orders get flagged. The usual choices are a form that can't express enough, a scripting language that can express far too much, or a mini-language invented under deadline and never quite safe.
+Plenty of features come down to a condition written by someone who is not an engineer. Which users see a flag. Which rows a policy allows. Which tickets a saved search returns. Which orders get routed to review. Each time, someone has to build the little language those conditions are written in, and each time it is built under deadline, slightly differently, and never quite finished.
 
-Amino is the mini-language, done once. It is deliberately tiny: comparisons, `and`/`or`/`not`, list membership, substring match, dot paths into structs, and calls to functions the developer declared. No loops, no assignment, no way to reach anything the schema didn't expose. That is what makes it safe to accept from the internet, and small enough to implement in more than one language.
+Amino is that language, built once, so the feature on top of it can be small. It comes with the requirements those features share already met:
 
-It borrows GraphQL's central move, a schema that decides what a client can say, and points it at a different problem. GraphQL lets untrusted clients choose which fields come back. Amino lets untrusted users choose which records do.
+- **Checked against a schema.** An expression can only name fields, functions, and operators you declared. Unknown names are rejected before anything runs.
+- **Safe to accept from people you don't trust.** Nothing a user types executes. Literals are bound as parameters. The language has no loops, assignment, or way to reach past the schema, so it can be exposed to the internet. See [docs/security.md](docs/security.md) for the guarantees and their current status.
+- **Runs in more than one place.** The same expression decides for one record in process and selects all matching records in the database, with a test suite that keeps the answers identical.
+- **Small enough to reimplement.** Two grammar files. A TypeScript host for composing and validating in the browser is planned.
+
+It borrows GraphQL's central move, a schema that decides what a client can say, and points it at a different problem. GraphQL lets clients choose which fields come back. Amino lets users choose which records do.
 
 ## What it looks like
 
@@ -46,7 +51,7 @@ Everything the user typed is bound as a parameter. Nothing is interpolated.
 
 ## Is it for you
 
-Yes, if an untrusted person needs to express a condition over records you control, and especially if that condition has to run in more than one place. Feature targeting, row-level policy, alert conditions, data quality checks, saved searches, routing rules.
+Yes, if you are building a feature where users express a condition over records you control: a rules engine, a saved-search or query box, feature targeting, row-level policy, alert conditions, data quality checks, routing. Especially if the same condition has to run in more than one place.
 
 No, if you need projections, sorting, aggregation, sequencing, or anything with side effects. Amino says which records qualify and nothing else. Those are boundaries, not a roadmap.
 
