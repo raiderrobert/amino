@@ -2,7 +2,9 @@
 
 ## What amino is
 
-Amino is a schema-first classification rules engine. The schema defines the type system — fields, types, structs, and functions. Rules are conditional expressions compiled against that schema. Decisions are data items (dicts) evaluated against compiled rules. The engine enforces a clean separation between these three concerns, provides a correct type system with two enforcement modes, and supports an extensible operator and type model.
+Amino is a toolkit for a small, typed expression language that compiles to multiple targets. The schema defines the type system — fields, types, structs, and functions. Expressions are parsed and type-checked against that schema into a typed AST. A target consumes the typed AST: the in-process Python evaluator (which adds decision validation and match modes, and is the original rules engine), the Postgres and ClickHouse backends (which emit parameterised SQL predicates), or a user-written backend. The engine enforces a clean separation between schema, expression, and target, provides a correct type system with two enforcement modes, and supports an extensible operator and type model.
+
+The rest of this document describes the pipeline with the Python evaluator as the target. `backends.md` covers the SQL targets, which branch off after the parser.
 
 ## Pipeline
 

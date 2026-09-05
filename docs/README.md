@@ -1,6 +1,6 @@
 # Amino Documentation
 
-Amino is a schema-first classification rules engine. The schema defines the type system; rules are compiled against it; decisions (input data) are evaluated against compiled rules. The engine establishes a correct type system, an extensible operator model, and a clean lifecycle with freeze-before-use semantics and zero-downtime replacement.
+Amino is a toolkit for building a small, typed expression language over your data and compiling it to more than one target. The schema defines the type system. Expressions are parsed and type-checked against it once. A target then turns the typed expression into something executable: an in-process Python evaluator with match modes (the original rules engine), a Postgres or ClickHouse `WHERE` predicate, or a backend you write.
 
 ## Documents
 
