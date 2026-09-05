@@ -170,11 +170,11 @@ class MyDialect(SQLBackend):
 
 Walk `Expression.ast` directly. The node types in `amino.rules.ast` are `Literal`, `Variable`, `UnaryOp`, `BinaryOp`, and `FunctionCall`, each carrying `type_name`. `Expression.base_type(name)` reduces a custom type to its primitive. Raise `UnsupportedExpressionError` for anything you cannot render; do not approximate.
 
-Whatever you build, add it to the parity suite. A target that can disagree with the others on a supported expression is a target that hands users a footgun.
+Whatever you build, add it to the parity suite, and run the eval half of `spec/conformance/` through it. A target that can disagree with the others on a supported expression is a target that hands users a footgun.
 
 ## Testing targets
 
-`tests/integration/test_sql_parity.py` runs every expression in its list through Postgres, ClickHouse, and the Python evaluator against the same twelve rows and asserts all three select the same ids.
+`python/tests/integration/test_sql_parity.py` runs every expression in its list through Postgres, ClickHouse, and the Python evaluator against the same twelve rows and asserts all three select the same ids.
 
 ```bash
 make db-up              # postgres:16 on :55432, clickhouse:24.8 on :18123

@@ -78,7 +78,7 @@ Chosen at `load_schema()` time with the `operators` argument.
 
 ### Custom operators
 
-Registered before the first `parse()`, `compile()`, or `eval()`. See [api.md](api.md#register_operator) for the full signature.
+Registered before the first `parse()`, `compile()`, or `eval()`. See [python/API.md](../python/API.md#register_operator) for the full signature.
 
 ```python
 engine.register_operator(
@@ -128,4 +128,4 @@ These are not missing features. Leaving them out is what keeps the language smal
 
 ## Grammar
 
-The formal grammar of the irreducible minimum is [grammar/rules.peg](grammar/rules.peg). It is the specification that every host implementation must match. Operator-level parsing is driven by the Pratt table and is described by the binding-power table above.
+The formal grammar of the irreducible minimum is [spec/grammar/rules.peg](../spec/grammar/rules.peg). With the [conformance corpus](../spec/conformance/README.md), it is the specification that every host implementation must match. Operator-level parsing is driven by the Pratt table and is described by the binding-power table above.

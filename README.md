@@ -74,10 +74,10 @@ Early, and used by one person. The API is small and may change. Two known gaps i
 Not on PyPI yet:
 
 ```bash
-pip install git+https://github.com/raiderrobert/amino.git
+pip install "git+https://github.com/raiderrobert/amino.git#subdirectory=python"
 ```
 
-Python 3.10 or newer. Database drivers are optional extras, `amino[postgres]` and `amino[clickhouse]`, and are only needed to execute what a backend produces.
+Python 3.10 or newer. Database drivers are optional extras, `amino[postgres]` and `amino[clickhouse]`, and are only needed to execute what a backend produces. The Python package is the reference implementation; TypeScript and Go hosts are planned, and the repository is laid out for them. See [ADR 006](docs/adr/006-repository-layout-for-multiple-hosts.md).
 
 ## Learn more
 
@@ -87,7 +87,7 @@ Start with [docs/README.md](docs/README.md), which orders the rest. The short ve
 - [Security model](docs/security.md): the threat model, the guarantees, and their current status
 - [Expression language](docs/expression-language.md) and [schema language](docs/schema-language.md)
 - [Targets](docs/targets.md): the Python evaluator with match modes, Postgres, ClickHouse, and writing your own
-- [API reference](docs/api.md)
-- [Development](DEVELOPMENT.md)
+- [Python API reference](python/API.md)
+- [Development](DEVELOPMENT.md), and the [conformance corpus](spec/conformance/README.md) every host must pass
 
 MIT licensed.

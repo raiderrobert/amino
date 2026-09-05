@@ -94,6 +94,8 @@ Every error carries `message`, and where it applies, `field`, `expected`, and `g
 
 ## Package layout
 
+The Python reference implementation, under `python/`. Other hosts live beside it; see [ADR 006](adr/006-repository-layout-for-multiple-hosts.md).
+
 ```
 amino/
 ├── __init__.py            load_schema(), public exports

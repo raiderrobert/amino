@@ -1,0 +1,13 @@
+{
+  "schema": "score: Int\nactive: Bool\ndone: Bool",
+  "operators": "minimal",
+  "cases": [
+    {"name": "and still present", "expression": "active and done", "expect": "accept", "type": "Bool"},
+    {"name": "or still present", "expression": "active or done", "expect": "accept", "type": "Bool"},
+    {"name": "not still present", "expression": "not active", "expect": "accept", "type": "Bool"},
+    {"name": "parentheses still present", "expression": "(active or done) and not active", "expect": "accept", "type": "Bool"},
+    {"name": "comparison removed", "expression": "score > 1", "expect": "reject", "error": "unknown_operator"},
+    {"name": "equality removed", "expression": "score = 1", "expect": "reject", "error": "unknown_operator"},
+    {"name": "membership removed", "expression": "score in [1, 2]", "expect": "reject", "error": "unknown_operator"}
+  ]
+}

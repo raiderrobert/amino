@@ -17,9 +17,9 @@ engine = amino.load_schema(
 
 - `source`: if it names a readable file, the file is parsed; otherwise the string itself is. Raises `SchemaParseError` or `SchemaValidationError`.
 - `funcs`: implementations for functions declared in the schema. Same as calling `add_function()` for each.
-- `rules_mode`: designed to choose between raising and warning on type mismatches in expressions. No mismatch is currently detected for built-in operators, so this has no effect. See [expression-language.md](expression-language.md#type-checking).
+- `rules_mode`: designed to choose between raising and warning on type mismatches in expressions. No mismatch is currently detected for built-in operators, so this has no effect. See [expression-language.md](../docs/expression-language.md#type-checking).
 - `decisions_mode`: `"strict"` raises `DecisionValidationError` on a non-conforming record. `"loose"` drops non-conforming fields, adds a warning to `MatchResult.warnings`, and evaluates on what remains. Python target only.
-- `operators`: the operator preset. See [expression-language.md](expression-language.md#operator-presets).
+- `operators`: the operator preset. See [expression-language.md](../docs/expression-language.md#operator-presets).
 
 ## Registration
 
@@ -132,7 +132,7 @@ Immutable. To change rules, compile again and swap the reference.
 {"mode": "score", "aggregate": "sum", "threshold": 0.7}
 ```
 
-See [targets.md](targets.md#match-modes).
+See [targets.md](../docs/targets.md#match-modes).
 
 ### `MatchResult`
 
@@ -172,7 +172,7 @@ Frozen dataclass.
 
 ### `SQLBackend`
 
-Abstract base. Subclass and implement `quote_ident()`, `new_params()`, `render_in()`, `render_contains()`. Optionally override `render_not_in()`. See [targets.md](targets.md#writing-a-target).
+Abstract base. Subclass and implement `quote_ident()`, `new_params()`, `render_in()`, `render_contains()`. Optionally override `render_not_in()`. See [targets.md](../docs/targets.md#writing-a-target).
 
 ## Errors
 

@@ -1,7 +1,7 @@
-# docs/grammar/schema.peg
+# spec/grammar/schema.peg
 #
 # PEG grammar for the Amino schema language (.amn files).
-# This grammar is implemented by amino/schema/parser.py using a static PEG parser.
+# This grammar is implemented by python/amino/schema/parser.py using a static PEG parser.
 
 schema        <- s* entry* eof
 entry         <- comment / struct_def / func_def / field_def / blank
