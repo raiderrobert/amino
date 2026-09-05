@@ -6,7 +6,7 @@ A small expression language for building the features where your users write con
 credit_score < 600 and state_code in ['CA', 'NY']
 ```
 
-You define a schema. Your users write expressions like that one against it. Amino checks each expression against the schema, then compiles it for wherever it needs to run: in-process Python, a Postgres `WHERE` clause, a ClickHouse `WHERE` clause, or a target you write. Build the feature; don't build the language.
+You define a schema. Your users write expressions like that one against it. Amino checks each expression against the schema, then compiles it for wherever it needs to run: in your application, in your database, or in a target you write. Build the feature; don't build the language.
 
 ## Why
 
@@ -25,7 +25,6 @@ It borrows GraphQL's central move, a schema that decides what a client can say, 
 
 ```python
 import amino
-from amino.backends.postgres import PostgresBackend
 
 engine = amino.load_schema("""
 credit_score: Int
@@ -33,21 +32,14 @@ state_code: Str
 income: Int
 """)
 
-expr = engine.parse("credit_score < 600 and state_code in ['CA', 'NY']")
-
-# Decide for one record, in process
-engine.eval(
+result = engine.eval(
     rules=[{"id": "decline", "rule": "credit_score < 600 and state_code in ['CA', 'NY']"}],
     decision={"credit_score": 580, "state_code": "CA", "income": 45000},
-).matched                                   # ['decline']
-
-# Select every matching record, in the database
-q = PostgresBackend().compile(expr)
-q.sql                                       # '(("credit_score" < %s) AND ("state_code" = ANY(%s)))'
-q.params                                    # [600, ['CA', 'NY']]
+)
+result.matched   # ['decline']
 ```
 
-Everything the user typed is bound as a parameter. Nothing is interpolated.
+That is the in-process target: a rule, a record, a verdict. The same expression can instead be parsed once and handed to a target that compiles it for a data store, so the condition that decides one record in your application is the condition that selects all matching records in your database. See [docs/targets.md](docs/targets.md).
 
 ## Is it for you
 
