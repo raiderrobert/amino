@@ -23,6 +23,8 @@ It borrows GraphQL's central move, a schema that decides what a client can say, 
 
 ## What it looks like
 
+One schema, one expression, two features.
+
 ```python
 import amino
 
@@ -31,7 +33,11 @@ credit_score: Int
 state_code: Str
 income: Int
 """)
+```
 
+**As a rules engine.** Hold the rules fixed, stream records past them, get a verdict for each.
+
+```python
 result = engine.eval(
     rules=[{"id": "decline", "rule": "credit_score < 600 and state_code in ['CA', 'NY']"}],
     decision={"credit_score": 580, "state_code": "CA", "income": 45000},
@@ -39,7 +45,21 @@ result = engine.eval(
 result.matched   # ['decline']
 ```
 
-That is the in-process target: a rule, a record, a verdict. The same expression can instead be parsed once and handed to a target that compiles it for a data store, so the condition that decides one record in your application is the condition that selects all matching records in your database. See [docs/targets.md](docs/targets.md).
+**As a query language.** Hold the dataset fixed, push one expression into it, get back the records that match.
+
+```python
+from amino.backends.postgres import PostgresBackend   # or ClickHouseBackend, or a dialect you write
+
+expr = engine.parse("credit_score < 600 and state_code in ['CA', 'NY']")
+
+q = PostgresBackend().compile(expr)
+q.sql      # '(("credit_score" < %s) AND ("state_code" = ANY(%s)))'
+q.params   # [600, ['CA', 'NY']]
+
+cur.execute(f"SELECT id FROM applications WHERE {q.sql}", q.params)
+```
+
+Same text, same parse, opposite direction. Which backend compiles the expression is one line, so one query box can front several stores, and a rule evaluated in the application and a query run in the database cannot drift apart. Everything the user typed is bound as a parameter. See [docs/targets.md](docs/targets.md) for the targets and for writing your own.
 
 ## Is it for you
 
