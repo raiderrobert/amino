@@ -41,7 +41,7 @@ The language has no loops, recursion, assignment, or user-defined functions. An 
 
 ### 6. An expression means the same thing on every target
 
-If two targets can disagree on a supported expression, a user has been handed a footgun they cannot see. The parity suite in `tests/integration/` runs every supported construct through Postgres, ClickHouse, and the Python evaluator and requires identical results. Known divergences are listed below and are treated as defects to close, not quirks to document.
+If two targets can disagree on a supported expression, a user has been handed a footgun they cannot see. The parity suite in `python/tests/integration/` runs every supported construct through Postgres, ClickHouse, and the Python evaluator and requires identical results. Known divergences are listed below and are treated as defects to close, not quirks to document.
 
 ## What amino does not guarantee
 
@@ -77,6 +77,8 @@ Probed on 2026-09-05 against the `feat/sql-backends` branch. This table is the h
 | 6. Same meaning on every target | **Partial** | 29 expressions agree across three targets. Divergences: SQL three-valued logic on nullable columns versus the Python evaluator's "missing field means false"; database collation versus Python code-point comparison. |
 
 A related gap that is not a security boundary but affects guarantee 6: the parser resolves types and annotates every node, but does not reject a mismatched built-in comparison. `name = 5` on a `Str` field is accepted and evaluates false in Python and false in SQL, so the targets agree, but the user was not told. `rules_mode` is accepted by `load_schema()` and has no effect. See [expression-language.md](expression-language.md#type-checking).
+
+The conformance corpus also found that the parser raises a bare `IndexError` rather than `RuleParseError` when input ends early (an empty expression, `score >`, an unclosed list or call). Not a boundary violation, but a malformed request becomes an unhandled exception instead of a rejection. Recorded as expected failures in `spec/conformance/parse/standard.json`.
 
 Guarantees 1 and 3 close together with one parser change. Guarantee 5 is a depth counter and a length check. Both are scheduled ahead of any new feature.
 

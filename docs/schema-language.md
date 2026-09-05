@@ -2,7 +2,7 @@
 
 The schema is the contract between a developer and the people who write expressions. It declares every field, type, struct, constraint, and function an expression may reference. Anything not declared cannot be named, which is the foundation of the [security model](security.md).
 
-Schema files use the `.amn` extension by convention and are passed to `amino.load_schema()` as a path or as text. The formal grammar is [grammar/schema.peg](grammar/schema.peg).
+Schema files use the `.amn` extension by convention and are passed to `amino.load_schema()` as a path or as text. The formal grammar is [spec/grammar/schema.peg](../spec/grammar/schema.peg).
 
 ```
 # Loan application

@@ -1,10 +1,10 @@
-# docs/grammar/rules.peg
+# spec/grammar/rules.peg
 #
 # PEG grammar for the Amino rule expression language.
 # This grammar describes the irreducible minimum — the atoms and structural elements that are
 # always present regardless of operator configuration. All operator-level parsing is driven by
 # the Pratt (top-down operator precedence) parser's dynamic operator table, implemented in
-# amino/rules/parser.py.
+# python/amino/rules/parser.py.
 
 # Irreducible minimum — always present regardless of operator preset.
 # The Pratt parser's nud/led dispatch handles operators dynamically.

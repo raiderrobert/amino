@@ -1,0 +1,316 @@
+{
+  "schema": "score: Int\nratio: Float\nname: Str\nactive: Bool\ntags: List[Str]\ncontact: email\nstruct Meta { tier: Int }\nmeta: Meta\nlower: (s: Str) -> Str",
+  "cases": [
+    {
+      "name": "int equality",
+      "expression": "score = 5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "int inequality",
+      "expression": "score != 5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "greater than",
+      "expression": "score > 5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "less than",
+      "expression": "score < 5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "greater or equal",
+      "expression": "score >= 5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "less or equal",
+      "expression": "score <= 5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "negative int literal",
+      "expression": "score > -5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "float comparison",
+      "expression": "ratio > 0.5",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "string equality",
+      "expression": "name = 'bob'",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "empty string literal",
+      "expression": "name = ''",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "bool true",
+      "expression": "active = true",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "bool false",
+      "expression": "active = false",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "custom type field",
+      "expression": "contact = 'a@b.co'",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "in list",
+      "expression": "name in ['a', 'b']",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "not in list",
+      "expression": "name not in ['a', 'b']",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "in int list",
+      "expression": "score in [1, 2, 3]",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "in empty list",
+      "expression": "name in []",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "contains",
+      "expression": "name contains 'ob'",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "not prefix",
+      "expression": "not active = true",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "and",
+      "expression": "score > 1 and name = 'x'",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "or",
+      "expression": "score > 1 or name = 'x'",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "and binds tighter than or",
+      "expression": "score > 1 or name = 'x' and active = false",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "parentheses",
+      "expression": "(score > 1 or name = 'x') and active = false",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "not over parentheses",
+      "expression": "not (score > 50 or ratio < 0.1)",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "nested field",
+      "expression": "meta.tier = 2",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "declared function call",
+      "expression": "lower(name) = 'x'",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "declared function result type",
+      "expression": "lower(name)",
+      "expect": "accept",
+      "type": "Str"
+    },
+    {
+      "name": "bare int field has Int type",
+      "expression": "score",
+      "expect": "accept",
+      "type": "Int"
+    },
+    {
+      "name": "bare float field has Float type",
+      "expression": "ratio",
+      "expect": "accept",
+      "type": "Float"
+    },
+    {
+      "name": "surrounding whitespace",
+      "expression": "   score > 1   ",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "tabs between tokens",
+      "expression": "score\t>\t1",
+      "expect": "accept",
+      "type": "Bool"
+    },
+    {
+      "name": "unknown field",
+      "expression": "missing > 5",
+      "expect": "reject",
+      "error": "unknown_field"
+    },
+    {
+      "name": "unknown nested field",
+      "expression": "meta.missing > 5",
+      "expect": "reject",
+      "error": "unknown_field"
+    },
+    {
+      "name": "empty expression",
+      "expression": "",
+      "expect": "reject",
+      "error": "syntax",
+      "xfail": "python: parser raises IndexError instead of RuleParseError at end of input"
+    },
+    {
+      "name": "unclosed parenthesis",
+      "expression": "(score > 1",
+      "expect": "reject",
+      "error": "syntax"
+    },
+    {
+      "name": "dangling operator",
+      "expression": "score >",
+      "expect": "reject",
+      "error": "syntax",
+      "xfail": "python: parser raises IndexError instead of RuleParseError at end of input"
+    },
+    {
+      "name": "leading operator",
+      "expression": "> score",
+      "expect": "reject",
+      "error": "syntax"
+    },
+    {
+      "name": "two operands no operator",
+      "expression": "score name",
+      "expect": "reject",
+      "error": "syntax"
+    },
+    {
+      "name": "double quoted string",
+      "expression": "name = \"bob\"",
+      "expect": "reject",
+      "error": "syntax"
+    },
+    {
+      "name": "unterminated string",
+      "expression": "name = 'bob",
+      "expect": "reject",
+      "error": "syntax"
+    },
+    {
+      "name": "unknown symbol",
+      "expression": "score ^ 1",
+      "expect": "reject",
+      "error": "syntax"
+    },
+    {
+      "name": "unclosed list",
+      "expression": "name in ['a', 'b'",
+      "expect": "reject",
+      "error": "syntax",
+      "xfail": "python: parser raises IndexError instead of RuleParseError at end of input"
+    },
+    {
+      "name": "unclosed call",
+      "expression": "lower(name = 'x'",
+      "expect": "reject",
+      "error": "syntax",
+      "xfail": "python: parser raises IndexError instead of RuleParseError at end of input"
+    },
+    {
+      "name": "undeclared function",
+      "expression": "f(score) = 1",
+      "expect": "reject",
+      "error": "unknown_function",
+      "xfail": "python: parser accepts any identifier( as a call; ADR 005 consequence 2"
+    },
+    {
+      "name": "undeclared zero-arg function",
+      "expression": "version() = 'x'",
+      "expect": "reject",
+      "error": "unknown_function",
+      "xfail": "python: parser accepts any identifier( as a call; ADR 005 consequence 2"
+    },
+    {
+      "name": "str field compared to int",
+      "expression": "name = 5",
+      "expect": "reject",
+      "error": "type_mismatch",
+      "xfail": "python: built-in comparisons are not type-checked; ADR 005 consequence 2"
+    },
+    {
+      "name": "int field compared to str",
+      "expression": "score > 'abc'",
+      "expect": "reject",
+      "error": "type_mismatch",
+      "xfail": "python: built-in comparisons are not type-checked; ADR 005 consequence 2"
+    },
+    {
+      "name": "contains on int field",
+      "expression": "score contains 'x'",
+      "expect": "reject",
+      "error": "type_mismatch",
+      "xfail": "python: built-in comparisons are not type-checked; ADR 005 consequence 2"
+    },
+    {
+      "name": "and over non-bool",
+      "expression": "score and name",
+      "expect": "reject",
+      "error": "type_mismatch",
+      "xfail": "python: built-in comparisons are not type-checked; ADR 005 consequence 2"
+    },
+    {
+      "name": "excessive nesting",
+      "expression": "@deep:5000",
+      "expect": "reject",
+      "error": "depth_exceeded",
+      "xfail": "python: no depth limit, raises RecursionError; ADR 005 consequence 2"
+    }
+  ]
+}

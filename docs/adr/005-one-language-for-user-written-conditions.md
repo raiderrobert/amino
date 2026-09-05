@@ -51,7 +51,7 @@ Amino is one language, not a kit for building grammars. The developer supplies *
 
 **Why**: Features share the language only if the language is the same across them. A user who learns it in the search box knows it in the rules editor. It is also what makes a second host implementation feasible for one maintainer and what makes the safety requirement provable: a closed grammar has a finite list of things it can emit.
 
-**Consequence**: The PEG files in `docs/grammar/` are the specification, not documentation. Changing them is a language change and must land in every host.
+**Consequence**: The PEG files in `spec/grammar/` are the specification, not documentation. Changing them is a language change and must land in every host.
 
 ### 2. Vocabulary from a developer-defined schema
 
@@ -95,7 +95,7 @@ Python is the reference implementation (ADR 002 decision 3). A TypeScript implem
 **Consequences**:
 
 - The backend never trusts the frontend. Browser validation is a user-experience property. The server re-parses and is the only validation that counts for requirement 4.
-- Both implementations must accept and reject exactly the same inputs with the same error classes. This needs a shared conformance corpus that every host runs. It does not exist yet.
+- Both implementations must accept and reject exactly the same inputs with the same error classes. This needs a shared conformance corpus that every host runs. It lives in `spec/conformance/` (ADR 006).
 - Validation rules are named, following GraphQL's spec: "unknown field", "undeclared function", "type mismatch", "depth exceeded", each in the corpus, each mapping to the same error class in every host.
 - Custom operators are describable by signature. A host validates `precedes` from its keyword, binding power, and types; only the host that executes it needs the implementation.
 

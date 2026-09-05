@@ -18,14 +18,14 @@ The documents below are ordered so that reading them top to bottom is a sensible
 |---|---|
 | [schema-language.md](schema-language.md) | Fields, primitives, lists, optional fields, constraints, structs, functions, custom types, export. |
 | [expression-language.md](expression-language.md) | Atoms, operators and binding powers, presets, custom operators, what type checking does and does not do, what is deliberately absent. |
-| [grammar/](grammar/) | The formal PEG grammars. These are the specification every host implementation must match. |
+| [../spec/grammar/](../spec/grammar/) | The formal PEG grammars. With the conformance corpus in [../spec/conformance/](../spec/conformance/README.md), these are the specification every host implementation must match. |
 
 ## Running expressions
 
 | Document | Covers |
 |---|---|
 | [targets.md](targets.md) | The Python evaluator (compile, eval, match modes, decision validation), Postgres, ClickHouse, shared SQL behaviour, known divergences, and writing a target. |
-| [api.md](api.md) | Every public function, class, and error. |
+| [../python/API.md](../python/API.md) | Every public function, class, and error in the Python reference implementation. |
 
 ## Decision records
 
@@ -38,3 +38,4 @@ The documents below are ordered so that reading them top to bottom is a sensible
 | [003](adr/003-extensibility-model.md) | Extensibility Model |
 | [004](adr/004-schema-language-features.md) | Schema Language Features |
 | [005](adr/005-one-language-for-user-written-conditions.md) | One Language for User-Written Conditions |
+| [006](adr/006-repository-layout-for-multiple-hosts.md) | Repository Layout for Multiple Hosts |

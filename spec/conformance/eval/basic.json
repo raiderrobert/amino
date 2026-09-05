@@ -1,0 +1,410 @@
+{
+  "schema": "struct Meta { tier: Int }\nscore: Int\nratio: Float\nname: Str\nactive: Bool\ncontact: email\nmeta: Meta",
+  "records": [
+    {
+      "id": 1,
+      "score": 0,
+      "ratio": 0.0,
+      "name": "alice",
+      "active": true,
+      "contact": "alice@example.com",
+      "meta": {
+        "tier": 1
+      }
+    },
+    {
+      "id": 2,
+      "score": 10,
+      "ratio": 0.25,
+      "name": "bob",
+      "active": false,
+      "contact": "bob@example.com",
+      "meta": {
+        "tier": 1
+      }
+    },
+    {
+      "id": 3,
+      "score": 50,
+      "ratio": 0.5,
+      "name": "carol",
+      "active": true,
+      "contact": "carol@example.org",
+      "meta": {
+        "tier": 2
+      }
+    },
+    {
+      "id": 4,
+      "score": 100,
+      "ratio": 0.75,
+      "name": "dave",
+      "active": false,
+      "contact": "dave@example.org",
+      "meta": {
+        "tier": 2
+      }
+    },
+    {
+      "id": 5,
+      "score": 150,
+      "ratio": 1.0,
+      "name": "erin",
+      "active": true,
+      "contact": "erin@example.net",
+      "meta": {
+        "tier": 3
+      }
+    },
+    {
+      "id": 6,
+      "score": -5,
+      "ratio": -0.5,
+      "name": "frank",
+      "active": false,
+      "contact": "frank@example.net",
+      "meta": {
+        "tier": 3
+      }
+    },
+    {
+      "id": 7,
+      "score": 100,
+      "ratio": 2.5,
+      "name": "grace",
+      "active": true,
+      "contact": "grace@example.com",
+      "meta": {
+        "tier": 1
+      }
+    },
+    {
+      "id": 8,
+      "score": 42,
+      "ratio": 0.42,
+      "name": "heidi",
+      "active": true,
+      "contact": "heidi@example.com",
+      "meta": {
+        "tier": 2
+      }
+    },
+    {
+      "id": 9,
+      "score": 1000,
+      "ratio": 10.0,
+      "name": "ivan",
+      "active": false,
+      "contact": "ivan@example.org",
+      "meta": {
+        "tier": 3
+      }
+    },
+    {
+      "id": 10,
+      "score": 7,
+      "ratio": 0.07,
+      "name": "judy",
+      "active": true,
+      "contact": "judy@example.net",
+      "meta": {
+        "tier": 1
+      }
+    },
+    {
+      "id": 11,
+      "score": 99,
+      "ratio": 0.99,
+      "name": "bobby",
+      "active": false,
+      "contact": "bobby@example.com",
+      "meta": {
+        "tier": 2
+      }
+    },
+    {
+      "id": 12,
+      "score": 100,
+      "ratio": 1.5,
+      "name": "O'Neil",
+      "active": true,
+      "contact": "oneil@example.com",
+      "meta": {
+        "tier": 3
+      }
+    }
+  ],
+  "cases": [
+    {
+      "expression": "score = 100",
+      "matches": [
+        4,
+        7,
+        12
+      ]
+    },
+    {
+      "expression": "score != 100",
+      "matches": [
+        1,
+        2,
+        3,
+        5,
+        6,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "expression": "score > 50",
+      "matches": [
+        4,
+        5,
+        7,
+        9,
+        11,
+        12
+      ]
+    },
+    {
+      "expression": "score < 50",
+      "matches": [
+        1,
+        2,
+        6,
+        8,
+        10
+      ]
+    },
+    {
+      "expression": "score >= 100",
+      "matches": [
+        4,
+        5,
+        7,
+        9,
+        12
+      ]
+    },
+    {
+      "expression": "score <= 0",
+      "matches": [
+        1,
+        6
+      ]
+    },
+    {
+      "expression": "ratio > 0.5",
+      "matches": [
+        4,
+        5,
+        7,
+        9,
+        11,
+        12
+      ]
+    },
+    {
+      "expression": "ratio <= 0.42",
+      "matches": [
+        1,
+        2,
+        6,
+        8,
+        10
+      ]
+    },
+    {
+      "expression": "name = 'bob'",
+      "matches": [
+        2
+      ]
+    },
+    {
+      "expression": "name contains 'Neil'",
+      "matches": [
+        12
+      ]
+    },
+    {
+      "expression": "active = true",
+      "matches": [
+        1,
+        3,
+        5,
+        7,
+        8,
+        10,
+        12
+      ]
+    },
+    {
+      "expression": "active = false",
+      "matches": [
+        2,
+        4,
+        6,
+        9,
+        11
+      ]
+    },
+    {
+      "expression": "contact = 'alice@example.com'",
+      "matches": [
+        1
+      ]
+    },
+    {
+      "expression": "name in ['alice', 'bob', 'nobody']",
+      "matches": [
+        1,
+        2
+      ]
+    },
+    {
+      "expression": "name not in ['alice', 'bob']",
+      "matches": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "expression": "score in [0, 7, 42]",
+      "matches": [
+        1,
+        8,
+        10
+      ]
+    },
+    {
+      "expression": "ratio in [0.25, 1.0]",
+      "matches": [
+        2,
+        5
+      ]
+    },
+    {
+      "expression": "name in []",
+      "matches": []
+    },
+    {
+      "expression": "name not in []",
+      "matches": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "expression": "name contains 'ob'",
+      "matches": [
+        2,
+        11
+      ]
+    },
+    {
+      "expression": "contact contains '@example.org'",
+      "matches": [
+        3,
+        4,
+        9
+      ]
+    },
+    {
+      "expression": "not active = true",
+      "matches": [
+        2,
+        4,
+        6,
+        9,
+        11
+      ]
+    },
+    {
+      "expression": "score > 40 and active = true",
+      "matches": [
+        3,
+        5,
+        7,
+        8,
+        12
+      ]
+    },
+    {
+      "expression": "score > 900 or name = 'judy'",
+      "matches": [
+        9,
+        10
+      ]
+    },
+    {
+      "expression": "score > 1 or name = 'alice' and active = false",
+      "matches": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    {
+      "expression": "(score > 1 or name = 'alice') and active = false",
+      "matches": [
+        2,
+        4,
+        9,
+        11
+      ]
+    },
+    {
+      "expression": "meta.tier = 2",
+      "matches": [
+        3,
+        4,
+        8,
+        11
+      ]
+    },
+    {
+      "expression": "meta.tier in [1, 3] and score >= 100",
+      "matches": [
+        5,
+        7,
+        9,
+        12
+      ]
+    },
+    {
+      "expression": "not (score > 50 or ratio < 0.1)",
+      "matches": [
+        2,
+        3,
+        8
+      ]
+    }
+  ]
+}

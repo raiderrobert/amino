@@ -2,7 +2,7 @@
 
 Both fixtures skip when their database is unreachable, so ``pytest tests``
 stays green on a machine without Docker. Start the databases with
-``scripts/dev-db.sh up`` (or ``make db-up``).
+``scripts/dev-db.sh up`` from the repository root (or ``make db-up`` there).
 """
 
 import os
