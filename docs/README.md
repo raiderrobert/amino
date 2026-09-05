@@ -24,3 +24,4 @@ The `adr/` directory contains the decisions made during the design of the rewrit
 | [002](adr/002-dsl-interchange-format-and-multi-language.md) | DSL as Interchange Format and Multi-Language Strategy |
 | [003](adr/003-extensibility-model.md) | Extensibility Model |
 | [004](adr/004-schema-language-features.md) | Schema Language Features |
+| [005](adr/005-safe-expression-language-for-untrusted-users.md) | A Safe Expression Language for Untrusted Users. What amino is, the threat model and guarantees, non-goals, and the GraphQL comparison. Start here. |

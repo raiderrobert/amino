@@ -1,9 +1,7 @@
 # ADR 002: DSL as Interchange Format and Multi-Language Strategy
 
 **Date**: 2026-02-18
-**Status**: Partially superseded (2026-09-05)
-
-> Decisions 1 and 2 stand: DSL text is the interchange format and the portable unit is (schema, expression). Decisions 3 to 5 are retired. Amino is a Python toolkit that compiles a typed expression to multiple targets (Python, Postgres, ClickHouse, user-written). There is no plan for runtimes or composer SDKs in other languages. See `docs/backends.md`.
+**Status**: Accepted. Reaffirmed in full by ADR 005 (2026-09-05).
 
 ## Context
 
