@@ -1,7 +1,7 @@
 # ADR 002: DSL as Interchange Format and Multi-Language Strategy
 
 **Date**: 2026-02-18
-**Status**: Accepted
+**Status**: Accepted. Reaffirmed in full by ADR 005 (2026-09-05).
 
 ## Context
 

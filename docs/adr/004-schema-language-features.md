@@ -3,6 +3,8 @@
 **Date**: 2026-02-19
 **Status**: Accepted
 
+> Note (2026-09-05): the `format` and `exactItems` constraints in decision 1 are parsed but not enforced. The first open question below is still open.
+
 ## Context
 
 The core schema language (fields, structs, functions) needs to support three additional capabilities identified in earlier design work: field-level constraints for validation, optional fields for real-world incomplete data, and struct-as-type references for composable data modeling. These are schema language features that affect the parser, AST, and decision validator but not the rule expression grammar.

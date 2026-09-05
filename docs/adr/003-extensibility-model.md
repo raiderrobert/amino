@@ -3,6 +3,8 @@
 **Date**: 2026-02-19
 **Status**: Accepted
 
+> Clarified by ADR 005 (2026-09-05). Decision 1's phrase "not a single fixed grammar" refers to the operator vocabulary, which is configurable. The syntax is fixed and is the specification for every host implementation. The `'postfix'` operator kind in decision 2 is accepted by the API but not implemented.
+
 ## Context
 
 Amino is designed for use cases that go beyond a fixed rule grammar operating on a fixed set of types and returning a boolean result. Different problem domains require different operator vocabularies, different data types with domain-specific validation, and different result semantics. The extensibility model must support these cases without requiring changes to the core library.

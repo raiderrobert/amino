@@ -1,7 +1,7 @@
 [project]
 name = "amino"
 version = "0.1.0"
-description = "A framework to build custom domain specific languages"
+description = "A small expression language for building rules engines, query languages, and other features where users write conditions over your data"
 authors = [{name = "Robert Roskam", email = "raiderrobert@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}
@@ -9,6 +9,8 @@ requires-python = ">=3.10"
 
 [project.optional-dependencies]
 dev = [
+    "clickhouse-connect>=0.8",
+    "psycopg[binary]>=3.2",
     "pytest>=8.4.2",
     "pytest-cov",
     "ruff>=0.12.7",
@@ -16,6 +18,12 @@ dev = [
 ]
 abnf = [
     "abnf>=2.4.0",
+]
+postgres = [
+    "psycopg[binary]>=3.2",
+]
+clickhouse = [
+    "clickhouse-connect>=0.8",
 ]
 
 [tool.ruff]
@@ -39,3 +47,8 @@ exclude = [
     "examples/**",
 ]
 
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: needs local Postgres and ClickHouse (scripts/dev-db.sh up)",
+]

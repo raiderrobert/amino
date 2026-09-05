@@ -3,6 +3,8 @@
 **Date**: 2026-02-18
 **Status**: Accepted
 
+> Framing superseded by ADR 005 (2026-09-05). Decisions 1 to 6 stand, with "rules" read as expressions on the Python target and "decisions" as records. Decision 3's in-place `update_rules()` was never implemented; rule replacement is done by compiling again and swapping the reference.
+
 ## Context
 
 Amino is a schema-first classification rules engine. Before a significant rewrite, we needed to establish the core architectural decisions around data lifecycle, schema immutability, type enforcement, and multi-context use cases.

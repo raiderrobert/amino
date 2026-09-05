@@ -44,6 +44,7 @@ eof      <- !.
 #     in, not in   ->  40
 #     =, !=        ->  40
 #     >, <, >=, <= ->  40
+#     contains     ->  40
 #
 # - `float` is tried before `integer` so `600.0` is correctly parsed as Float, not Integer
 #   followed by `.0`.
