@@ -2,7 +2,7 @@
 
 ## What amino is
 
-Amino is a small, fixed expression language that is safe to accept from untrusted users. Its vocabulary comes from a developer-defined schema. An expression is parsed and type-checked once, then handed to a target that turns it into something executable: an in-process Python callable, a Postgres predicate, a ClickHouse predicate, or a backend the developer writes. [ADR 005](adr/005-safe-expression-language-for-untrusted-users.md) records why.
+Amino is a small expression language for building features in which users write conditions over a developer's data: rules engines, query languages, targeting, policy, alerting. It is one fixed grammar; its vocabulary comes from a developer-defined schema; it is safe to accept from untrusted users. An expression is parsed and type-checked once, then handed to a target that turns it into something executable: an in-process Python callable, a Postgres predicate, a ClickHouse predicate, or a backend the developer writes. [ADR 005](adr/005-one-language-for-user-written-conditions.md) records why.
 
 The Python package is the reference implementation. Its behaviour is the specification that other host implementations must match.
 

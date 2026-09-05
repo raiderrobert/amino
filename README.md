@@ -71,7 +71,7 @@ Python 3.10 or newer. Database drivers are optional extras, `amino[postgres]` an
 
 Start with [docs/README.md](docs/README.md), which orders the rest. The short version:
 
-- [Why amino is shaped this way](docs/adr/005-safe-expression-language-for-untrusted-users.md), including the GraphQL comparison
+- [What amino is for and what that requires](docs/adr/005-one-language-for-user-written-conditions.md), including the GraphQL comparison
 - [Security model](docs/security.md): the threat model, the guarantees, and their current status
 - [Expression language](docs/expression-language.md) and [schema language](docs/schema-language.md)
 - [Targets](docs/targets.md): the Python evaluator with match modes, Postgres, ClickHouse, and writing your own

@@ -8,8 +8,8 @@ The documents below are ordered so that reading them top to bottom is a sensible
 
 | Document | What it answers |
 |---|---|
-| [ADR 005: A Safe Expression Language for Untrusted Users](adr/005-safe-expression-language-for-untrusted-users.md) | What amino is, why it is shaped this way, what it refuses to be, and how it compares to GraphQL. |
-| [security.md](security.md) | The threat model, the six guarantees, what is not guaranteed, deployer responsibilities, and the current implementation status. |
+| [ADR 005: One Language for User-Written Conditions](adr/005-one-language-for-user-written-conditions.md) | What amino is for, the features it exists to build, the five requirements that purpose imposes, what it refuses to be, and how it compares to GraphQL. |
+| [security.md](security.md) | Requirement 4 in full: the threat model, the six guarantees, what is not guaranteed, deployer responsibilities, and the current implementation status. |
 | [architecture.md](architecture.md) | The pipeline from schema text to a target, the engine lifecycle, and the package layout. |
 
 ## Language reference
@@ -37,4 +37,4 @@ The documents below are ordered so that reading them top to bottom is a sensible
 | [002](adr/002-dsl-interchange-format-and-multi-language.md) | DSL as Interchange Format and Multi-Language Strategy |
 | [003](adr/003-extensibility-model.md) | Extensibility Model |
 | [004](adr/004-schema-language-features.md) | Schema Language Features |
-| [005](adr/005-safe-expression-language-for-untrusted-users.md) | A Safe Expression Language for Untrusted Users |
+| [005](adr/005-one-language-for-user-written-conditions.md) | One Language for User-Written Conditions |

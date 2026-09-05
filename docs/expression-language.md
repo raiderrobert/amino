@@ -1,6 +1,6 @@
 # Expression Language Reference
 
-An amino expression is a single, side-effect-free condition over one record, written against a schema. The language is fixed: a developer supplies vocabulary through the schema (fields, types, functions, custom operators) but not syntax. This is what makes the language safe to accept from untrusted users and feasible to implement in more than one host. See [ADR 005](adr/005-safe-expression-language-for-untrusted-users.md).
+An amino expression is a single, side-effect-free condition over one record, written against a schema. It is the language under features like rules engines and query boxes, so it is one fixed grammar: a developer supplies vocabulary through the schema (fields, types, functions, custom operators) but not syntax. A fixed grammar is what lets features share the language, lets it be implemented in more than one host, and lets it be safe to accept from untrusted users. See [ADR 005](adr/005-one-language-for-user-written-conditions.md).
 
 The same expression can be evaluated in-process or compiled to SQL. Which happens is a property of the target, not the expression. See [targets.md](targets.md).
 
@@ -109,7 +109,7 @@ What the parser does **not** reject today, and should:
 - A built-in comparison between mismatched types. `name = 5` on a `Str` field parses, and evaluates false on every target. `score contains 'x'` on an `Int` field parses. This is because built-in operators are registered with wildcard signatures, and a single registration is always accepted regardless of operand types.
 - A function call to a function not declared in the schema. It is given type `Any`. On the Python target it fails at evaluation. On SQL targets it is emitted verbatim, which is a security defect. See [security.md](security.md#implementation-status).
 
-`rules_mode` on `load_schema()` was designed to switch between raising and warning on type mismatches. It is accepted and currently has no effect, because no mismatch is detected. Both gaps are recorded in [ADR 005](adr/005-safe-expression-language-for-untrusted-users.md) and are scheduled ahead of new features.
+`rules_mode` on `load_schema()` was designed to switch between raising and warning on type mismatches. It is accepted and currently has no effect, because no mismatch is detected. Both gaps are recorded in [ADR 005](adr/005-one-language-for-user-written-conditions.md) and are scheduled ahead of new features.
 
 ## Result types
 
@@ -117,7 +117,7 @@ An expression usually has type `Bool`. Expressions of type `Int` or `Float` are 
 
 ## What is deliberately absent
 
-These are not missing features. They are the reason the language is safe.
+These are not missing features. Leaving them out is what keeps the language small enough to share across features, reimplement in another host, and accept from untrusted users.
 
 - No assignment, variables, or `let`.
 - No loops or recursion.

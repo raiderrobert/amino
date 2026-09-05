@@ -1,6 +1,6 @@
 # Security Model
 
-Amino exists so that a developer can accept expression text from people they do not trust, including the open internet, and run it against their data. This document is the reference for what that promise covers, what it does not, and where the implementation currently falls short of it. The reasoning behind the model is in [ADR 005](adr/005-safe-expression-language-for-untrusted-users.md).
+The features amino is built for put an expression box in front of the developer's users, and sometimes in front of the open internet. Safety is therefore a requirement of the language, not an add-on for one feature. This document is the reference for what that requirement covers, what it does not, and where the implementation currently falls short of it. It is requirement 4 of [ADR 005](adr/005-one-language-for-user-written-conditions.md) in full.
 
 ## Threat model
 
