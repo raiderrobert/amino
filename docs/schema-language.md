@@ -1,130 +1,84 @@
 # Schema Language Reference
 
-## Overview
+The schema is the contract between a developer and the people who write expressions. It declares every field, type, struct, constraint, and function an expression may reference. Anything not declared cannot be named, which is the foundation of the [security model](security.md).
 
-The amino schema language defines the type system for an engine instance: the fields, their types and constraints, struct definitions, and function signatures. The schema is the stable anchor that rules are compiled against and decisions are validated against.
-
-Schema files use the `.amn` extension. The schema is passed to `amino.load_schema()` either as a file path or as a raw string.
-
-## Field definitions
-
-Fields are declared with the syntax `name: Type`. Each field occupies one line.
+Schema files use the `.amn` extension by convention and are passed to `amino.load_schema()` as a path or as text. The formal grammar is [grammar/schema.peg](grammar/schema.peg).
 
 ```
-age: Int
-username: Str
-score: Float
-active: Bool
+# Loan application
+amount: Int
+state_code: Str
+credit_score: Int {min: 300, max: 850}
+email: Str?
+contact: email
+tags: List[Str]
+
+struct Address { street: Str, city: Str, country: Str }
+struct Customer { id: Str, billing: Address, shipping: Address? }
+customer: Customer
+
+risk_model: (score: Int, amount: Int) -> Float
 ```
+
+## Fields
+
+One per line, `name: Type`. Comments start with `#`.
 
 ## Primitive types
 
-| Name | Python equivalent | Notes |
-|------|-------------------|-------|
-| `Int` | `int` | |
-| `Float` | `float` | |
-| `Str` | `str` | |
-| `Bool` | `bool` | |
+`Int`, `Float`, `Str`, `Bool`. These are the only types a literal in an expression can have, and the only bases a custom type can have.
 
-## Complex types
+## Lists
 
-**Lists** are declared with `List[T]`:
+`List[T]`. Used with `in` and `not in` in expressions, and validated for element type and count on the Python target.
 
 ```
 tags: List[Str]
-scores: List[Float]
+values: List[Int|Str]      # union element type; unions are valid only inside List[...]
 ```
-
-**Union-typed lists** allow multiple element types:
-
-```
-values: List[Int|Str|Bool]
-```
-
-Union types are only valid inside `List[...]`. Top-level union field types are not supported.
-
-**Struct references** use the struct name as the type. See the Structs section below.
 
 ## Optional fields
 
-Fields are required by default. Append `?` after the type to mark a field as optional:
+A trailing `?` makes a field optional. Null and missing are equivalent.
 
 ```
 email: Str?
-phone: Str?
-age: Int?
+age: Int? {min: 13}        # constraint applies only when present
 ```
 
-Null and missing are treated as equivalent for optional fields. A decision that omits an optional field and one that includes it with a `null` value are both valid.
+A required field that is missing from a record is rejected in strict decisions mode, or dropped with a warning in loose mode. See [targets.md](targets.md#decision-validation).
 
-Optional fields with constraints — constraints apply only when the field is present and non-null:
-
-```
-age: Int? {min: 13, max: 120}   # if present, must be 13-120
-```
-
-**Validation behavior:**
-
-- Required field missing in `strict` decisions mode: rejected with `DecisionValidationError`
-- Required field missing in `loose` decisions mode: field is skipped and a warning is added to `MatchResult.warnings`
-- Optional field missing: always valid, no warning
+On SQL targets an optional field maps naturally to a nullable column, and comparisons against NULL follow SQL's three-valued logic, which differs from the Python target. See [targets.md](targets.md#divergence-from-the-python-evaluator).
 
 ## Constraints
 
-Fields can declare validation constraints inline using block syntax after the type:
+A block after the type. All constraints in a block must hold. They are enforced when the Python target validates a record, not when an expression is parsed, and SQL targets do not enforce them at all; the database's own constraints are the equivalent there.
 
 ```
 age: Int {min: 18, max: 120}
 username: Str {minLength: 3, maxLength: 20, pattern: "^[a-zA-Z0-9_]+$"}
 status: Str {oneOf: ["active", "inactive", "pending"]}
 tags: List[Str] {minItems: 1, maxItems: 10, unique: true}
-price: Float {min: 0.01}
 ```
 
-Multiple constraints within a block are combined with AND logic — all must be satisfied.
+Implemented constraint keys:
 
-**Supported constraint keys:**
+| Key | Applies to | Meaning |
+|---|---|---|
+| `min`, `max` | `Int`, `Float` | inclusive bounds |
+| `exclusiveMin`, `exclusiveMax` | `Int`, `Float` | exclusive bounds |
+| `minLength`, `maxLength`, `exactLength` | `Str` | character count |
+| `pattern` | `Str` | regex the whole value must match |
+| `oneOf` | any | value is one of the listed literals |
+| `const` | any | value equals this literal |
+| `minItems`, `maxItems` | `List` | element count |
+| `unique` | `List` | elements are distinct |
 
-| Constraint | Applicable types | Meaning |
-|------------|-----------------|---------|
-| `min` / `max` | `Int`, `Float` | Inclusive numeric bounds |
-| `exclusiveMin` / `exclusiveMax` | `Int`, `Float` | Exclusive numeric bounds |
-| `minLength` / `maxLength` / `exactLength` | `Str` | Character count bounds |
-| `pattern` | `Str` | Regex pattern the value must match |
-| `format` | `Str` | Named format validator (email, url, uuid, etc.) |
-| `oneOf` | Any | Value must be one of the listed literals |
-| `const` | Any | Value must equal exactly this literal |
-| `minItems` / `maxItems` / `exactItems` | `List` | Element count bounds |
-| `unique` | `List` | All elements must be distinct |
-
-Constraints are enforced by the `DecisionValidator` at evaluation time, not by the rule compiler. A constraint violation on incoming data is a validation failure, not a type error.
-
-**Deferred / future — cross-field validation:** Constraints that reference another field's value (e.g., requiring `end_date` to be after `start_date`) are out of scope for the current constraint system. Each constraint block is evaluated against its own field in isolation. Cross-field validation is identified as a future extension point.
+The schema parser accepts any key, so `format` and `exactItems` parse but are not enforced. They appeared in earlier design documents and are not implemented. Cross-field constraints, such as `end_date` after `start_date`, are out of scope; write them as expressions.
 
 ## Structs
 
-Structs are first-class types. A struct defined in the schema can be used as a field type anywhere a primitive type is valid.
-
-```
-struct Address {
-    street: Str,
-    city: Str,
-    country: Str
-}
-
-struct Customer {
-    id: Str,
-    name: Str,
-    billing_address: Address,    # struct as field type
-    shipping_address: Address?   # optional struct
-}
-```
-
-Struct fields can be separated by commas or newlines; mixing within one struct is permitted.
-
-**Nested structs** are supported to arbitrary depth. The schema validator checks for circular references and rejects them.
-
-**List of structs** is valid:
+A struct is a named group of fields usable as a type anywhere a primitive is. Fields may be separated by commas or newlines. Nesting is unlimited; cycles are rejected by the schema validator.
 
 ```
 struct OrderItem {
@@ -134,64 +88,44 @@ struct OrderItem {
 
 struct Order {
     items: List[OrderItem],
-    total: Float
+    total: Float,
+    shipping: Address?
 }
 ```
 
-**Struct references in rules** use dot notation:
+Expressions reach into structs with dot notation: `order.shipping.city = 'Austin'`. SQL targets need a column mapping for every dotted path they will see; see [targets.md](targets.md#column-mapping).
+
+## Functions
+
+`name: (params) -> ReturnType`. Parameters and return types use field type syntax including `?`. The implementation is supplied in Python with `funcs=` on `load_schema()` or `add_function()`.
 
 ```
-customer.billing_address.city = 'San Francisco'
+risk_model: (score: Int, amount: Int) -> Float
+find_user: (id: Str, include_deleted: Bool?) -> User?
 ```
 
-## Function declarations
-
-Functions are declared with the syntax `name: (params) -> ReturnType`. Function declarations appear in the schema alongside field definitions.
-
-```
-validate_address: (addr: Address) -> Bool
-score_customer: (id: Str, tier: Str) -> Float
-```
-
-Parameters use the same type syntax as fields, including the `?` optional suffix, and return types can also be marked optional with `?`. Function implementations are registered at engine construction time via `engine.add_function()`.
-
-```
-find_user:        (id: Str, include_deleted: Bool?) -> User    # optional parameter
-get_user_by_email: (email: Str) -> User?                       # optional return type
-find_user:        (id: Str, include_deleted: Bool?) -> User?   # both
-```
+A declared function is the only way expression text can cause code to run. The developer decides what to declare. On SQL targets the function is emitted by name and must exist in the database with a compatible signature.
 
 ## Custom types
 
-Custom types are registered at engine construction time via `engine.register_type()`. Once registered, the type name is valid in schema definitions.
+A custom type is a name, a base primitive, and a validator. Register it before the first parse. The name is then valid as a field type.
 
 ```python
-engine.register_type('ipv4', base='Str', validator=is_valid_ipv4)
-engine.register_type('cidr', base='Str', validator=is_valid_cidr)
+engine.register_type("ipv4", base="Str", validator=is_valid_ipv4)
 ```
-
-After registration, the type name can be used in the schema:
 
 ```
 source_ip: ipv4
-network: cidr
 ```
 
-The base type (`Str`, `Int`, `Float`, or `Bool`) governs default operator behavior when no type-specific operator is registered. The validator function runs during decision validation (`fn(value) -> bool | ValidationResult`).
-
-Custom type registrations must complete before the first `compile()` or `eval()` call.
+Built in: `ipv4`, `ipv6`, `cidr`, `email`, `uuid`, all with base `Str`. The validator runs during record validation on the Python target. The base type is what SQL targets use to choose a parameter type, and what operators fall back to when no overload is registered for the custom type itself.
 
 ## Type enforcement modes
 
-Type enforcement is configured independently for rules and decisions at engine construction:
+`decisions_mode` on `load_schema()` controls what the Python target does with a non-conforming record: `"strict"` raises `DecisionValidationError`; `"loose"` (default) drops the offending fields, records a warning on the result, and evaluates on the rest. Values are never coerced.
 
-- **`strict` rules mode** — type mismatch in a rule expression raises `TypeMismatchError` at `compile()` time
-- **`loose` rules mode** — type mismatch logs a warning; the rule is compiled with best-effort type information
-- **`strict` decisions mode** — non-conforming decision data raises `DecisionValidationError`
-- **`loose` decisions mode** — non-conforming fields are skipped; a warning is added to `MatchResult.warnings`
+`rules_mode` was designed to control what happens when an expression has a type mismatch. It is accepted and currently has no effect, because mismatches on built-in operators are not detected. See [expression-language.md](expression-language.md#type-checking).
 
-Loose mode is skip-and-warn. Type coercion (e.g., `"600"` → `600`) is explicitly not performed — types are never silently changed.
+## Export
 
-## Grammar
-
-See [docs/grammar/schema.peg](grammar/schema.peg) for the formal PEG grammar.
+`engine.export_schema()` returns the schema as `.amn` text, with structs first, then fields, then functions. A JSON form including operator signatures is planned so that a client-side validator can be built from it.

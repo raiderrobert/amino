@@ -2,147 +2,128 @@
 
 ## What amino is
 
-Amino is a toolkit for a small, typed expression language that compiles to multiple targets. The schema defines the type system — fields, types, structs, and functions. Expressions are parsed and type-checked against that schema into a typed AST. A target consumes the typed AST: the in-process Python evaluator (which adds decision validation and match modes, and is the original rules engine), the Postgres and ClickHouse backends (which emit parameterised SQL predicates), or a user-written backend. The engine enforces a clean separation between schema, expression, and target, provides a correct type system with two enforcement modes, and supports an extensible operator and type model.
+Amino is a small, fixed expression language that is safe to accept from untrusted users. Its vocabulary comes from a developer-defined schema. An expression is parsed and type-checked once, then handed to a target that turns it into something executable: an in-process Python callable, a Postgres predicate, a ClickHouse predicate, or a backend the developer writes. [ADR 005](adr/005-safe-expression-language-for-untrusted-users.md) records why.
 
-The rest of this document describes the pipeline with the Python evaluator as the target. `backends.md` covers the SQL targets, which branch off after the parser.
+The Python package is the reference implementation. Its behaviour is the specification that other host implementations must match.
 
 ## Pipeline
 
 ```
-Schema text  ──▶  Schema Parser  ──▶  SchemaAST  ──▶  Schema Validator
-                  (static PEG)                         (refs, circularity,
-                                                        duplicate names)
-                                                             │
-                                                             ▼
-                                                       SchemaRegistry
-                                                       (fast lookup,
-                                                        export)
-                                                             │
-                  ┌──────────────────────────────────────────┤
-                  │ fixed for engine lifetime                 │
-                  ▼                                           │
-           OperatorRegistry  ◀── register_operator()         │
-           TypeRegistry      ◀── register_type()             │
-           FunctionRegistry  ◀── add_function()              │
-                  │ (all frozen after first compile/eval)     │
-                  ▼                                           │
-Rule text  ──▶  Rule Parser  ──▶  RuleAST  ──▶  TypedCompiler  ──▶  CompiledRule
-               (Pratt parser,                    (type resolution
-                dynamic op table)                + optimization
-                                                 + codegen,
-                                                 one AST walk)
-
-Decision dict  ──▶  DecisionValidator  ──▶  Evaluator  ──▶  Matcher  ──▶  MatchResult
-                     (schema + constraints,    (runs              (all / first /
-                      strict / loose mode)     CompiledRules)      inverse / score)
+Schema text ──▶ Schema Parser ──▶ SchemaAST ──▶ Schema Validator ──▶ SchemaRegistry
+                (static PEG)                    (refs, cycles,         (lookup, export)
+                                                 duplicates)                 │
+                                                                             │
+   register_type()      ──▶ TypeRegistry      ─┐                             │
+   register_operator()  ──▶ OperatorRegistry  ─┤  frozen at first parse      │
+   add_function()       ──▶ functions dict    ─┘                             │
+                                                                             ▼
+Expression text ──▶ Pratt parser ──▶ typed RuleAST ──▶ Expression
+                    (dynamic op table,                     │
+                     types from schema)                    │
+                                                           ├──▶ TypedCompiler ──▶ CompiledRules ──▶ eval(decisions)
+                                                           │    (Python target)     + DecisionValidator
+                                                           │                        + Matcher ──▶ MatchResult
+                                                           │
+                                                           ├──▶ PostgresBackend   ──▶ Query(sql, params)
+                                                           ├──▶ ClickHouseBackend ──▶ Query(sql, params)
+                                                           └──▶ your SQLBackend   ──▶ Query(sql, params)
 ```
 
-## Three data groups
+Everything above the `Expression` line is shared. Everything below it is a target.
 
-The system is modeled around three data groups with fundamentally different lifecycles:
+## Three things with three lifetimes
 
-- **Schema** — defines the type system: fields, types, structs, function signatures. Fixed for the lifetime of an engine instance.
-- **Rules** — conditional logic compiled against the schema. Hot-swappable at runtime without restarting the process.
-- **Decisions** — input data items evaluated against compiled rules. Always dynamic; never cached.
+- **Schema.** Fields, types, structs, constraints, function signatures. Fixed for the life of an engine. Changing it means building a new engine.
+- **Expressions.** The text users write. Parsed against the schema. Cheap, frequent, replaceable at any time. The Python target calls them rules.
+- **Records.** The data an expression is applied to. Always dynamic, never retained. The Python target calls them decisions; SQL targets never see them, the database does.
 
-These are treated as separate concerns in the implementation because they have different stability characteristics. Schema changes are structural changes to the data model — a field removal or type change invalidates all compiled rules that reference that field, so schema and rules cannot be independently hot-swapped in the general case. Treating schema as fixed eliminates a class of correctness bugs and allows types to be resolved at rule compile time against a stable schema.
+They are separated because they change at different rates. A schema change can invalidate every compiled expression that references the changed field, so schema and expressions cannot be independently swapped in the general case. Fixing the schema per engine removes that class of bug and lets types resolve at parse time against something stable.
 
-Rules are dynamic by design. Policies change, thresholds are tuned, and seasonal logic is toggled. The engine supports hot-swapping rules without reinitializing the schema or the operator/type registries.
+## Rules and queries are one thing
 
-Decisions are always dynamic: they are evaluated on arrival and not retained.
+A rule holds the expression fixed and streams records past it. A query holds the dataset fixed and pushes one expression into it. The same text is either, depending on which side is the constant. The difference is entirely in the target: batch-and-match in process, or compile-to-the-store's-language. The grammar does not know which it is.
 
 ## Engine lifecycle
 
 ```
-Construction  │  load_schema() parses schema, builds SchemaRegistry, sets modes and preset
+Construction  │  load_schema() parses and validates the schema, sets modes and operator preset
               │
 Registration  │  register_type(), register_operator(), add_function()
-              │  All registrations must complete before first compile/eval
               │
-  ┌── Freeze ─┘  First compile() or eval() freezes all registries
-  │
-  │  Hot-swap │  update_rules() atomically replaces compiled rules;
-  │           │  schema and registries remain unchanged
-  │
-  └── Replace │  For schema changes: caller spins up a new Engine,
-              │  drains in-flight decisions against old engine, discards it
+  ── Freeze ──┘  First parse(), compile(), or eval() freezes all registries.
+                 Later registration raises EngineAlreadyFrozenError.
+                 Expressions may be parsed and compiled indefinitely after this.
+
+  ── Replace     Schema change: build a new Engine, drain work against the old one, discard it.
 ```
 
-The engine transitions through four phases:
+Freezing exists because parsing resolves operators and types from the registries. A registry that could change under a parsed expression would make the expression's meaning unstable.
 
-1. **Construction** — `load_schema()` parses the schema text, runs the schema validator, and builds the `SchemaRegistry`. Type enforcement modes and the operator preset are set here and do not change.
-2. **Registration** — the caller registers custom types, operators, and functions. All registrations must complete before any `compile()` or `eval()` call.
-3. **Freeze** — the first `compile()` or `eval()` call freezes all registries. Any subsequent registration attempt raises `EngineAlreadyFrozenError`.
-4. **Hot-swap / Replace** — see below.
+There is no in-place rule update. `compile()` returns an immutable `CompiledRules`; to change the rule set, compile again and swap the reference. Schema changes are handled by atomic engine replacement: the application builds a new engine, drains in-flight work against the old one, and discards it. Amino makes one engine well-encapsulated and replaceable. The application decides when to swap.
 
-## Zero-downtime via atomic engine replacement
+## Multi-context is the application's job
 
-For rule updates, `update_rules()` atomically replaces the compiled rule set. Schema and registries remain unchanged.
+A context is a (schema, expressions, validation modes) tuple. Serving several at once, such as one schema per tenant or one per trust level, is done by holding several engines and routing to the right one. Amino has no naming, routing, or lifecycle API for this. Exposing a narrower schema to a less trusted population is also how authorization scoping is done; see [security.md](security.md).
 
-For schema changes, the zero-downtime mechanism is **atomic engine replacement**: the caller spins up a new engine instance with the new schema and rules, drains in-flight decisions against the old instance, then discards it. Amino is responsible for making a single engine well-encapsulated and safely replaceable. The application is responsible for managing the swap — deciding when to swap, draining in-flight work, and discarding the old instance. This pattern handles schema changes cleanly because the schema is fixed per engine instance; replacing the schema means replacing the engine.
+## Text is the interchange format
 
-## Multi-context is application-level
+Expressions are stored and transmitted as text. There is no serialised AST or binary form. Every host implementation parses independently. The portable unit is the (schema, expression) pair: `credit_score < 600` has no meaning without knowing `credit_score` is an `Int`.
 
-A decision context is a (schema, rules, validation modes) tuple. Running multiple contexts simultaneously — for example, different tenants with different schemas — is handled by the application instantiating multiple engine instances and routing decisions accordingly.
+This is [ADR 002](adr/002-dsl-interchange-format-and-multi-language.md). Its consequences:
 
-Amino does not manage context naming, lifecycle, or routing. These are orchestration concerns outside the package boundary. Building multi-context management into amino would require naming, routing, and lifecycle APIs that have nothing to do with rules evaluation; applications are better positioned to own this logic.
-
-## DSL text as interchange format
-
-Rule expressions are stored and transmitted as text strings — not as serialized ASTs or binary formats. Each runtime implementation parses and compiles the DSL independently.
-
-The portable unit for a rule is the **(schema, DSL text) pair**, not the DSL text in isolation. A rule referencing `credit_score < 600` has no meaning without knowing that `credit_score` is an `Int` field. Services that receive and compile rules must also have access to the schema.
-
-Python is the initial reference implementation — the authoritative specification against which future language implementations must produce identical results for identical (schema, rule, decision) inputs. Client-side SDKs in other languages start as rule composers (libraries that produce DSL text) before implementing full runtimes.
-
-Schema introspection is a first-class operation. `engine.export_schema()` returns the current schema in `.amn` format, enabling client SDKs to fetch the schema and perform local preflight validation before submitting rules to a runtime.
+- Every host needs a parser and a type checker, and they must accept and reject the same inputs. A shared conformance corpus will enforce this.
+- `engine.export_schema()` returns the schema in `.amn` text. A JSON form carrying operator signatures is planned so a host can validate a custom operator it cannot execute.
+- A TypeScript implementation of parse and validate is planned for composing expressions in the browser. The server re-parses regardless; browser validation is a convenience, not a boundary.
 
 ## Error hierarchy
 
 ```
 AminoError
-├── SchemaParseError           # Syntax error in .amn schema file
-├── SchemaValidationError      # Semantic error: unknown type ref, circular struct, duplicate name
-├── RuleParseError             # Syntax error in rule expression string
-├── TypeMismatchError          # Type error caught at rule compile time
-├── DecisionValidationError    # Decision data fails schema/constraint validation (strict mode)
-├── RuleEvaluationError        # Runtime error during rule evaluation
-├── OperatorConflictError      # Duplicate operator registration
-└── EngineAlreadyFrozenError   # Registration attempted after first use
+├── SchemaParseError            syntax error in .amn text
+├── SchemaValidationError       unknown type reference, circular struct, duplicate name
+├── RuleParseError              syntax error or unknown field in an expression
+├── TypeMismatchError           reserved; not currently raised (see expression-language.md)
+├── DecisionValidationError     record fails schema or constraints in strict decisions mode
+├── RuleEvaluationError         runtime error inside the Python target
+├── UnsupportedExpressionError  a target cannot render part of an expression
+├── OperatorConflictError       duplicate operator registration
+└── EngineAlreadyFrozenError    registration after first use
 ```
 
-All errors carry a `message: str` and, where applicable, `field: str`, `expected: str`, and `got: str` for structured error handling.
+Every error carries `message`, and where it applies, `field`, `expected`, and `got`.
 
-## File structure
+## Package layout
 
 ```
 amino/
-├── __init__.py              # Public API: load_schema()
-├── engine.py                # Engine class: orchestrates registries, enforces freeze-before-use
+├── __init__.py            load_schema(), public exports
+├── engine.py              Engine: registries, freeze, parse(), compile(), eval()
+├── expression.py          Expression: typed AST plus the registries a target needs
+├── errors.py
 ├── schema/
-│   ├── __init__.py
-│   ├── parser.py            # PEG parser for .amn schema files (static grammar)
-│   ├── ast.py               # Schema AST nodes + SchemaType enum
-│   └── registry.py          # SchemaRegistry: field/struct lookup + schema export
-│   └── validator.py         # Schema self-consistency: refs, circular structs, duplicates
+│   ├── parser.py          static PEG parser for .amn
+│   ├── ast.py
+│   ├── validator.py       references, cycles, duplicates
+│   └── registry.py        field lookup by dotted path, export
 ├── rules/
-│   ├── __init__.py
-│   ├── parser.py            # Pratt parser for rule expressions (dynamic operator table)
-│   ├── ast.py               # Rule AST nodes, annotated with resolved types + return type
-│   └── compiler.py          # TypedCompiler: type resolution + optimization + codegen
+│   ├── parser.py          Pratt parser; dynamic operator table; types from schema
+│   ├── ast.py             Literal, Variable, UnaryOp, BinaryOp, FunctionCall, RuleAST
+│   └── compiler.py        TypedCompiler: AST to Python closure (Python target)
 ├── operators/
-│   ├── __init__.py
-│   ├── registry.py          # OperatorRegistry: symbol/keyword → OperatorDef
-│   └── standard.py          # 'standard' and 'minimal' preset definitions
+│   ├── registry.py        OperatorDef, OperatorRegistry
+│   └── standard.py        'standard' and 'minimal' presets
 ├── types/
-│   ├── __init__.py
-│   ├── registry.py          # TypeRegistry: name → TypeDef (base type + validator)
-│   └── builtin.py           # Pre-defined types: ipv4, ipv6, cidr, email, uuid, etc.
-├── runtime/
-│   ├── __init__.py
-│   ├── compiled_rules.py    # CompiledRules: returned by compile(), owns match config
-│   ├── validator.py         # DecisionValidator: validates decisions against schema + constraints
-│   ├── evaluator.py         # Executes compiled rules against a validated decision
-│   └── matcher.py           # Applies match mode to rule results → MatchResult
-└── errors.py                # Exception hierarchy
+│   ├── registry.py        TypeRegistry: name to base type plus validator
+│   └── builtin.py         ipv4, ipv6, cidr, email, uuid
+├── runtime/               the Python target
+│   ├── compiled_rules.py  CompiledRules
+│   ├── validator.py       DecisionValidator: schema, constraints, custom types
+│   ├── evaluator.py
+│   └── matcher.py         all / first / inverse / score
+└── backends/              SQL targets
+    ├── base.py            Query, ParamSink, SQLBackend (shared tree walk)
+    ├── postgres.py
+    └── clickhouse.py
 ```
+
+The Python evaluator under `runtime/` is planned to move under `backends/` so the package layout says what the architecture says: one parser, many targets.

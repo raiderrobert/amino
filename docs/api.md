@@ -1,29 +1,29 @@
-# Public API Reference
+# API Reference
 
-## Engine construction
+Everything public is importable from `amino` except the SQL backends, which live under `amino.backends` so that importing `amino` never touches a database driver.
+
+## `load_schema()`
 
 ```python
 engine = amino.load_schema(
-    source,                      # str — file path or raw schema text
+    source,                      # str: path to a .amn file, or schema text
     *,
-    funcs=None,                  # dict[str, Callable] | None
-    rules_mode='strict',         # 'strict' | 'loose'
-    decisions_mode='loose',      # 'strict' | 'loose'
-    operators='standard',        # 'standard' | 'minimal' | list[str]
+    funcs=None,                  # dict[str, Callable]
+    rules_mode="strict",         # accepted; currently no effect (see below)
+    decisions_mode="loose",      # "strict" | "loose"
+    operators="standard",        # "standard" | "minimal" | list[str]
 ) -> Engine
 ```
 
-**Parameters:**
-
-- `source` — a file path to a `.amn` schema file, or raw schema text as a string. The schema is parsed and validated immediately; `SchemaParseError` or `SchemaValidationError` is raised on failure.
-- `funcs` — optional dict of `{name: callable}` pairs to register as functions at construction time. Equivalent to calling `engine.add_function()` for each entry.
-- `rules_mode` — type enforcement mode for rule expressions. `'strict'` raises `TypeMismatchError` at compile time on type mismatches. `'loose'` logs a warning and compiles with best-effort type information. Default: `'strict'`.
-- `decisions_mode` — type enforcement mode for decision data. `'strict'` raises `DecisionValidationError` on non-conforming decisions. `'loose'` skips non-conforming fields and adds a warning to `MatchResult.warnings`. Default: `'loose'`.
-- `operators` — operator preset for the rule expression parser. `'standard'` includes all built-in operators. `'minimal'` includes only `and`, `or`, `not`. A `list[str]` selects a specific subset of built-in operator names. Default: `'standard'`.
+- `source`: if it names a readable file, the file is parsed; otherwise the string itself is. Raises `SchemaParseError` or `SchemaValidationError`.
+- `funcs`: implementations for functions declared in the schema. Same as calling `add_function()` for each.
+- `rules_mode`: designed to choose between raising and warning on type mismatches in expressions. No mismatch is currently detected for built-in operators, so this has no effect. See [expression-language.md](expression-language.md#type-checking).
+- `decisions_mode`: `"strict"` raises `DecisionValidationError` on a non-conforming record. `"loose"` drops non-conforming fields, adds a warning to `MatchResult.warnings`, and evaluates on what remains. Python target only.
+- `operators`: the operator preset. See [expression-language.md](expression-language.md#operator-presets).
 
 ## Registration
 
-All registrations must complete before the first `compile()` or `eval()` call. After first use, the engine is frozen and any registration attempt raises `EngineAlreadyFrozenError`.
+All registration must happen before the first `parse()`, `compile()`, or `eval()`. After that the engine is frozen and any of these raises `EngineAlreadyFrozenError`.
 
 ### `add_function()`
 
@@ -31,70 +31,56 @@ All registrations must complete before the first `compile()` or `eval()` call. A
 engine.add_function(name: str, fn: Callable) -> None
 ```
 
-Registers a callable as a named function available in rule expressions. The function can then be called as `name(args...)` in rule strings.
+Provides the implementation for a function declared in the schema. Runs on the Python target only. SQL targets emit the name and expect the database to define it.
 
 ### `register_type()`
 
 ```python
-engine.register_type(
-    name: str,
-    base: str,           # 'Str' | 'Int' | 'Float' | 'Bool'
-    validator: Callable, # fn(value) -> bool | ValidationResult
-) -> None
+engine.register_type(name: str, base: str, validator: Callable[[object], bool]) -> None
 ```
 
-Registers a custom type. Once registered, `name` is valid in schema field definitions. The `base` type determines default operator behavior when no type-specific operator is registered. The `validator` runs during decision validation.
+Makes `name` usable as a field type in the schema. `base` is one of `"Str"`, `"Int"`, `"Float"`, `"Bool"` and is what targets use for parameter types and default operator behaviour. `validator` runs during decision validation on the Python target. Registering a name that already exists, including a built-in like `email`, overwrites it.
+
+Built-in custom types: `ipv4`, `ipv6`, `cidr`, `email`, `uuid`, all with base `Str`.
 
 ### `register_operator()`
 
 ```python
 engine.register_operator(
     *,
-    symbol: str = None,          # symbolic: '|', '^', '->'
-    keyword: str = None,         # word: 'precedes', 'overlaps'
-    kind: str = 'infix',         # 'infix' | 'prefix' | 'postfix'
+    symbol: str | None = None,       # "|", "~", "->"
+    keyword: str | None = None,      # "precedes", "overlaps"
+    kind: str = "infix",             # "infix" | "prefix"
     fn: Callable,
     binding_power: int,
-    associativity: str = 'left', # 'left' | 'right'
-    input_types: tuple[str, ...],
-    return_type: str,
+    associativity: str = "left",     # "left" | "right"
+    input_types: tuple[str, ...] = ("*", "*"),
+    return_type: str = "Bool",
 ) -> None
 ```
 
-Registers a custom operator. Exactly one of `symbol` or `keyword` must be provided. `input_types` and `return_type` are required for compile-time type checking. Registering a duplicate symbol or keyword raises `OperatorConflictError`.
+Exactly one of `symbol` or `keyword`. `"postfix"` is accepted but not implemented; it parses as infix. A duplicate token with the same `input_types` raises `OperatorConflictError`; the same token with different `input_types` is an overload and is dispatched by operand type. Custom operators run on the Python target only; SQL targets raise `UnsupportedExpressionError`.
 
-## Evaluation
+## Parsing
 
-### `eval()`
-
-```python
-engine.eval(
-    rules: list[dict],   # same format as compile()
-    decision: dict,
-    match: dict = None,
-) -> MatchResult
-```
-
-One-shot evaluation: parses, compiles, and evaluates in a single call. Useful for ad-hoc or low-frequency evaluation. For repeated evaluation against the same rule set, prefer `compile()` + `CompiledRules.eval()`.
-
-### `compile()`
+### `parse()`
 
 ```python
-engine.compile(
-    rules: list[dict],   # [{'id': str, 'rule': str, 'ordering': int, ...}]
-    match: dict = None,
-) -> CompiledRules
+engine.parse(text: str) -> Expression
 ```
 
-Compiles a rule set for repeated evaluation. Returns a `CompiledRules` object. Calling `compile()` freezes the engine's registries.
+Parses and type-checks one expression. Freezes the engine. Raises `RuleParseError` on a syntax error or an unknown field. The returned `Expression` can be given to any target.
 
-### `update_rules()`
+### `Expression`
 
 ```python
-engine.update_rules(rules: list[dict]) -> None
+expr.ast           # RuleAST: .root (a node) and .return_type
+expr.schema        # SchemaRegistry
+expr.types         # TypeRegistry
+expr.base_type(type_name: str) -> str   # "email" -> "Str"; primitives return themselves
 ```
 
-Atomically hot-swaps the compiled rule set. Schema and registries remain unchanged. The new rules are compiled against the same (fixed) schema.
+Frozen dataclass. Node types are in `amino.rules.ast`: `Literal`, `Variable`, `UnaryOp`, `BinaryOp`, `FunctionCall`. Each carries `type_name`.
 
 ### `export_schema()`
 
@@ -102,57 +88,104 @@ Atomically hot-swaps the compiled rule set. Schema and registries remain unchang
 engine.export_schema() -> str
 ```
 
-Returns the current schema in `.amn` format. Enables client SDKs to fetch the schema for local preflight validation.
+The schema in `.amn` text. A JSON form that includes operator signatures is planned for client-side validators.
 
-## Rule dict format
+## Python target
 
-```python
-{
-    'id': str,           # required, unique within the rule set
-    'rule': str,         # required, rule expression string
-    'ordering': int,     # optional, used by 'first' match mode
-    # any additional keys are stored as metadata on the rule
-}
-```
-
-## Match config format
+### `eval()`
 
 ```python
-# Return all matching rules (default)
-match = None
-match = {'mode': 'all'}
-
-# Return first match by ordering
-match = {'mode': 'first', 'key': 'ordering', 'order': 'asc'}
-
-# Return all non-matching rules
-match = {'mode': 'inverse'}
-
-# Aggregate scores, optional threshold
-match = {'mode': 'score', 'aggregate': 'sum', 'threshold': 0.7}
+engine.eval(rules: list[dict], decision: dict, match: dict | None = None) -> MatchResult
 ```
 
-## CompiledRules
+Parse, compile, and evaluate in one call. Convenient for one-offs. For repeated evaluation use `compile()`.
 
-`CompiledRules` is returned by `engine.compile()`. It holds the compiled rule set and match configuration, and can be evaluated against multiple decisions without recompilation.
+### `compile()`
+
+```python
+engine.compile(rules: list[dict], match: dict | None = None) -> CompiledRules
+```
+
+Rule dict format:
+
+```python
+{"id": ..., "rule": "credit_score < 600", "ordering": 1, ...}
+```
+
+`id` is required and must be unique within the set. `rule` is the expression text. `ordering` is used by `first` mode. Any other keys are kept as metadata.
+
+### `CompiledRules`
 
 ```python
 compiled.eval(decisions: list[dict]) -> list[MatchResult]
 compiled.eval_single(decision: dict) -> MatchResult
 ```
 
-## MatchResult
+Immutable. To change rules, compile again and swap the reference.
+
+### Match config
 
 ```python
-result.id        # str | None — decision identifier (from 'id' key in decision dict)
-result.matched   # list[str] — matched rule ids ('all' and 'first' modes)
-result.excluded  # list[str] — non-matching rule ids ('inverse' mode)
-result.score     # float | None — aggregated score ('score' mode)
-result.warnings  # list[str] — validation warnings (loose mode only)
+{"mode": "all"}                                                  # default
+{"mode": "first", "key": "ordering", "order": "asc"}
+{"mode": "inverse"}
+{"mode": "score", "aggregate": "sum", "threshold": 0.7}
 ```
 
-- `id` — taken from the `'id'` key in the decision dict, if present.
-- `matched` — populated by `'all'` and `'first'` modes. Empty list if no rules match.
-- `excluded` — populated by `'inverse'` mode. Contains rule ids that did not match.
-- `score` — populated by `'score'` mode. `None` in all other modes.
-- `warnings` — populated when `decisions_mode='loose'` and non-conforming fields are encountered. Empty list in strict mode.
+See [targets.md](targets.md#match-modes).
+
+### `MatchResult`
+
+```python
+result.id         # the decision's "id" key, or None
+result.matched    # list of rule ids (all, first, and score-with-threshold modes)
+result.excluded   # list of rule ids that did not match (inverse mode)
+result.score      # aggregate (score mode), else None
+result.warnings   # list[str] from loose decisions mode
+```
+
+## SQL targets
+
+```python
+from amino.backends import Query, SQLBackend, ParamSink, UnsupportedExpressionError
+from amino.backends.postgres import PostgresBackend
+from amino.backends.clickhouse import ClickHouseBackend
+```
+
+### `PostgresBackend`, `ClickHouseBackend`
+
+```python
+backend = PostgresBackend(columns: dict[str, str] | None = None)
+backend.compile(expr: Expression) -> Query
+```
+
+`columns` maps a field path to a SQL fragment rendered verbatim. Required for nested struct fields. Raises `UnsupportedExpressionError` for anything the backend cannot render.
+
+### `Query`
+
+```python
+q.sql      # str, a predicate suitable for a WHERE clause
+q.params   # list for Postgres, dict for ClickHouse
+```
+
+Frozen dataclass.
+
+### `SQLBackend`
+
+Abstract base. Subclass and implement `quote_ident()`, `new_params()`, `render_in()`, `render_contains()`. Optionally override `render_not_in()`. See [targets.md](targets.md#writing-a-target).
+
+## Errors
+
+All subclass `AminoError`, which carries `message`, `field`, `expected`, `got`.
+
+| Error | Raised when |
+|---|---|
+| `SchemaParseError` | `.amn` text has a syntax error |
+| `SchemaValidationError` | unknown type reference, circular struct, duplicate name, bad custom type base |
+| `RuleParseError` | expression has a syntax error or references an unknown field |
+| `TypeMismatchError` | reserved; not currently raised |
+| `DecisionValidationError` | record fails validation in strict decisions mode |
+| `RuleEvaluationError` | runtime failure inside the Python target; usually caught and turned into a false rule |
+| `UnsupportedExpressionError` | a target cannot render part of an expression |
+| `OperatorConflictError` | duplicate operator registration |
+| `EngineAlreadyFrozenError` | registration after first use |

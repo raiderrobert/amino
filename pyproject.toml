@@ -1,7 +1,7 @@
 [project]
 name = "amino"
 version = "0.1.0"
-description = "A framework to build custom domain specific languages"
+description = "A small, typed expression language that is safe to accept from untrusted users and compiles to multiple targets"
 authors = [{name = "Robert Roskam", email = "raiderrobert@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}

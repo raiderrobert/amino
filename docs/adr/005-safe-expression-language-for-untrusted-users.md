@@ -56,6 +56,8 @@ Probed on 2026-09-05 against `feat/sql-backends`:
 | 5. Bounded cost | **No.** 5,000 nested parentheses raise an uncaught `RecursionError`. No length limit. | Same. |
 | 6. Same meaning everywhere | 29 expressions agree across all three. NULL and collation divergences documented. | Same. |
 
+A related gap, not itself a security boundary but part of "meaning is fixed before execution": the parser annotates every node with a type but does not reject a mismatched built-in comparison. `name = 5` on a `Str` field parses and evaluates false on every target, so the targets agree, but the user was not told. Built-in operators are registered with wildcard signatures and a lone registration is always accepted. `rules_mode` is accepted by `load_schema()` and has no effect. `TypeMismatchError` exists and is never raised.
+
 Guarantees 1 and 3 have the same root cause and the same fix: the parser rejects undeclared functions. Guarantee 5 is a depth counter and a length check in the parser. Both are small. Both are recorded here because this is the class of bug the framing exists to prevent, and the README should state the guarantees rather than a changelog stating the fixes.
 
 ### Vocabulary from a developer-defined schema
@@ -160,7 +162,7 @@ A slogan, if one is wanted: *amino is to `WHERE` what GraphQL is to `SELECT`.*
 What changes, in rough order:
 
 1. **README** is rewritten around this ADR. It states the guarantees, the threat model, the non-goals, and the GraphQL comparison. It does not lead with rules or with queries.
-2. **Parser** rejects undeclared functions at parse time and enforces default length and depth limits. Closes the gaps in the status table above.
+2. **Parser** rejects undeclared functions at parse time, rejects mismatched built-in comparisons so that `rules_mode` and `TypeMismatchError` mean something, and enforces default length and depth limits. Closes the gaps in the status table above.
 3. **Named validation rules** and a **conformance corpus** are introduced in the Python implementation first, so the TypeScript implementation has something to be measured against.
 4. **Schema export** gains a JSON form that includes operator signatures.
 5. **The Python evaluator and matcher move under the targets namespace**, so the rules engine is visibly one target among several.
