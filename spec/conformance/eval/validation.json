@@ -1,0 +1,14 @@
+{
+  "schema": "id: Int\ncontact: email\nscore: Int {min: 0}",
+  "records": [
+    {"id": 1, "contact": "a@b.co", "score": 5},
+    {"id": 2, "contact": "not-an-email", "score": 5},
+    {"id": 3, "contact": "c@d.org", "score": -1}
+  ],
+  "cases": [
+    {"expression": "contact = 'not-an-email'", "matches": [],
+     "xfail": "python: custom type validators are not run during decision validation, so the field is kept"},
+    {"expression": "score = -1", "matches": []},
+    {"expression": "score = 5", "matches": [1, 2]}
+  ]
+}

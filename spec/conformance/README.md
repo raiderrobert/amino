@@ -29,7 +29,7 @@ Each file is self-contained: it carries its own schema so a host can run one fil
 - `type` on an accept is the result type of the root: `Bool`, `Int`, `Float`, or `Str`.
 - `error` on a reject is a named validation rule from the table below. A host maps it to its own error class.
 - `operators`, if present at file level, is the operator preset the engine is built with. Default `standard`.
-- `xfail`, if present, is a string explaining why the reference implementation currently fails this case. Hosts should treat the case as required behaviour and report it as an expected failure, not a pass.
+- `xfail`, if present, is a string explaining why one host currently fails this case. It is prefixed with that host's name: `python: ...`, `go: ...`, `typescript: ...`. A host treats a case as an expected failure only when the prefix is its own; every other host must pass it. This is how the corpus describes required behaviour that the reference implementation does not have yet.
 
 ## Named validation rules
 
@@ -42,7 +42,7 @@ Each file is self-contained: it carries its own schema so a host can run one fil
 | `type_mismatch` | Operands are of incompatible types for a built-in operator. | `TypeMismatchError` (pending) |
 | `depth_exceeded` | Nesting is deeper than the host's limit. | (pending) |
 
-"Pending" marks rules the reference implementation does not yet enforce. Cases for them carry `xfail`.
+"Pending" marks rules the Python reference implementation does not yet enforce. Cases for them carry `xfail: "python: ..."`. The Go host enforces all six.
 
 ## Eval case format
 
@@ -62,12 +62,13 @@ Each file is self-contained: it carries its own schema so a host can run one fil
 
 - Every record has an integer `id`.
 - `matches` is the sorted list of ids for which the expression is true.
+- Records may be nested to match struct fields in the schema. A host with only SQL targets maps dotted paths to columns.
 - Records contain no nulls and no optional fields, because SQL three-valued logic and the Python evaluator differ there and that divergence is not yet resolved (ADR 005, open questions). When it is, cases will be added.
 - A host with an in-process evaluator runs these directly. A host with only SQL targets loads the records into a database and runs `SELECT id ... WHERE <compiled>`.
 
 ## Running
 
-Python: `cd python && uv run pytest tests/test_conformance.py`. Other hosts document their runner in their own README.
+Python: `cd python && uv run pytest tests/test_conformance.py`. Go: `cd go && go test -run Conformance ./...`. Each host's runner reads this directory directly; the corpus is never copied.
 
 ## Adding cases
 

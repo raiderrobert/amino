@@ -1,5 +1,5 @@
 # Root Makefile. Host-specific work is delegated to each host's directory.
-# Today only python/ exists; typescript/ and go/ targets are added when those hosts land.
+# typescript/ targets are added when that host lands.
 
 .PHONY: install-dependencies tidy test test-integration qa db-up db-down
 
@@ -8,9 +8,16 @@ install-dependencies:
 
 tidy:
 	$(MAKE) -C python tidy
+	cd go && gofmt -l . && go vet ./...
 
-test:
+test: test-python test-go
+
+.PHONY: test-python test-go
+test-python:
 	$(MAKE) -C python test
+
+test-go:
+	cd go && go vet ./... && go test ./...
 
 test-integration: db-up
 	$(MAKE) -C python test-integration
