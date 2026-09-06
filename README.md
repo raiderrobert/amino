@@ -15,7 +15,7 @@ Plenty of features come down to a condition written by someone who is not an eng
 Amino is that language, built once, so the feature on top of it can be small. It comes with the requirements those features share already met:
 
 - **Checked against a schema.** An expression can only name fields, functions, and operators you declared. Unknown names are rejected before anything runs.
-- **Safe to accept from people you don't trust.** Nothing a user types executes. Literals are bound as parameters. The language has no loops, assignment, or way to reach past the schema, so it can be exposed to the internet. See [docs/security.md](docs/security.md) for the guarantees and their current status.
+- **Safe to accept from people you don't trust.** Nothing a user types executes, and the language has no loops, assignment, or way to reach past the schema. See [docs/security.md](docs/security.md).
 - **Runs in more than one place.** The same expression decides for one record in process and selects all matching records in the database, with a test suite that keeps the answers identical.
 - **Small enough to reimplement.** Two grammar files and a conformance corpus. There are Python, Go, and TypeScript hosts, and the TypeScript one validates in the browser as the user types.
 
@@ -59,7 +59,37 @@ q.params   # [600, ['CA', 'NY']]
 cur.execute(f"SELECT id FROM applications WHERE {q.sql}", q.params)
 ```
 
-Same text, same parse, opposite direction. Which backend compiles the expression is one line, so one query box can front several stores, and a rule evaluated in the application and a query run in the database cannot drift apart. Everything the user typed is bound as a parameter. See [docs/targets.md](docs/targets.md) for the targets and for writing your own.
+Same text, same parse, opposite direction. Which backend compiles the expression is one line, so one query box can front several stores, and a rule evaluated in the application and a query run in the database cannot drift apart. See [docs/targets.md](docs/targets.md) for the targets and for writing your own.
+
+**Across client and server.** The browser checks the expression as the user types, against the same schema the server uses. The TypeScript host does the checking in the browser; the server parses the text again when it arrives.
+
+```ts
+// browser
+import { loadSchema } from "@raiderrobert/amino";
+
+const engine = loadSchema(await fetch("/api/search/schema").then((r) => r.text()));
+
+input.oninput = () => {
+  const check = engine.validate(input.value);
+  hint.textContent = check.ok ? "" : check.error.message;   // 'unknown_field: unknown field "stat"'
+};
+form.onsubmit = () => fetch("/api/search", { method: "POST", body: input.value });
+```
+
+```python
+# server
+@app.get("/api/search/schema")
+def schema():
+    return engine.export_schema()          # the same .amn text the browser loads
+
+@app.post("/api/search")
+def search(text: str):
+    expr = engine.parse(text)              # parse on arrival, then compile for the store
+    q = PostgresBackend().compile(expr)
+    return db.execute(f"SELECT id FROM applications WHERE {q.sql}", q.params)
+```
+
+The Python, Go, and TypeScript hosts are held to one conformance corpus, so browser and server share one definition of a valid expression and one set of error codes. The user sees a mistake before the round trip.
 
 ## Is it for you
 
@@ -69,7 +99,7 @@ No, if you need projections, sorting, aggregation, sequencing, or anything with 
 
 ## Status
 
-Early, and used by one person. The API is small and may change. Two known gaps in the safety guarantees are documented in [docs/security.md](docs/security.md) and are scheduled before any new feature. Read that page before exposing amino to untrusted input.
+Early, and used by one person. The API is small and may change.
 
 Not on PyPI yet:
 
