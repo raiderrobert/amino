@@ -6,14 +6,14 @@ One repository, one language, several hosts. [ADR 006](docs/adr/006-repository-l
 spec/           what every host must implement: grammar/ (PEG) and conformance/ (JSON corpus)
 docs/           language-agnostic docs and ADRs; docs/README.md orders them
 python/         reference implementation; its own README, API.md, tests, and toolchain
-typescript/     browser-side parse and validate; README only until started
+typescript/     parse, validate, and evaluate for the browser and Node; no SQL targets
 go/             full runtime for services: parse, validate, evaluate, Postgres and ClickHouse targets
 scripts/        shared tooling: dev-db.sh starts the databases every host's parity suite uses
 ```
 
 ## Working on a host
 
-Toolchains: Python 3.10 or newer with `uv`; Go 1.22 or newer; Docker for the SQL parity suite.
+Toolchains: Python 3.10 or newer with `uv`; Go 1.22 or newer; Node 18 or newer with `pnpm`; Docker for the SQL parity suite.
 
 Each host directory is self-contained and uses its own toolchain. For Python:
 
@@ -31,6 +31,14 @@ For Go:
 cd go
 go test ./...                            # unit tests and the conformance corpus
 go vet ./... && gofmt -l .
+```
+
+For TypeScript:
+
+```bash
+cd typescript
+pnpm install
+pnpm typecheck && pnpm build && pnpm test   # tests include the conformance corpus
 ```
 
 The root `Makefile` delegates to the hosts that exist:

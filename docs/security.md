@@ -88,6 +88,10 @@ Guarantees 1 and 3 close together with one parser change. Guarantee 5 is a depth
 
 The Go host was written against the corpus after the gaps above were known, and enforces all six guarantees: undeclared functions and mismatched built-in comparisons are parse errors, expression length and nesting depth are capped by default (10,000 bytes and 100 levels, configurable), truncated input is a `syntax` error rather than a crash, and custom type validators run during record validation. Its SQL backends produce the same SQL as Python's, verified by tests that assert the exact strings. It has not yet been run through a parity suite against live databases; that is the next step for it.
 
+### TypeScript
+
+Same position as Go: written against the corpus, enforces all six guarantees at parse time and in record validation, passes every case. It has no SQL targets, so guarantee 3 does not apply to it. Its `validate()` is the browser-side feedback described under "What amino does not guarantee": a convenience, re-parsed by the server.
+
 ## Reporting
 
 This is a one-maintainer project without a security contact yet. Open a GitHub issue. If the report is sensitive, say so in the title without details and the maintainer will arrange a channel.

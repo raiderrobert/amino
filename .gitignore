@@ -138,3 +138,6 @@ dmypy.json
 
 # superpowers working docs (specs, plans)
 docs/superpowers/
+
+# Node
+node_modules/

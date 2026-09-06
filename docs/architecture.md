@@ -73,7 +73,7 @@ This is [ADR 002](adr/002-dsl-interchange-format-and-multi-language.md). Its con
 
 - Every host needs a parser and a type checker, and they must accept and reject the same inputs. A shared conformance corpus will enforce this.
 - `engine.export_schema()` returns the schema in `.amn` text. A JSON form carrying operator signatures is planned so a host can validate a custom operator it cannot execute.
-- A TypeScript implementation of parse and validate is planned for composing expressions in the browser. The server re-parses regardless; browser validation is a convenience, not a boundary.
+- The TypeScript host parses, validates, and evaluates, and is the way to compose expressions in the browser with feedback as the user types. The server re-parses regardless; browser validation is a convenience, not a boundary.
 
 ## Error hierarchy
 
