@@ -42,7 +42,7 @@ Each file is self-contained: it carries its own schema so a host can run one fil
 | `type_mismatch` | Operands are of incompatible types for a built-in operator. | `TypeMismatchError` (pending) |
 | `depth_exceeded` | Nesting is deeper than the host's limit. | (pending) |
 
-"Pending" marks rules the Python reference implementation does not yet enforce. Cases for them carry `xfail: "python: ..."`. The Go host enforces all six.
+"Pending" marks rules the Python reference implementation does not yet enforce. Cases for them carry `xfail: "python: ..."`. The Go and TypeScript hosts enforce all six.
 
 ## Eval case format
 
@@ -68,7 +68,7 @@ Each file is self-contained: it carries its own schema so a host can run one fil
 
 ## Running
 
-Python: `cd python && uv run pytest tests/test_conformance.py`. Go: `cd go && go test -run Conformance ./...`. Each host's runner reads this directory directly; the corpus is never copied.
+Python: `cd python && uv run pytest tests/test_conformance.py`. Go: `cd go && go test -run Conformance ./...`. TypeScript: `cd typescript && pnpm test`. Each host's runner reads this directory directly; the corpus is never copied.
 
 ## Adding cases
 

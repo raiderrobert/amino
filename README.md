@@ -17,7 +17,7 @@ Amino is that language, built once, so the feature on top of it can be small. It
 - **Checked against a schema.** An expression can only name fields, functions, and operators you declared. Unknown names are rejected before anything runs.
 - **Safe to accept from people you don't trust.** Nothing a user types executes. Literals are bound as parameters. The language has no loops, assignment, or way to reach past the schema, so it can be exposed to the internet. See [docs/security.md](docs/security.md) for the guarantees and their current status.
 - **Runs in more than one place.** The same expression decides for one record in process and selects all matching records in the database, with a test suite that keeps the answers identical.
-- **Small enough to reimplement.** Two grammar files. A TypeScript host for composing and validating in the browser is planned.
+- **Small enough to reimplement.** Two grammar files and a conformance corpus. There are Python, Go, and TypeScript hosts, and the TypeScript one validates in the browser as the user types.
 
 It borrows GraphQL's central move, a schema that decides what a client can say, and points it at a different problem. GraphQL lets clients choose which fields come back. Amino lets users choose which records do.
 
@@ -77,7 +77,7 @@ Not on PyPI yet:
 pip install "git+https://github.com/raiderrobert/amino.git#subdirectory=python"
 ```
 
-Python 3.10 or newer. Database drivers are optional extras, `amino[postgres]` and `amino[clickhouse]`, and are only needed to execute what a backend produces. The Python package is the reference implementation; TypeScript and Go hosts are planned, and the repository is laid out for them. See [ADR 006](docs/adr/006-repository-layout-for-multiple-hosts.md).
+Python 3.10 or newer. Database drivers are optional extras, `amino[postgres]` and `amino[clickhouse]`, and are only needed to execute what a backend produces. The Python package is the reference implementation. Go and TypeScript hosts exist and pass the same conformance corpus. See [ADR 006](docs/adr/006-repository-layout-for-multiple-hosts.md).
 
 ## Learn more
 

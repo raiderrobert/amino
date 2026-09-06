@@ -27,6 +27,7 @@ The documents below are ordered so that reading them top to bottom is a sensible
 | [targets.md](targets.md) | The Python evaluator (compile, eval, match modes, decision validation), Postgres, ClickHouse, shared SQL behaviour, known divergences, and writing a target. |
 | [../python/API.md](../python/API.md) | Every public function, class, and error in the Python reference implementation. |
 | [../go/README.md](../go/README.md) | The Go host: API, how it differs from Python, and how to run its tests. |
+| [../typescript/README.md](../typescript/README.md) | The TypeScript host: validating in the browser, the evaluator for Node, and how it differs from Python. |
 
 ## Decision records
 
