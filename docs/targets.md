@@ -177,9 +177,9 @@ Whatever you build, add it to the parity suite, and run the eval half of `spec/c
 `python/tests/integration/test_sql_parity.py` runs every expression in its list through Postgres, ClickHouse, and the Python evaluator against the same twelve rows and asserts all three select the same ids.
 
 ```bash
-make db-up              # postgres:16 on :55432, clickhouse:24.8 on :18123
-make test-integration
-make db-down
+just db-up              # postgres:16 on :55432, clickhouse:24.8 on :18123
+just test-integration
+just db-down
 ```
 
-`make test` runs the same tests and skips them when a database is unreachable. Override connection strings with `AMINO_PG_DSN` and `AMINO_CH_URL`. Drivers are optional extras: `amino[postgres]` and `amino[clickhouse]`. The backends import neither; only your code and the tests do.
+`just test` runs the same tests and skips them when a database is unreachable. Override connection strings with `AMINO_PG_DSN` and `AMINO_CH_URL`. Drivers are optional extras: `amino[postgres]` and `amino[clickhouse]`. The backends import neither; only your code and the tests do.

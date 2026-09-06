@@ -13,7 +13,7 @@ scripts/        shared tooling: dev-db.sh starts the databases every host's pari
 
 ## Working on a host
 
-Toolchains: Python 3.10 or newer with `uv`; Go 1.22 or newer; Node 18 or newer with `pnpm`; Docker for the SQL parity suite.
+Toolchains: Python 3.10 or newer with `uv`; Go 1.22 or newer; Node 18 or newer with `pnpm`; Docker for the SQL parity suite; [`just`](https://just.systems) for the root recipes.
 
 Each host directory is self-contained and uses its own toolchain. For Python:
 
@@ -41,14 +41,15 @@ pnpm install
 pnpm typecheck && pnpm build && pnpm test   # tests include the conformance corpus
 ```
 
-The root `Makefile` delegates to the hosts that exist:
+The root `justfile` delegates to the hosts that exist; `just --list` shows every recipe:
 
 ```bash
-make test               # every host's tests; integration tests skip without databases
-make tidy
-make db-up              # postgres:16 on :55432, clickhouse:24.8 on :18123, via Docker
-make test-integration   # SQL parity suites against live databases
-make db-down
+just test               # every host's tests; integration tests skip without databases
+just tidy
+just db-up              # postgres:16 on :55432, clickhouse:24.8 on :18123, via Docker
+just test-integration   # SQL parity suites against live databases
+just db-down
+just python::tidy       # one host's recipe, run from the root
 ```
 
 Ports are non-default to avoid a local Postgres on 5432. Override with `AMINO_PG_PORT` and `AMINO_CH_PORT` for the script, and `AMINO_PG_DSN` and `AMINO_CH_URL` for the tests.

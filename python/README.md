@@ -48,4 +48,4 @@ uv run ruff check && uv run ruff format --check
 uv run ty check amino
 ```
 
-Or from the repository root, `make test`, `make tidy`, `make test-integration`, which delegate here. The integration suite needs the databases from `../scripts/dev-db.sh up` (or `make db-up` at the root).
+Or `just test`, `just tidy`, `just test-integration` here, or from the repository root, which delegates here. The integration suite needs the databases from `../scripts/dev-db.sh up` (or `just db-up`).
