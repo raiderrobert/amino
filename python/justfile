@@ -1,0 +1,36 @@
+# Python host. Recipes run from this directory whether invoked here or as `just python::<recipe>` from the root.
+
+# List the available recipes.
+default:
+    @just --list
+
+install-dependencies:
+    @uv sync --all-groups --all-extras
+
+upgrade-dependencies:
+    @uv sync --all-groups --all-extras --upgrade
+
+# Tidy, then test.
+qa: tidy test
+
+tidy: tidy-ruff tidy-ty
+
+tidy-ruff:
+    uv run --frozen ruff format .
+
+tidy-ty:
+    uv run --frozen ty check .
+
+test:
+    uv run --locked pytest tests --cov-report=term --cov-report=xml --cov-config=pyproject.toml --cov=amino
+
+# `just test` also runs these but skips them when the databases are down.
+# Run the SQL parity suite against local Postgres and ClickHouse containers.
+test-integration: db-up
+    uv run --locked pytest tests/integration -v
+
+db-up:
+    ../scripts/dev-db.sh up
+
+db-down:
+    ../scripts/dev-db.sh down

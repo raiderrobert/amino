@@ -104,4 +104,4 @@ go test ./...
 go vet ./... && gofmt -l .
 ```
 
-Or `make test-go` from the repository root. There is no live-database parity suite for this host yet; the backends are held to Python's SQL by exact-string tests, and Python's parity suite holds that SQL to the databases.
+Or `just test-go` from the repository root. There is no live-database parity suite for this host yet; the backends are held to Python's SQL by exact-string tests, and Python's parity suite holds that SQL to the databases.

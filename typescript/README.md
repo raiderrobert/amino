@@ -112,4 +112,4 @@ pnpm install
 pnpm typecheck && pnpm build && pnpm test
 ```
 
-Or `make test-ts` from the repository root.
+Or `just test-ts` from the repository root.

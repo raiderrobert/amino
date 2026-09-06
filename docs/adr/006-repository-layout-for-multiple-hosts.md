@@ -38,7 +38,7 @@ scripts/      shared tooling, today the local database script used by every host
 
 ### 4. Root tooling delegates
 
-The root `Makefile` delegates `test`, `tidy`, `test-integration` to each host directory and owns only what is shared (`db-up`, `db-down`). Each host keeps its own build tool: `uv` for Python, `pnpm` for TypeScript, `go` for Go.
+The root `justfile` delegates `test`, `tidy`, `test-integration` to each host directory and owns only what is shared (`db-up`, `db-down`). Each host keeps its own build tool: `uv` for Python, `pnpm` for TypeScript, `go` for Go.
 
 ### 5. Install paths change once
 
