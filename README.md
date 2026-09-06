@@ -61,6 +61,36 @@ cur.execute(f"SELECT id FROM applications WHERE {q.sql}", q.params)
 
 Same text, same parse, opposite direction. Which backend compiles the expression is one line, so one query box can front several stores, and a rule evaluated in the application and a query run in the database cannot drift apart. Everything the user typed is bound as a parameter. See [docs/targets.md](docs/targets.md) for the targets and for writing your own.
 
+**Across client and server.** The browser checks the expression as the user types, against the same schema the server enforces. The TypeScript host does the checking; the server re-parses and is the only check that counts.
+
+```ts
+// browser
+import { loadSchema } from "@raiderrobert/amino";
+
+const engine = loadSchema(await fetch("/api/search/schema").then((r) => r.text()));
+
+input.oninput = () => {
+  const check = engine.validate(input.value);
+  hint.textContent = check.ok ? "" : check.error.message;   // 'unknown_field: unknown field "stat"'
+};
+form.onsubmit = () => fetch("/api/search", { method: "POST", body: input.value });
+```
+
+```python
+# server
+@app.get("/api/search/schema")
+def schema():
+    return engine.export_schema()          # the same .amn text the browser loads
+
+@app.post("/api/search")
+def search(text: str):
+    expr = engine.parse(text)              # re-parse; never trust the client's check
+    q = PostgresBackend().compile(expr)
+    return db.execute(f"SELECT id FROM applications WHERE {q.sql}", q.params)
+```
+
+The Python, Go, and TypeScript hosts are held to one conformance corpus, so the browser's answer and the server's answer have the same definition and the same error codes. Where the Python host still lags the corpus (see [docs/security.md](docs/security.md)), the browser is stricter than the server, never looser. The user learns the mistake before the round trip; the server never relies on that.
+
 ## Is it for you
 
 Yes, if you are building a feature where users express a condition over records you control: a rules engine, a saved-search or query box, feature targeting, row-level policy, alert conditions, data quality checks, routing. Especially if the same condition has to run in more than one place.
